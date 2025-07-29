@@ -1,0 +1,153 @@
+@use "@coreui/coreui/scss/coreui" as * with ( 
+  $enable-deprecation-messages: false,
+);
+@use "@coreui/chartjs/scss/coreui-chartjs";
+@use "vendors/simplebar";
+
+body {
+  background-color: var(--cui-tertiary-bg);
+}
+
+
+.pointer {
+  cursor: pointer;
+}
+
+.wrapper {
+  width: 100%;
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  @include transition(padding .15s);
+}
+
+.header > .container-fluid,
+.sidebar-header {
+  min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+}
+
+.sidebar-brand-full {
+  margin-left: 3px;
+}
+
+.sidebar-header {
+  .nav-underline-border {
+    --cui-nav-underline-border-link-padding-x: 1rem;
+    --cui-nav-underline-border-gap: 0;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+  }
+}
+
+.sidebar-toggler {
+  margin-inline-start: auto;
+}
+
+.sidebar-narrow,
+.sidebar-narrow-unfoldable:not(:hover) {
+  .sidebar-toggler {
+    margin-inline-end: auto;
+  }
+}
+
+.header > .container-fluid + .container-fluid {
+  min-height: 3rem;
+}
+
+.footer {
+  min-height: calc(3rem + 1px); // stylelint-disable-line function-disallowed-list
+}
+
+@include color-mode(dark) {
+  body {
+    background-color: var(--cui-dark-bg-subtle);
+  }
+
+  .footer {
+    --cui-footer-bg: var(--cui-body-bg);
+  }
+}
+
+
+
+// Light mode (default)
+.custom-select__control {
+  background-color:var(--cui-body-bg);
+  color: var(--cui-body-color);
+  border:var(--cui-border-width) solid var(--cui-border-color);
+}
+
+.small-select {
+  .custom-select__control {
+    min-height: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+
+  .custom-select__option {
+      font-size: 0.75rem;
+      min-height: 25px;
+      padding: 6px 12px;
+    }
+
+  .custom-select__dropdown-indicator {
+    padding: 4px;
+  }
+
+  .custom-select__clear-indicator {
+    padding: 4px;
+  }
+
+  .custom-select__value-container {
+    padding: 0 6px;
+  }
+
+  .custom-select__input {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+
+.custom-select__menu {
+  background-color: var(--cui-body-bg);
+  color: var(--cui-body-color);
+}
+
+.custom-select__option--is-focused {
+  background-color:var(--cui-body-bg);
+}
+
+// Dark mode (scoped using CoreUI mixin)
+@include color-mode(dark) {
+  .custom-select__control {
+    background-color: var(--cui-body-bg);
+    color: var(--cui-body-color);
+    border:var(--cui-border-width) solid var(--cui-border-color);
+  }
+
+  .custom-select__menu {
+    background-color:var(--cui-body-bg);
+    color: var(--cui-body-color);
+  }
+
+  .custom-select__option--is-focused {
+    background-color:var(--cui-body-bg)
+  }
+
+   .small-select {
+    .custom-select__single-value {
+      color: var(--cui-body-color) !important;
+    }
+    
+    .custom-select__option {
+      font-size: 0.75rem;
+      min-height: 25px;
+      padding: 6px 12px;
+    }
+  }
+}
+
