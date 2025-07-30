@@ -29,7 +29,7 @@ import { toast } from 'react-toastify';
 import {vehicleNum,validateHSN,ValidMonth,ValidSingleDigit} from '../../utils/validators';
 
 
-const VehicleInventory = () => {
+const TrailerAssign = () => {
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const [data, setData] = useState([]);
@@ -608,14 +608,7 @@ useEffect(() => {
     () => [
       { Header: 'SL', accessor: 'id', disableSortBy: true, },
       { Header: 'Vehicle Number', accessor: 'vehicle_number' },
-      { Header: 'Category', accessor: 'category' },
-      { Header: 'Brand', accessor: 'brandname', className: 'center' },
-      { Header: 'Model', accessor: 'modelname' },
-      { Header: 'Engine number', accessor: 'engine_num' },
-      { Header: 'Chassis number', accessor: 'chassis_num' },
-      { Header: 'Wheels count', accessor: 'tyre_count' },
-      { Header: 'HSN', accessor: 'hsn' },
-      { Header: 'Purchase date', accessor: 'purchase_date' },
+      { Header: 'Trailer Number', accessor: 'trailer_number' },
       {
               Header: () => <FaBars />,
               id: 'actions', 
@@ -901,7 +894,7 @@ const updatevichile = async () => {
     <>
       <CCard className="mb-4">
         <CCardHeader className='bg-secondary text-light'>
-         Vehicle Inventory
+         Trailer Assign
         </CCardHeader>
         <CCardBody>
                 
@@ -986,59 +979,22 @@ const updatevichile = async () => {
         alignment="center"
         scrollable
         visible={show}
-        size="xl"
+        size="md"
         onClose={() => handleClose()}
         aria-labelledby="NewProcessing"
         >
         <CModalHeader className='bg-secondary'>
-          <CModalTitle id="NewProcessing">New Vehicle</CModalTitle>
+          <CModalTitle id="NewProcessing">Trailer Assign</CModalTitle>
         </CModalHeader>
         <CModalBody>
 
           <CRow>
 
-          <CCol md={6}>
-
-
-            <CFormLabel className="col-form-label">
-              Vehicle Number
-              </CFormLabel>
-              <CFormInput
-                  type="text"
-                  size="sm"
-                  placeholder="Vehicle Number"
-                  className="mb-2 vehiclenumber"
-                  onChange={(e) => {
-                    setsave_data((prev) => ({
-                      ...prev,
-                      vno: e.target.value.toUpperCase(),
-                    }));
-                  }}
-                   onKeyUp={(e) => {
-                    const result = vehicleNum(e.target.value);
-                   if (e.target.value.length > 9 && !result.isValid) {
-                      toast.error('Vehicle Number Invalid!');
-                    }
-                   }}
-                />
-
+          <CCol md={12}>
               <CFormLabel className="col-form-label">
-              Type
+              Select Vehicle
               </CFormLabel>
-               <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select' 
-                classNamePrefix="custom-select"
-                onChange={(selectedOption) => {
-                          setsave_data((prev) => ({
-                            ...prev,
-                            type: selectedOption ? selectedOption.value : '',
-                          }));
-                        }}
-                />
-
-              <CFormLabel className="col-form-label">
-               Category
-              </CFormLabel>
-                <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select' 
+                <Select options={categoryoption} isMulti={false} placeholder="Select Vehicle" size="sm" className='mb-2 small-select' 
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
                           setsave_data((prev) => ({
@@ -1052,9 +1008,9 @@ const updatevichile = async () => {
                 />
 
               <CFormLabel className="col-form-label">
-              Brand
+              Select Trailer
               </CFormLabel>
-              <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
+              <Select options={brandoption} isMulti={false} placeholder="Select Trailer" size="sm" className='mb-2 small-select'
               classNamePrefix="custom-select"
                         onChange={(selectedOption) => {
                         setsave_data((prev) => ({
@@ -1066,289 +1022,7 @@ const updatevichile = async () => {
                           }
                       }}
                         />
-
-              <CFormLabel className="col-form-label">
-               Model
-              </CFormLabel>
-
-                 <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select' 
-                 classNamePrefix="custom-select"
-                        onChange={(selectedOption) => {
-                        setsave_data((prev) => ({
-                          ...prev,
-                          modal: selectedOption ? selectedOption.value : '',
-                        }));
-                      }}
-                        />
-
-              <CFormLabel className="col-form-label">
-              Purchase Date
-              </CFormLabel>
-              <CFormInput type="date" value={date_time} size="sm" 
-                onChange={(e) =>
-                setsave_data((prev) => ({
-                  ...prev,
-                  purchasedate: e.target.value,
-                }))
-              }
-               className='mb-2' />
-
-              <CFormLabel className="col-form-label">
-               Months of warranty
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) =>
-                setsave_data((prev) => ({
-                  ...prev,
-                  warrentyyear: e.target.value,
-                }))
-              }
-               onKeyUp={(e) => {
-                  const result = ValidMonth(e.target.value);
-                  if (e.target.value.length > 1 && !result.isValid) {
-                    toast.error('Month Invalid!');
-                  }
-                  }}
-              placeholder="Month of warranty" className='mb-2' />
-
-
-
-               <CFormLabel className="col-form-label">
-                AMC 
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm"
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    amc: e.target.value,
-                  }))
-                }
-                placeholder="AMC File Number" />
-
-                <CFormInput type="date" value={date_time} size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    amcdate: e.target.value,
-                  }))
-                }
-                />
-              </CInputGroup>
-
-
-               <CFormLabel className="col-form-label">
-               Tyre count / Stepney Count
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    tyrecnt: e.target.value,
-                  }))
-                }
-                 onKeyUp={(e) => {
-                  const result = ValidSingleDigit(e.target.value);
-                  if (e.target.value.length > 0 && !result.isValid) {
-                    toast.error('Tyre Count Invalid!');
-                  }
-                  }}
-                placeholder="Tyre count" />
-
-                <CFormInput type="text" size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    stepnycnt: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = ValidSingleDigit(e.target.value);
-                  if (e.target.value.length > 0 && !result.isValid) {
-                    toast.error('Tyre Count Invalid!');
-                  }
-                  }}
-                placeholder="Stepney Count" />
-              </CInputGroup>
-
                </CCol>
-
-            <CCol md={6}>
-
-
-              <CFormLabel className="col-form-label">
-               Fuel Type
-              </CFormLabel>
-                <select placeholder="Select Brand" size="sm" className='form-control form-control-sm mb-2' 
-                  onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    fuel: e.target.value,
-                  }))
-                   }
-                  >
-                      <option value="1">Diesel</option>
-                      <option value="2">Petrol</option>
-                      <option value="3">Gas</option>
-                      <option value="4">Battery</option>
-                    </select>
-
-             <CFormLabel className="col-form-label">
-               Engine Number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    enginenumber: e.target.value,
-                  }))
-                }
-              placeholder="Engine Number" className='mb-2' />
-
-              <CFormLabel className="col-form-label">
-               Chassis number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    chassisnumber: e.target.value,
-                  }))
-                }
-              placeholder="Chassis number" className='mb-2' />
-
-
-              <CFormLabel className="col-form-label">
-               HSN Number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    hsn: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = validateHSN(e.target.value);
-                  if (e.target.value.length > 7 && !result.isValid) {
-                    toast.error('HSN Number Invalid!');
-                  }
-                  }}
-              placeholder="HSN Number" className='mb-2' />
-
-               <CFormLabel className="col-form-label">
-               Insurance
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    insurancenumber: e.target.value,
-                  }))
-                }
-                placeholder="Insurance Number" />
-
-                <CFormInput type="date" value={date_time} size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    insuranceenddate: e.target.value,
-                  }))
-                }
-                />
-              </CInputGroup>
-               
-              <CFormLabel className="col-form-label">
-               Fitness Certificate
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    fitness: e.target.value,
-                  }))
-                }
-                placeholder="Fitness Certificate Number" />
-
-                <CFormInput type="date" value={date_time} size="sm" 
-                 onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    fitnessdate: e.target.value,
-                   }))
-                 }
-                />
-              </CInputGroup>
-
-
-               <CFormLabel className="col-form-label">
-                Pollution  Certificate
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                 onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    puc: e.target.value,
-                   }))
-                 }
-                placeholder="Pollution Certificate Number" />
-
-                <CFormInput type="date" value={date_time} size="sm" 
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    pucdate: e.target.value,
-                   }))
-                 }
-                />
-              </CInputGroup>
-
-              <CFormLabel className="col-form-label">
-               Green Tax
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                 onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    greentax: e.target.value,
-                   }))
-                 }
-                placeholder="Green Tax Number" />
-
-                <CFormInput type="date" value={date_time} size="sm" 
-                 onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    greendate: e.target.value,
-                   }))
-                 }
-                />
-              </CInputGroup>
-
-             <div className="mb-3">
-              <label htmlFor="formFileSm" className="form-label">Image</label>
-              <input className="form-control form-control-sm" id="formFileSm" type="file"
-               onChange={(e) =>
-                setsave_data((prev) => ({
-                  ...prev,
-                  file: e.target.files[0],
-                }))
-              }
-              
-              />
-            </div>
-
-
-            </CCol>
-
           </CRow>
         </CModalBody>
 
@@ -1766,4 +1440,4 @@ const updatevichile = async () => {
   )
 }
 
-export default VehicleInventory
+export default TrailerAssign

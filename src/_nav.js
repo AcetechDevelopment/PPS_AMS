@@ -58,12 +58,17 @@ const _nav = [
       {
         component: CNavItem,
         name: 'Vehicle Trailer Assign',
-        to: '/inward',
+        to: '/trailerassign',
       }, 
       {
         component: CNavItem,
         name: 'Vehicle Spare Assign',
-        to: '/inward',
+        to: '/spareasign',
+      },
+      {
+        component: CNavItem,
+        name: 'Tyreassign',
+        to: '/tyreassign',
       },
      
     ]

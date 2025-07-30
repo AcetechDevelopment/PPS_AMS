@@ -10,11 +10,16 @@ const dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 
 
 
+
+
+
 const VehicleInventory = React.lazy(() => import('./views/Vehicles/VehicleInventory'))
 const Generalmaster = React.lazy(() => import('./views/master/general_master'))
 const TrilerInventory = React.lazy(() => import('./views/Vehicles/TrailerInventory'))
 const SpareInventory = React.lazy(() => import('./views/Vehicles/SpareInventory'))
-
+const TrailerAssign = React.lazy(() => import('./views/Vehicles/Trailerassign'))
+const Spareassign = React.lazy(() => import('./views/Vehicles/Spareassign'))
+const Tyreassign =React.lazy(()=>import('./views/Vehicles/Tyreassign'))
 
 
 const routes = [
@@ -22,6 +27,12 @@ const routes = [
   { path: '/processing', name: 'Processing', element: processing },
   { path: '/trailerinventory', name: 'TrilerInventory', element: TrilerInventory },
   { path: '/spareinventory', name: 'SpareInventory', element: SpareInventory },
+  { path: '/trailerassign', name: 'TrailerAssign', element: TrailerAssign },
+  { path: '/spareasign', name: 'Spareassign', element: Spareassign },
+  { path: '/tyreassign', name: 'Tyreassign', element: Tyreassign },
+  
+  
+
   { path: '/processlist', name: 'Processing', element: process_list },
   { path: '/neglist', name: 'negativewaste', element: negativelist },
 
