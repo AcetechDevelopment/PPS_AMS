@@ -5,7 +5,7 @@ import Auth from './Middleware/auth';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
+import Context from './components/Context';
 import { CSpinner, useColorModes } from '@coreui/react';
 import './scss/style.scss';
 import './scss/examples.scss';
@@ -13,6 +13,10 @@ import './scss/examples.scss';
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'));
 const Login = React.lazy(() => import('./views/pages/login/Login'));
 const Page404 = React.lazy(() => import('./Error/404'));
+
+export const  test = () =>{
+  return "test";
+}
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
@@ -32,6 +36,7 @@ const App = () => {
 
   return (
     <>
+    <Context>
     <ToastContainer />
     <BrowserRouter>
       <Suspense
@@ -59,6 +64,7 @@ const App = () => {
         
       </Suspense>
     </BrowserRouter>
+    </Context>
     </>
   );
 };

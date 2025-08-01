@@ -976,7 +976,7 @@ const Tyreassign = () => {
                 aria-labelledby="NewProcessing"
             >
                 <CModalHeader className='bg-secondary'>
-                    <CModalTitle id="NewProcessing">Spare Assign</CModalTitle>
+                    <CModalTitle id="NewProcessing">Tyre Assign</CModalTitle>
                 </CModalHeader>
                 <CModalBody>
 
@@ -1013,7 +1013,7 @@ const Tyreassign = () => {
 
                         </CCol>
                     </CRow>
-                    
+
                     <CRow>
                         {[...Array(6)].map((_, index) => (<CCol md={6}>nvkvhbk</CCol>))}
                     </CRow>
@@ -1273,7 +1273,7 @@ const Tyreassign = () => {
                                 placeholder="Engine Number" className='mb-2' />
 
                             <CFormLabel className="col-form-label">
-                                Chassis number
+                                Classic number
                             </CFormLabel>
                             <CFormInput type="text" size="sm"
                                 value={updated_data.chassisnumber}

@@ -131,7 +131,7 @@ const _nav = [
             {
               component: CNavItem,
               name: 'Tools Inventory',
-              to: '/negativewaste',
+              to: '/toolinventory',
             },
             {
               component: CNavItem,
@@ -181,13 +181,14 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Tool Rooms',
-    to: '/processin',
+    to: '/toolrooms',
     icon: <CIcon icon={cilTablet} customClassName="nav-icon" />,
   },
+  
   {
     component: CNavItem,
     name: 'Spare Rooms',
-    to: '/processin',
+    to: '/sparerooms',
     icon: <CIcon icon={cilHouse} customClassName="nav-icon" />,
   },
   {
