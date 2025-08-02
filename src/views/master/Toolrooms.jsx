@@ -22,12 +22,18 @@ import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { useMemo } from 'react';
 import { FaTrash, FaEdit, FaBars } from 'react-icons/fa';
+import { useContext,useEffect } from 'react';
+import { Sharedcontext } from '../../components/Context';
+
 const Toolrooms = () => {
     const [pageCount, setPageCount] = useState(0);
 
     const [data, setData] = useState([]);
     const [show, setShow] = useState(false);
-    const handleClose = () => setShow(false);
+    
+    const handleClose = () => {setShow(false)
+       
+    }
     const handleShow = () => setShow(true);
     const [selectedtype, setSelectedtype] = useState(null);
     const columns = useMemo(
@@ -140,7 +146,10 @@ const Toolrooms = () => {
         usePagination
     );
     const selectoptions = [{ value: 'vehicle', label: 'Vehicle' }, { value: 'trailer', label: 'Trailer' },]
-
+     
+           const handletoolitem=()=>{}
+     
+              useEffect(()=>{console.log(spareitems)},[spareitems])
     return (
         <>
             <CCard className="mb-4">
@@ -240,83 +249,69 @@ const Toolrooms = () => {
                     <CRow>
 
                         <CCol md={12}>
-                            <CFormLabel className="col-form-label">
-                                Select RoomId
-                            </CFormLabel>
-                            <Select options={selectoptions} value={selectedtype} isMulti={false} placeholder="Select type" size="sm" className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                onChange={(option) => {
-                                    setSelectedtype(option)
-                                }}
-                            />
+                            
+                           <CFormLabel className="col-form-label">
+                                    RoomId
+                                </CFormLabel>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm mb-2 small-select"
+                                    placeholder="Some text here"
+                                   
+                                    onChange={handletoolitem}
+                                    name="room_id"
+                                />
+
+                                <CFormLabel className="col-form-label">
+                                    RoomName
+                                </CFormLabel>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm mb-2 small-select"
+                                    placeholder="Some text here"
+                                   
+                                    onChange={handletoolitem}
+                                    name="room_name"
+                                />
 
 
-                            <CFormLabel className="col-form-label">
-                                Select RoomName
-                            </CFormLabel>
-                            <Select isMulti={false} placeholder="Select Number" size="sm" className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                onChange={(selectedOption) => {
-                                    setsave_data((prev) => ({
-                                        ...prev,
-                                        brand: selectedOption ? selectedOption.value : '',
-                                    }));
-                                    if (selectedOption) {
-                                        getmodellist(selectedOption.value);
-                                    }
-                                }}
-                            />
-                         
-
-                          <CFormLabel className="col-form-label">
-                                Select No_of_Racks
-                            </CFormLabel>
-                            <Select isMulti={false} placeholder="Select Number" size="sm" className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                onChange={(selectedOption) => {
-                                    setsave_data((prev) => ({
-                                        ...prev,
-                                        brand: selectedOption ? selectedOption.value : '',
-                                    }));
-                                    if (selectedOption) {
-                                        getmodellist(selectedOption.value);
-                                    }
-                                }}
-                            />
-
-                            <CFormLabel className="col-form-label">
-                                Columns per Rack
-                            </CFormLabel>
-                            <Select isMulti={false} placeholder="Select Number" size="sm" className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                onChange={(selectedOption) => {
-                                    setsave_data((prev) => ({
-                                        ...prev,
-                                        brand: selectedOption ? selectedOption.value : '',
-                                    }));
-                                    if (selectedOption) {
-                                        getmodellist(selectedOption.value);
-                                    }
-                                }}
-                            />
+                                <CFormLabel className="col-form-label">
+                                    No of Racks
+                                </CFormLabel>
+                                <input
+                                    type="number"
+                                    className="form-control form-control-sm mb-2 small-select"
+                                    placeholder="Some text here"
+                                  
+                                    onChange={handletoolitem}
+                                    name="no_of_racks"
+                                />
 
 
-                            <CFormLabel className="col-form-label">
-                                Select Location
-                            </CFormLabel>
-                            <Select isMulti={false} placeholder="Select Number" size="sm" className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                onChange={(selectedOption) => {
-                                    setsave_data((prev) => ({
-                                        ...prev,
-                                        brand: selectedOption ? selectedOption.value : '',
-                                    }));
-                                    if (selectedOption) {
-                                        getmodellist(selectedOption.value);
-                                    }
-                                }}
-                            />
+                                <CFormLabel className="col-form-label">
+                                    Columns per Rack
+                                </CFormLabel>
+                                <input
+                                    type="number"
+                                    className="form-control form-control-sm mb-2 small-select"
+                                    placeholder="Some text here"
+                                  
+                                    onChange={handletoolitem}
+                                    name="columns_rack"
+                                />
 
+
+                                <CFormLabel className="col-form-label">
+                                    Location
+                                </CFormLabel>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm mb-2 small-select"
+                                    placeholder="Some text here"
+                                    
+                                    onChange={handletoolitem}
+                                    name="location"
+                                />
                         </CCol>
                     </CRow>
 
