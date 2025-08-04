@@ -25,7 +25,7 @@ import { FaTrash, FaEdit, FaBars } from 'react-icons/fa';
 import { useContext, useEffect } from 'react';
 import { Sharedcontext } from '../../components/Context';
 
-const Toolrooms = () => {
+const Jobcard = () => {
     const [pageCount, setPageCount] = useState(0);
     const [data, setData] = useState([]);
     const [show, setShow] = useState(false);
@@ -159,7 +159,7 @@ const Toolrooms = () => {
         useSortBy,
         usePagination
     );
-    const selectoptions = [{ value: 'vehicle', label: 'Vehicle' }, { value: 'trailer', label: 'Trailer' },]
+    const [selectjobcard,setjobcard] = [{ value: 'internal', label: 'internal' }, { value: 'external', label: 'external' },]
 
     //dynamically updating the state
     const handletoolitem = (e) => {
@@ -169,7 +169,7 @@ const Toolrooms = () => {
 
     //useEffect to understand values of room_items
     useEffect(() => { console.log(toolitems) }, [toolitems])
-
+     const categoryoption=["internal","external"]
     return (
         <>
             <CCard className="mb-4">
@@ -271,15 +271,20 @@ const Toolrooms = () => {
                         <CCol md={12}>
 
                             <CFormLabel className="col-form-label">
-                                RoomId
+                                Job Card type
                             </CFormLabel>
-                            <input
-                                type="text"
-                                className="form-control form-control-sm mb-2 small-select"
-                                placeholder="RoomId"
-                                value={toolitems.room_id}
-                                onChange={handletoolitem}
-                                name="room_id"
+                            <Select options={selectjobcard} isMulti={false} placeholder="Select jobcard type" size="sm"
+                             className='mb-2 small-select'
+                                classNamePrefix="custom-select"
+                                onChange={(selectedOption) => {
+                                    setsave_data((prev) => ({
+                                        ...prev,
+                                        category: selectedOption ? selectedOption.value : '',
+                                    }));
+                                    if (selectedOption) {
+                                        getbrandlist(selectedOption.value);
+                                    }
+                                }}
                             />
 
                             <CFormLabel className="col-form-label">
@@ -348,4 +353,4 @@ const Toolrooms = () => {
     )
 }
 
-export default Toolrooms
+export default Jobcard

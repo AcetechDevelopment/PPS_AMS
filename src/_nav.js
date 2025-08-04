@@ -82,8 +82,8 @@ const _nav = [
     items: [
           {
             component: CNavItem,
-            name: 'Job Card',
-            to: '/processin',
+            name: 'jobcard',
+            to: '/jobcard',
           },
           {
             component: CNavItem,
@@ -194,7 +194,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Workshops',
-    to: '/processin',
+    to: '/workshop',
     icon: <CIcon icon={cilGarage} customClassName="nav-icon" />,
   },
   // {

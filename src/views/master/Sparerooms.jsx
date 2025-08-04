@@ -28,25 +28,33 @@ import { Sharedcontext } from '../../components/Context';
 
 const Sparerooms = () => {
     const [pageCount, setPageCount] = useState(0);
-
     const [data, setData] = useState([]);
     const [show, setShow] = useState(false);
+
+    //object for storing room details
     const room_items = {
-        room_name: "",
         room_id: "",
+        room_name: "",
         no_of_racks: "",
         columns_rack: "",
         location: ""
     }
-  
     const [spareitems, setspareitems] = useState(room_items)
-    const { typecheck } = useContext(Sharedcontext)
+
+    //isNumberkey fn shared from context component
+    const { isNumberKey } = useContext(Sharedcontext)
+
+    console.log(isNumberKey)
     const handleClose = () => {
         setShow(false)
         setspareitems(room_items);
     }
+
     const handleShow = () => setShow(true);
+
     const [selectedtype, setSelectedtype] = useState(null);
+
+
     const columns = useMemo(
         () => [
 
@@ -79,21 +87,12 @@ const Sparerooms = () => {
         []
     );
 
-    const edittoolroom = (id) => {
-        console.log(id);
+    // const edittoolroom = (id) => {
+    //     console.log(id);
 
-    }
+    // }
 
-    const isNumberKey=(e)=>{
-        const char=e.key
-        const allowedchars="0123456789"
-        const isAllowed=allowedchars.includes(char)
 
-        if(char==="." && e.target.value.includes('.'))
-            return false
-        if(!isAllowed)
-            e.preventDefault()
-    }
 
     const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
         setLoading(true);
@@ -169,32 +168,18 @@ const Sparerooms = () => {
     );
     const selectoptions = [{ value: 'vehicle', label: 'Vehicle' }, { value: 'trailer', label: 'Trailer' },]
 
-
-
-    const numericFields = ["no_of_racks", "columns_rack"];
+    //dynamically updating the state
     const handlespareitem = (e) => {
         const { name, value } = e.target
-
-        // const isNumeric = numericFields.includes(name)
-        // if (isNumeric) {
-        //     const typereturned = typecheck(value)
-
-        //     if (typereturned) {
-        //         setspareitems((pre) => ({
-        //             ...pre, [name]: value
-        //         }));
-
-        //     }
-        // }
-        // else
-          setspareitems((pre) => ({
-                    ...pre, [name]: value
-                }));
+        setspareitems((pre) => ({
+            ...pre, [name]: value
+        }));
     }
-    //  console.log(typecheck())
 
-
+    //useEffect to understand values of room_items
     useEffect(() => { console.log(spareitems) }, [spareitems])
+
+
     return (
         <>
             <CCard className="mb-4">
@@ -289,18 +274,18 @@ const Sparerooms = () => {
                 <CModalHeader className='bg-secondary'>
                     <CModalTitle id="NewProcessing">Spare rooms</CModalTitle>
                 </CModalHeader>
+
                 <CModalBody>
-
                     <CRow>
-
                         <CCol md={12}>
+
                             <CFormLabel className="col-form-label">
                                 RoomId
                             </CFormLabel>
                             <input
                                 type="text"
                                 className="form-control form-control-sm mb-2 small-select"
-                                placeholder="Some text here"
+                                placeholder="RoomId"
                                 value={spareitems.room_id}
                                 onChange={handlespareitem}
                                 name="room_id"
@@ -312,7 +297,7 @@ const Sparerooms = () => {
                             <input
                                 type="text"
                                 className="form-control form-control-sm mb-2 small-select"
-                                placeholder="Some text here"
+                                placeholder="RoomName"
                                 value={spareitems.room_name}
                                 onChange={handlespareitem}
                                 name="room_name"
@@ -325,11 +310,11 @@ const Sparerooms = () => {
                             <input
                                 type="text"
                                 className="form-control form-control-sm mb-2 small-select no-spinner"
-                                placeholder="Some text here"
+                                placeholder="No of racks"
                                 value={spareitems.no_of_racks}
                                 onChange={handlespareitem}
                                 name="no_of_racks"
-                                onKeyDown={isNumberKey}
+                                onKeyDown={(e) => isNumberKey(e)}
 
                             />
 
@@ -340,11 +325,11 @@ const Sparerooms = () => {
                             <input
                                 type="text"
                                 className="form-control form-control-sm mb-2 small-select"
-                                placeholder="Some text here"
+                                placeholder="Coumns per rack"
                                 value={spareitems.columns_rack}
                                 onChange={handlespareitem}
                                 name="columns_rack"
-                                //  onKeyDown={isNumberKey}
+                                onKeyDown={(e) => isNumberKey(e)}
 
                             />
 
@@ -355,7 +340,7 @@ const Sparerooms = () => {
                             <input
                                 type="text"
                                 className="form-control form-control-sm mb-2 small-select"
-                                placeholder="Some text here"
+                                placeholder="Location"
                                 value={spareitems.location}
                                 onChange={handlespareitem}
                                 name="location"
@@ -363,10 +348,9 @@ const Sparerooms = () => {
 
                         </CCol>
                     </CRow>
-
-
-
                 </CModalBody>
+
+
 
                 <CModalFooter>
                     <CButton color="primary">Add</CButton>

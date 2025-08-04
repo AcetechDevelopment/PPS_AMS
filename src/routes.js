@@ -14,6 +14,7 @@ const Generalmaster = React.lazy(() => import('./views/master/general_master'))
 const Toolmaster = React.lazy(() => import('./views/master/Toolrooms'))
 const toolinventory = React.lazy(() => import('./views/master/ToolsInventory'))
 const Sparerooms= React.lazy(() => import('./views/master/Sparerooms'))
+const workshop=React.lazy(()=>import('./views/master/Workshop'))
 
 
 
@@ -25,6 +26,9 @@ const TrailerAssign = React.lazy(() => import('./views/Vehicles/Trailerassign'))
 const Spareassign = React.lazy(() => import('./views/Vehicles/Spareassign'))
 const Tyreassign = React.lazy(() => import('./views/Vehicles/Tyreassign'))
 
+
+//services
+const Jobcard=React.lazy(()=>import('./views/services/Jobcard'))
 
 const routes = [
   { path: '/dashboard', exact: true, name: 'Home', element: dashboard },
@@ -45,8 +49,11 @@ const routes = [
   { path: '/toolrooms', name: 'General', element: Toolmaster },
   { path: '/toolinventory', name: 'General', element: toolinventory },
    { path: '/sparerooms', name: 'General', element: Sparerooms },
+   { path: '/workshop', name: 'General', element: workshop },
 
+   { path: '/jobcard', name: 'jobcard', element: Jobcard },
 
+   
 ]
 
 export default routes
