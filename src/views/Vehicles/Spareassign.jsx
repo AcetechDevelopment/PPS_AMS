@@ -986,7 +986,9 @@ const SpareAssign = () => {
               <CFormLabel className="col-form-label">
                 Select type
               </CFormLabel>
-              <Select options={selectoptions} value={selectedtype} isMulti={false} placeholder="Select type" size="sm" className='mb-2 small-select'
+              <Select options={selectoptions} value={selectedtype}
+               isMulti={false} placeholder="Select type" size="sm"
+                className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(option) => {
                   setSelectedtype(option)
