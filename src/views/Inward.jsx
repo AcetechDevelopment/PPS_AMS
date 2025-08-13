@@ -338,7 +338,7 @@ const Inward = () => {
         className='my-modal custom-modal'
         scrollable
         visible={show}
-        size="xl"
+        size="lg"
         onClose={() => handleClose()}
         aria-labelledby="NewProcessing"
       >
@@ -348,7 +348,7 @@ const Inward = () => {
 
         <CModalBody>
           <CRow>
-            <CCol md={12}>
+            <CCol md={6}>
 
               <CFormLabel className="col-form-label">
                 Inward Type
@@ -363,10 +363,12 @@ const Inward = () => {
                 onChange={handleinward}
               />
 
-              {inward?.label === "jobcard" ? (<>
+              {inward?.label === "jobcard" ? 
+              (
+                <>
 
                 <CFormLabel className="col-form-label">
-                  Jobcard?DC no
+                  Jobcard/DC no
                 </CFormLabel>
                 <input
                   type="text"
@@ -376,9 +378,8 @@ const Inward = () => {
                   placeholder="Jobcard No/DC No"
 
                 />
-
-
-              </>) : (<>
+               </>) 
+               : (<>
                 <CFormLabel className="col-form-label">
                   Company Name
                 </CFormLabel>
@@ -406,7 +407,6 @@ const Inward = () => {
                   onChange={handleCreate}
                   placeholder="Address "
                   row={6}
-
                 />
 
 
@@ -419,11 +419,12 @@ const Inward = () => {
                   placeholder="Refrence Id"
                   value={refrence_id}
                   onChange={(e) => setrefrence(e.target.value)}
-                  name="columns_rack"
                 // onKeyDown={(e) => isNumberKey(e)}
-
                 />
-            
+                </>)}
+                </CCol>
+
+                <CCol md={12}>
                 <table style={tableStyle}>
                   <thead>
                     <tr>
@@ -499,12 +500,12 @@ const Inward = () => {
                       <td style={cellStyle}><button style={btn} onClick={addrow}>+</button></td>
                     </tr>
                   </tfoot>
-                </table> 
-                </>)
-              }
-            </CCol>
+                </table>         
+              </CCol>
+           
           </CRow>
         </CModalBody>
+
         <CModalFooter>
           <CButton color="primary">Receive</CButton>
         </CModalFooter>

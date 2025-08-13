@@ -29,6 +29,8 @@ const Tyreassign = React.lazy(() => import('./views/Vehicles/Tyreassign'))
 
 //services
 const Jobcard=React.lazy(()=>import('./views/services/Jobcard'))
+const VehicleService=React.lazy(()=>import('./views/services/Vehicleservice'))
+const VehicleCondemn=React.lazy(()=>import('./views/services/Vehiclecondemn'))
 
 const routes = [
   { path: '/dashboard', exact: true, name: 'Home', element: dashboard },
@@ -52,6 +54,8 @@ const routes = [
    { path: '/workshop', name: 'General', element: workshop },
 
    { path: '/jobcard', name: 'jobcard', element: Jobcard },
+   { path: '/vehicleservice', name: 'Vehicle service', element: VehicleService },
+      { path: '/vehiclecondemn', name: 'Vehicle Condemnation', element: VehicleCondemn },
 
    { path: '/inward', name: 'Inward', element: inward },
 
