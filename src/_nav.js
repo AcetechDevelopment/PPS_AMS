@@ -88,32 +88,32 @@ const _nav = [
           {
             component: CNavItem,
             name: 'Vehicle Service',
-            to: '/inward',
+            to: '/vehicleservice',
           },
           {
             component: CNavItem,
             name: 'Vehicle Condemnation',
-            to: '/inward',
+            to: '/vehiclecondemn',
           },
           {
             component: CNavItem,
             name: 'Spare Service',
-            to: '/inward',
+            to: '/spareservice',
           },
           {
             component: CNavItem,
             name: 'Spare Condemnation',
-            to: '/inward',
+            to: '/sparecondemn',
           },
           {
             component: CNavItem,
             name: 'Trailer Service',
-            to: '/inward',
+            to: '/trailerservice',
           },
           {
             component: CNavItem,
             name: 'Trailer Condemnation',
-            to: '/inward',
+            to: '/trailercondemn',
           },
     ]
   },
@@ -154,7 +154,7 @@ const _nav = [
           {
             component: CNavItem,
             name: 'Inward',
-            to: '/processin',
+            to: '/inward',
           },
           {
             component: CNavItem,

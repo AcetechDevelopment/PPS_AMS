@@ -53,6 +53,8 @@ const routes = [
 
    { path: '/jobcard', name: 'jobcard', element: Jobcard },
 
+   { path: '/inward', name: 'Inward', element: inward },
+
    
 ]
 
