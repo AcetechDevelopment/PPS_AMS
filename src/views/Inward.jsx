@@ -362,23 +362,11 @@ const Inward = () => {
                 value={inward}
                 onChange={handleinward}
               />
-
               {inward?.label === "jobcard" ? 
               (
                 <>
-
-                <CFormLabel className="col-form-label">
-                  Jobcard/DC no
-                </CFormLabel>
-                <input
-                  type="text"
-                  value={deliveryno}
-                  className="form-control form-control-sm mb-2 small-select"
-                  onChange={(e) => setdeliveryno(e.target.value)}
-                  placeholder="Jobcard No/DC No"
-
-                />
-               </>) 
+                </>
+              )
                : (<>
                 <CFormLabel className="col-form-label">
                   Company Name
@@ -396,32 +384,59 @@ const Inward = () => {
                   onChange={handlecompany}
                   onCreateOption={handleCreate}
                 />
-
-                <CFormLabel className="col-form-label">
-                  Address
-                </CFormLabel>
-                <textarea
-                  type="text"
-                  value={address}
-                  className="form-control form-control-sm mb-2 small-select"
-                  onChange={handleCreate}
-                  placeholder="Address "
-                  row={6}
-                />
-
-
-                <CFormLabel className="col-form-label">
-                  Refrence Id:
-                </CFormLabel>
-                <input
-                  type="text"
-                  className="form-control form-control-sm mb-4 small-select"
-                  placeholder="Refrence Id"
-                  value={refrence_id}
-                  onChange={(e) => setrefrence(e.target.value)}
-                // onKeyDown={(e) => isNumberKey(e)}
-                />
                 </>)}
+                </CCol>
+
+                <CCol md={6}>
+                  <>
+                   {inward?.label === "jobcard" ? 
+                    (
+                      <>
+
+                      <CFormLabel className="col-form-label">
+                        Jobcard/DC no
+                      </CFormLabel>
+                      <input
+                        type="text"
+                        value={deliveryno}
+                        className="form-control form-control-sm mb-2 small-select"
+                        onChange={(e) => setdeliveryno(e.target.value)}
+                        placeholder="Jobcard No/DC No"
+
+                      />
+                    </>) : (
+                      <>
+
+                       <CFormLabel className="col-form-label">
+                          Refrence Id:
+                        </CFormLabel>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm mb-4 small-select"
+                          placeholder="Refrence Id"
+                          value={refrence_id}
+                          onChange={(e) => setrefrence(e.target.value)}
+                        // onKeyDown={(e) => isNumberKey(e)}
+                        />
+                              
+                       <CFormLabel className="col-form-label">
+                          Address
+                        </CFormLabel>
+                        <textarea
+                          type="text"
+                          value={address}
+                          className="form-control form-control-sm mb-2 small-select"
+                          onChange={handleCreate}
+                          placeholder="Address "
+                          row={6}
+                        />
+                      
+                      </>
+                    )
+                      }
+                  
+                  </>
+
                 </CCol>
 
                 <CCol md={12}>

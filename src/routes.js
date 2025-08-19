@@ -13,8 +13,8 @@ const dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Generalmaster = React.lazy(() => import('./views/master/general_master'))
 const Toolmaster = React.lazy(() => import('./views/master/Toolrooms'))
 const toolinventory = React.lazy(() => import('./views/master/ToolsInventory'))
-const Sparerooms= React.lazy(() => import('./views/master/Sparerooms'))
-const workshop=React.lazy(()=>import('./views/master/Workshop'))
+const Sparerooms = React.lazy(() => import('./views/master/Sparerooms'))
+const workshop = React.lazy(() => import('./views/master/Workshop'))
 
 
 
@@ -28,38 +28,49 @@ const Tyreassign = React.lazy(() => import('./views/Vehicles/Tyreassign'))
 
 
 //services
-const Jobcard=React.lazy(()=>import('./views/services/Jobcard'))
-const VehicleService=React.lazy(()=>import('./views/services/Vehicleservice'))
-const VehicleCondemn=React.lazy(()=>import('./views/services/Vehiclecondemn'))
+const Jobcard = React.lazy(() => import('./views/services/Jobcard'))
+const VehicleService = React.lazy(() => import('./views/services/Vehicleservice'))
+const VehicleCondemn = React.lazy(() => import('./views/services/Vehiclecondemn'))
+const Spareservice = React.lazy(() => import('./views/services/Spareservice'))
+const Sparecondemn = React.lazy(() => import('./views/services/Sparecondemn'))
+const Trailerservice = React.lazy(() => import('./views/services/Trailerservice'))
+const Trailercondemn = React.lazy(() => import('./views/services/Trailercondemn'))
 
 const routes = [
-  { path: '/dashboard', exact: true, name: 'Home', element: dashboard },
-  { path: '/processing', name: 'Processing', element: processing },
-  { path: '/trailerinventory', name: 'TrilerInventory', element: TrilerInventory },
-  { path: '/spareinventory', name: 'SpareInventory', element: SpareInventory },
-  { path: '/trailerassign', name: 'TrailerAssign', element: TrailerAssign },
-  { path: '/spareasign', name: 'Spareassign', element: Spareassign },
-  { path: '/tyreassign', name: 'Tyreassign', element: Tyreassign },
+   { path: '/dashboard', exact: true, name: 'Home', element: dashboard },
+   { path: '/processing', name: 'Processing', element: processing },
+   { path: '/trailerinventory', name: 'TrilerInventory', element: TrilerInventory },
+   { path: '/spareinventory', name: 'SpareInventory', element: SpareInventory },
+   { path: '/trailerassign', name: 'TrailerAssign', element: TrailerAssign },
+   { path: '/spareasign', name: 'Spareassign', element: Spareassign },
+   { path: '/tyreassign', name: 'Tyreassign', element: Tyreassign },
 
 
 
-  { path: '/processlist', name: 'Processing', element: process_list },
-  { path: '/neglist', name: 'negativewaste', element: negativelist },
+   { path: '/processlist', name: 'Processing', element: process_list },
+   { path: '/neglist', name: 'negativewaste', element: negativelist },
 
-  { path: '/vehicle_inventory', name: 'Vehicle Inventory', element: VehicleInventory },
-  { path: '/generalmaster', name: 'General', element: Generalmaster },
-  { path: '/toolrooms', name: 'General', element: Toolmaster },
-  { path: '/toolinventory', name: 'General', element: toolinventory },
+   { path: '/vehicle_inventory', name: 'Vehicle Inventory', element: VehicleInventory },
+   { path: '/generalmaster', name: 'General', element: Generalmaster },
+   { path: '/toolrooms', name: 'General', element: Toolmaster },
+   { path: '/toolinventory', name: 'General', element: toolinventory },
    { path: '/sparerooms', name: 'General', element: Sparerooms },
    { path: '/workshop', name: 'General', element: workshop },
 
    { path: '/jobcard', name: 'jobcard', element: Jobcard },
-   { path: '/vehicleservice', name: 'Vehicle service', element: VehicleService },
-      { path: '/vehiclecondemn', name: 'Vehicle Condemnation', element: VehicleCondemn },
+   { path: '/vehicleservice', name: 'Vehicle Service', element: VehicleService },
+   { path: '/vehiclecondemn', name: 'Vehicle Condemnation', element: VehicleCondemn },
+   { path: '/spareservice', name: 'Spare Service', element: Spareservice },
+   { path: '/sparecondemn', name: 'Spare Condemnation ', element: Sparecondemn },
+   { path: '/trailerservice', name: 'Trailer Service', element: Trailerservice },
+   { path: '/trailercondemn', name: 'Tailer Condemnation ', element: Trailercondemn },
+
+
+
 
    { path: '/inward', name: 'Inward', element: inward },
 
-   
+
 ]
 
 export default routes

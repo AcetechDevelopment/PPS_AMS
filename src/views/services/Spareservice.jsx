@@ -26,7 +26,7 @@ import { useContext } from 'react';
 import { Sharedcontext } from '../../components/Context';
 
 
-const Vehiclecondemn = () => {
+const Spareservice = () => {
     const [pageCount, setPageCount] = useState(0);
     const [data, setData] = useState([]);
     const [show, setShow] = useState(false);
@@ -58,7 +58,7 @@ const Vehiclecondemn = () => {
     const columns = useMemo(
         () => [
 
-            { Header: 'Vehicle No', accessor: 'id', disableSortBy: true, },
+            { Header: 'Spare No', accessor: 'id', disableSortBy: true, },
             { Header: 'Type of Fault', accessor: 'vehicle_number' },
             { Header: 'ServiceEngineer', accessor: 'type' },
            
@@ -176,13 +176,12 @@ const Vehiclecondemn = () => {
     //useEffect to understand values of room_items
     useEffect(() => { console.log(spareitems) }, [spareitems])
 
-   const engineeroptions = [{ value: 'engineer1', label: "engineer1" },
-     { value: 'engineer2', label: "engineer2" }]
+
     return (
         <>
             <CCard className="mb-4">
                 <CCardHeader className='bg-secondary text-light'>
-                    Vehicle Service
+                    Spare Service
                 </CCardHeader>
                 <CCardBody>
 
@@ -278,29 +277,16 @@ const Vehiclecondemn = () => {
                         <CCol md={12}>
 
                             <CFormLabel className="col-form-label">
-                                Vehicle No
+                                Spare No
                             </CFormLabel>
                             <input
                                 type="text"
                                 className="form-control form-control-sm mb-2 small-select"
-                                placeholder="enter vehicle no"
+                                placeholder="Spare No"
                                 value={spareitems.room_id}
                                 onChange={handlespareitem}
                                 name="room_id"
                             />
-
-                            <CFormLabel className="col-form-label">
-                                Service Engineer
-                            </CFormLabel>
-                             <Select options={engineeroptions} isMulti={false} placeholder="Select service engineers"
-                                        size="sm"
-                                        className='mb-2 small-select'
-                                        classNamePrefix="custom-select"/>
-                                        {/* // value={services}
-                                        // onChange={(selectedOption) => {
-                                        //     setservic(selectedOption)
-                                        // }}
-                                    /> */}
 
                             {/* <CFormLabel className="col-form-label">
                                 RoomName
@@ -373,4 +359,4 @@ const Vehiclecondemn = () => {
 }
 
 
-export default Vehiclecondemn
+export default Spareservice
