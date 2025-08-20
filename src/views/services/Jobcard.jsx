@@ -165,6 +165,7 @@ const Jobcard = () => {
 
     //select jobcard
     const [jobcard, setjobcard] = useState(null)
+    const[jobcardId,setjobId]=useState("")
     const initial_jobcard = [{ label: "internal", value: "internal" }, { label: "external", value: "external" }]
 
 
@@ -183,7 +184,7 @@ const Jobcard = () => {
     const [service_engineer, setservice_engineer] = useState(null)
     const initial_engineers = [{ label: "engineer1", value: "engineer1" }, { label: "engineer2", value: "engineer2" }]
 
-     const [service_station, setservice_station] = useState(null)
+    const [service_station, setservice_station] = useState(null)
     const initial_stations = [{ label: "station1", value: "station1" }, { label: "station2", value: "station2" }]
 
     const [tyrespares, settyrespares] = useState("")
@@ -194,8 +195,8 @@ const Jobcard = () => {
 
     //select service type
 
-    const service_types=[ { label: "vehicle", value: "vehicle" }, { label: "trailer", value: "trailer" },{ label: "spare", value: "spare" }]
-    const[services,setservices]=useState(null)
+    const service_types = [{ label: "vehicle", value: "vehicle" }, { label: "trailer", value: "trailer" }, { label: "spare", value: "spare" }]
+    const [services, setservices] = useState(null)
 
     //select tyres/spares
     const mainoptions = [{ label: "spare", value: "spare" }, { label: "tyre", value: "tyre" }]
@@ -210,8 +211,8 @@ const Jobcard = () => {
 
     const [address, setaddress] = useState('')
 
-    useEffect(() => { console.log(jobcard, vehicleno, spares, tools, service_engineer, tyrespares, category, description, address,items,services) },
-        [tyrespares, jobcard, vehicleno, spares, tools, service_engineer, category, description, address,items,services])
+    useEffect(() => { console.log(jobcard, vehicleno, spares, tools, service_engineer, tyrespares, category, description, address, items, services) },
+        [tyrespares, jobcard, vehicleno, spares, tools, service_engineer, category, description, address, items, services])
 
     return (
         <>
@@ -323,108 +324,118 @@ const Jobcard = () => {
                                 value={jobcard}
                                 onChange={handlejobcard}
                             />
-                           
-                                <>
-                                    <CFormLabel className="col-form-label">
-                                        Vehicle no
-                                    </CFormLabel>
-                                    <input
-                                        type="text"
-                                        className="form-control form-control-sm mb-2 small-select"
-                                        placeholder="Vehicle no"
-                                        value={vehicleno}
-                                        onChange={(e) => setvehicleno(e.target.value)}
-                                    />
 
-                                     <CFormLabel className="col-form-label">
-                                        Select Type of Service
-                                    </CFormLabel>
-                                    <Select options={service_types} isMulti={false} placeholder="Select service types"
-                                        size="sm"
-                                        className='mb-2 small-select'
-                                        classNamePrefix="custom-select"
-                                        value={services}
-                                        onChange={(selectedOption) => {
-                                            setservices(selectedOption)
-                                        }}
-                                    />
+                            <CFormLabel className="col-form-label">
+                                Jobcard Id
+                            </CFormLabel>
+                            <input
+                                type="text"
+                                className="form-control form-control-sm mb-2 small-select"
+                                placeholder="Vehicle no"
+                                value={jobcardId}
+                                onChange={(e) => setjobId(e.target.value)}
+                            />
+                            <>
+                                <CFormLabel className="col-form-label">
+                                    Vehicle no
+                                </CFormLabel>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm mb-2 small-select"
+                                    placeholder="Vehicle no"
+                                    value={vehicleno}
+                                    onChange={(e) => setvehicleno(e.target.value)}
+                                />
 
-                                    <CFormLabel className="col-form-label">
-                                        Select Spares
-                                    </CFormLabel>
-                                    <Select options={initial_spares} isMulti={false} placeholder="Select spares"
-                                        size="sm"
-                                        className='mb-2 small-select'
-                                        classNamePrefix="custom-select"
-                                        value={spares}
-                                        onChange={(selectedOption) => {
-                                            setspares(selectedOption)
-                                        }}
-                                    />
+                                <CFormLabel className="col-form-label">
+                                    Select Type of Service
+                                </CFormLabel>
+                                <Select options={service_types} isMulti={false} placeholder="Select service types"
+                                    size="sm"
+                                    className='mb-2 small-select'
+                                    classNamePrefix="custom-select"
+                                    value={services}
+                                    onChange={(selectedOption) => {
+                                        setservices(selectedOption)
+                                    }}
+                                />
+
+                                <CFormLabel className="col-form-label">
+                                    Select Spares
+                                </CFormLabel>
+                                <Select options={initial_spares} isMulti={false} placeholder="Select spares"
+                                    size="sm"
+                                    className='mb-2 small-select'
+                                    classNamePrefix="custom-select"
+                                    value={spares}
+                                    onChange={(selectedOption) => {
+                                        setspares(selectedOption)
+                                    }}
+                                />
 
 
 
-                                    <CFormLabel className="col-form-label">
-                                        Select tools
-                                    </CFormLabel>
-                                    <Select options={initial_tools} isMulti={false} placeholder="Select tools"
-                                        size="sm"
-                                        className='mb-2 small-select'
-                                        classNamePrefix="custom-select"
-                                        value={tools}
-                                        onChange={(selectedOption) => {
-                                            settools(selectedOption)
-                                        }}
-                                    />
+                                <CFormLabel className="col-form-label">
+                                    Select tools
+                                </CFormLabel>
+                                <Select options={initial_tools} isMulti={false} placeholder="Select tools"
+                                    size="sm"
+                                    className='mb-2 small-select'
+                                    classNamePrefix="custom-select"
+                                    value={tools}
+                                    onChange={(selectedOption) => {
+                                        settools(selectedOption)
+                                    }}
+                                />
 
-                                    {jobcard?.value === "internal" &&
-                                        <>
-                                            <CFormLabel className="col-form-label">
-                                                Service Engineer
-                                            </CFormLabel>
-                                            <Select options={initial_engineers} isMulti={true} placeholder="Select Service engineers"
-                                                size="sm"
-                                                className='mb-2 small-select'
-                                                classNamePrefix="custom-select"
-                                                value={service_engineer}
-                                                onChange={(selectedOption) => {
-                                                    setservice_engineer(selectedOption)
-                                                }}
-                                            />
-                                        </>}
-                                      
+                                {jobcard?.value === "internal" &&
+                                    <>
+                                        <CFormLabel className="col-form-label">
+                                            Service Engineer
+                                        </CFormLabel>
+                                        <Select options={initial_engineers} isMulti={true} placeholder="Select Service engineers"
+                                            size="sm"
+                                            className='mb-2 small-select'
+                                            classNamePrefix="custom-select"
+                                            value={service_engineer}
+                                            onChange={(selectedOption) => {
+                                                setservice_engineer(selectedOption)
+                                            }}
+                                        />
+                                    </>}
 
-                                        {jobcard?.value === "external" &&
-                                        <>
-                                            <CFormLabel className="col-form-label">
-                                                Service Station
-                                            </CFormLabel>
-                                            <Select options={initial_stations} isMulti={true} placeholder="Select Service stations"
-                                                size="sm"
-                                                className='mb-2 small-select'
-                                                classNamePrefix="custom-select"
-                                                value={service_station}
-                                                onChange={(selectedOption) => {
-                                                    setservice_station(selectedOption)
-                                                }}
-                                            />
-                                        </>}
 
-                                    <CFormLabel className="col-form-label">
-                                        Spare/ Tyre
-                                    </CFormLabel>
-                                    <Select options={mainoptions} isMulti={false} placeholder="Select Spare/Tyre"
-                                        size="sm"
-                                        className='mb-2 small-select'
-                                        classNamePrefix="custom-select"
-                                        value={category}
-                                        onChange={(selectedOption) => {
-                                            setcategory(selectedOption)
-                                            setitems(null)
-                                        }}
-                                    />
-                                </>
-                            
+                                {jobcard?.value === "external" &&
+                                    <>
+                                        <CFormLabel className="col-form-label">
+                                            Service Station
+                                        </CFormLabel>
+                                        <Select options={initial_stations} isMulti={true} placeholder="Select Service stations"
+                                            size="sm"
+                                            className='mb-2 small-select'
+                                            classNamePrefix="custom-select"
+                                            value={service_station}
+                                            onChange={(selectedOption) => {
+                                                setservice_station(selectedOption)
+                                            }}
+                                        />
+                                    </>}
+
+                                <CFormLabel className="col-form-label">
+                                    Spare/ Tyre
+                                </CFormLabel>
+                                <Select options={mainoptions} isMulti={false} placeholder="Select Spare/Tyre"
+                                    size="sm"
+                                    className='mb-2 small-select'
+                                    classNamePrefix="custom-select"
+                                    value={category}
+                                    onChange={(selectedOption) => {
+                                        setcategory(selectedOption)
+                                        setitems(null)
+                                    }}
+                                />
+                            </>
+
                             {category?.value === "tyre" &&
                                 <Select options={tyreoptions} isMulti={false} placeholder="Select tyre type"
                                     size="sm"
@@ -467,8 +478,8 @@ const Jobcard = () => {
                                 </CRow>
                             </>}
 
-                            
-                                  
+
+
                             <label className="form-label">Description:</label>
                             <textarea
                                 className="form-control"

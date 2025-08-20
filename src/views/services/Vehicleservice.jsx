@@ -10,7 +10,7 @@ import {
   CModalFooter,
   CCardBody,
   CButtonGroup,
-  CTableHead,
+  CTableHead,CTableRow,CTableHeaderCell,CTableBody,CTableDataCell,
   CFormInput,
   CInputGroup,
   CRow,
@@ -28,41 +28,48 @@ const Vehicleservice = () => {
   const [pageCount, setPageCount] = useState(0);
   const [data, setData] = useState([]);
   const [show, setShow] = useState(false);
-  const[view,setview]=useState(false)
-  const[assign,setassign]=useState(false)
-  const[status,setstatus]=useState(false)
-  
+  const [view, setview] = useState(false)
+  const [assign, setassign] = useState(false)
+  const [status, setstatus] = useState(false)
+  const [currentid, setcurrentid] = useState(null)
 
   const handleClose = () => {
     setShow(false)
-  
+
   }
 
   const handleShow = () => setShow(true);
 
-  const handleviewshow=()=>{setview(true)}
-  const handleviewclose=()=>{setview(false)}
-  const handleassignshow=()=>{setassign(true)
+  const handleviewshow = (id) => {
+    
+    setcurrentid(id)
+    setview(true)
+  }
+  const handleviewclose = (id) => {
+
+    setview(false)
+  }
+  const handleassignshow = (id) => {
+    setcurrentid(id)
+    setassign(true)
     console.log(assign)
   }
-  const handleassignclose=()=>{setassign(false)}
-  const handlestatusshow=()=>{setstatus(true)
+  const handleassignclose = () => { setassign(false) }
+  const handlestatusshow = (id) => {
+    setcurrentid(id)
+    setstatus(true)
     console.log("status")
   }
-  const handlestatusclose=()=>{setstatus(false)}
+  const handlestatusclose = () => { setstatus(false) }
 
   const [datas, setDatas] = useState([
-    {
-      id: 1, fault: 'puncture', engineer:' person1'
-    },
-    { id: 2, fault: 'steering',engineer:' person2'},
-    { id: 3, fault: 'engine', engineer:' person3'}
+    { id: 1, fault: 'puncture', engineer: ' person1' },
+    { id: 2, fault: 'steering', engineer: ' person2' },
+    { id: 3, fault: 'engine', engineer: ' person3' }
   ]);
-  const viewDetails = (id) => alert("Details view for ID: " + id);
-  const assignEngineer = (id) => alert("Assign engineer for ID: " + id);
-  const changeStatus = (id) => alert("Change status for ID: " + id);
 
-  
+
+
   const columns = useMemo(
     () => [
       {
@@ -86,20 +93,22 @@ const Vehicleservice = () => {
               className="text-info"
               style={{ cursor: "pointer" }}
               title="View Details"
-              onClick={handleviewshow}
-               size={24}
+              onClick={() => handleviewshow(row.original.id)}
+              size={20}
             />
             <FaUserCog
               className="text-warning"
               style={{ cursor: "pointer" }}
               title="Assign Engineer"
-              onClick={handleassignshow}
+              onClick={() => handleassignshow(row.original.id)}
+              size={20}
             />
             <FaClipboardCheck
               className="text-success"
               style={{ cursor: "pointer" }}
               title="Change Status"
-              onClick={handlestatusshow}
+              onClick={() => handlestatusshow(row.original.id)}
+              size={20}
             />
           </div>
         ),
@@ -108,7 +117,20 @@ const Vehicleservice = () => {
     [datas]
   );
 
-
+  const [repairdetails,setrepairdetails] =useState([
+    { date: 1, fault: "Puncture",desc:"...", engineer: "Person1" },
+   
+  ]);
+  const historyColumns = useMemo(
+    () => [
+      { Header: "Date", accessor: "date" },
+      { Header: "fault", accessor: "fault" },
+      { Header: "Description", accessor: "desc" },
+      { Header: "Engineer", accessor: "engineer" },
+    ],
+    []
+  );
+ const historyTable = useTable({ columns: historyColumns, data: repairdetails });
 
 
   const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
@@ -121,7 +143,7 @@ const Vehicleservice = () => {
     const pageSizee = 15;
     const pageindex = pageIndex * pageSizee;
 
-    
+
 
     try {
       const response = await fetch(
@@ -185,21 +207,19 @@ const Vehicleservice = () => {
     usePagination
   );
 
+  const engineerlist = [{ label: "engineer 1", value: "engineer 1" },
+  { label: "engineer 2", value: "engineer 2" },
+  { label: "engineer 3", value: "engineer 3" },
+  { label: "engineer 4", value: "engineer 4" }]
 
+  const [engineer, setengineer] = useState("")
 
-    const engineerlist = [{ label: "engineer 1", value: "engineer 1" },
-       { label: "engineer 2", value: "engineer 2" },
-       { label: "engineer 3", value: "engineer 3" },
-       { label: "engineer 4", value: "engineer 4" }]
+  const statuslist = [{ label: "pending", value: "pending" },
+  { label: "postponed", value: "postponed" },
+  { label: "completed", value: "completed" },
+  { label: "condemnation", value: "condemnation" }]
 
-   const[engineer,setengineer]=useState("")
-
-   const statuslist= [{label: "pending", value: "pending" },
-       { label: "postponed", value: "postponed" },
-       { label: "completed", value: "completed" },
-       { label: "condemnation", value: "condemnation" }]
-
-       const[statusTobe,setstatusTobe]=useState("")
+  const [statusTobe, setstatusTobe] = useState("")
   return (
     <>
       <CCard className="mb-4">
@@ -223,7 +243,7 @@ const Vehicleservice = () => {
           </CButtonGroup>
 
 
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem',  marginTop:"20px"}}>
+          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem', marginTop: "20px" }}>
             <CTableHead color="secondary">
               {headerGroups.map((headerGroup) => (
 
@@ -250,7 +270,7 @@ const Vehicleservice = () => {
                   <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => (
 
-                      <td {...cell.getCellProps()} style={{textAlign:"center"}}>
+                      <td {...cell.getCellProps()} style={{ textAlign: "center" }}>
 
                         {cell.render("Cell")}
                       </td>
@@ -309,179 +329,194 @@ const Vehicleservice = () => {
                 type="text"
                 className="form-control form-control-sm mb-2 small-select"
                 placeholder="Vehicle No"
-      
               />
-
-
             </CCol>
           </CRow>
         </CModalBody>
-
-        <CModalFooter>
-          <CButton color="primary">Add</CButton>
-        </CModalFooter>
       </CModal>
 
-      {view&&
-      <CModal
-        alignment="center"
-        scrollable
-        visible={view}
-        size="md"
-        onClose={() => handleviewclose()}
-        aria-labelledby="NewProcessing"
-      >
-        <CModalHeader className='bg-secondary'>
-          <CModalTitle id="NewProcessing">View Job card details</CModalTitle>
-        </CModalHeader>
+      {view &&
+        <CModal
+          alignment="center"
+          scrollable
+          visible={view}
+          size="md"
+          onClose={() => handleviewclose()}
+          aria-labelledby="NewProcessing"
+        >
+          <CModalHeader className='bg-secondary'>
+            <CModalTitle id="NewProcessing">View Job card details</CModalTitle>
+          </CModalHeader>
 
-        <CModalBody>
-          <CRow>
-            <CCol md={12}>
+          <CModalBody>
+            <CRow>
+              <CCol md={12}>
 
-              <CFormLabel className="col-form-label">
-                vehicle No
-              </CFormLabel>
-              <input
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No" 
-              />
+                <CFormLabel className="col-form-label">
+                  vehicle No
+                </CFormLabel>
+                <input
+                  type="text"
+                  className="form-control form-control-sm mb-2 small-select"
+                  placeholder="Vehicle No"
+                  value={currentid}
+                  readOnly
+                />
 
-               <CFormLabel className="col-form-label">
-                Jobcard Id
-              </CFormLabel>
-              <input
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No"
-               
-              />
+                <CFormLabel className="col-form-label">
+                  Jobcard Id
+                </CFormLabel>
+                <input
+                  type="text"
+                  className="form-control form-control-sm mb-2 small-select"
+                  placeholder="Vehicle No"
+                />
+              </CCol>
+            </CRow>
+          </CModalBody>
+        </CModal>
+        }
 
+      {assign &&
+        <CModal
+          alignment="center"
+          visible={assign}
+          size="xl"
+        
+          onClose={() => handleassignclose()}
+          aria-labelledby="NewProcessing"
+        >
+          <CModalHeader className='bg-secondary'>
+            <CModalTitle id="NewProcessing">Assign Technician</CModalTitle>
+          </CModalHeader>
 
+          <CModalBody>
+            <CRow>
+              <CCol md={6}>
+                <CFormLabel className="col-form-label">
+                  Select Engineer
+                </CFormLabel>
+                <Select options={engineerlist} isMulti={false} placeholder="Select jobcard type"
+                  size="sm"
+                  className='mb-2 small-select'
+                  classNamePrefix="custom-select"
+                  value={engineer}
+                  onChange={(selectedOption) => setengineer(selectedOption)}
+                />
+                </CCol>
 
-            </CCol>
-          </CRow>
-        </CModalBody>
-
-        <CModalFooter>
-          <CButton color="primary">Add</CButton>
-        </CModalFooter>
-      </CModal>}
-
-      {assign&&
-      <CModal
-        alignment="center"
-        visible={assign}
-        size="lg"
-        onClose={() => handleassignclose()}
-        aria-labelledby="NewProcessing"
-      >
-        <CModalHeader className='bg-secondary'>
-          <CModalTitle id="NewProcessing">Assign Technician</CModalTitle>
-        </CModalHeader>
-
-        <CModalBody>
-          <CRow>
-            <CCol md={12}>
-
+                <CCol md={6}>
+                <CFormLabel className="col-form-label">
+                  History of Repairs
+                </CFormLabel>
+                 <CTable striped bordered hover size="sm" {...historyTable.getTableProps()}>
+        <CTableHead>
+          {historyTable.headerGroups.map((headerGroup) => (
+            <CTableRow {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => (
+                <CTableHeaderCell {...column.getHeaderProps()}>
+                  {column.render("Header")}
+                </CTableHeaderCell>
+              ))}
+            </CTableRow>
+          ))}
+        </CTableHead>
+        <CTableBody {...historyTable.getTableBodyProps()}>
+          {historyTable.rows.map((row) => {
+            historyTable.prepareRow(row);
+            return (
+              <CTableRow {...row.getRowProps()}>
+                {row.cells.map((cell) => (
+                  <CTableDataCell {...cell.getCellProps()}>
+                    {cell.render("Cell")}
+                  </CTableDataCell>
+                ))}
+              </CTableRow>
+            );
+          })}
+        </CTableBody>
+      </CTable>
+                </CCol>
+                <div className="d-flex justify-content-between " style={{ marginTop: "20px" }}>
+                  <CButton color="secondary" style={{ minWidth: "100px" }}>
+                    Reject
+                  </CButton>
+                  <CButton color="secondary" style={{ minWidth: "100px" }}>
+                    Approve
+                  </CButton>
+                </div>
               
-                            <CFormLabel className="col-form-label">
-                                Select Engineer
-                            </CFormLabel>
-                            <Select options={engineerlist} isMulti={false} placeholder="Select jobcard type"
-                                size="sm"
-                                className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                value={engineer}
-                                onChange={(selectedOption)=>setengineer(selectedOption)}
-                            />
+            </CRow>
+          </CModalBody>
+        </CModal>
+        }
 
-                         <div className="d-flex justify-content-between " style={{marginTop:"20px"}}>
-  <CButton color="secondary" style={{ minWidth: "100px" }}>
-   Reject
-  </CButton>
+      {status &&
+        <CModal
+          alignment="center"
+          scrollable
+          visible={status}
+          size="md"
+          onClose={() => handlestatusclose()}
+          aria-labelledby="NewProcessing"
+        >
+          <CModalHeader className='bg-secondary'>
+            <CModalTitle id="NewProcessing">check Status</CModalTitle>
+          </CModalHeader>
 
-  <CButton color="secondary" style={{ minWidth: "100px" }}>
-    Approve
-  </CButton>
-</div>
-            </CCol>
-          </CRow>
-        </CModalBody>
+          <CModalBody>
+            <CRow>
+              <CCol md={12}>
 
-        <CModalFooter>
-          <CButton color="primary">Add</CButton>
-        </CModalFooter>
-      </CModal>}
+                <CFormLabel className="col-form-label">
+                  vehicle No
+                </CFormLabel>
+                <input
+                  type="text"
+                  className="form-control form-control-sm mb-2 small-select"
+                  placeholder="Vehicle No"
+                  value={currentid ?? ""}
+                  readOnly
+                />
 
-      {status&&
-      <CModal
-        alignment="center"
-        scrollable
-        visible={status}
-        size="md"
-        onClose={() => handlestatusclose()}
-        aria-labelledby="NewProcessing"
-      >
-        <CModalHeader className='bg-secondary'>
-          <CModalTitle id="NewProcessing">check Status</CModalTitle>
-        </CModalHeader>
+                <CFormLabel className="col-form-label">
+                  Set status
+                </CFormLabel>
+                <Select options={statuslist} isMulti={false} placeholder="Set the Status"
+                  size="sm"
+                  className='mb-2 small-select'
+                  classNamePrefix="custom-select"
+                  value={statusTobe}
+                  onChange={(selectedOption) => setstatusTobe(selectedOption)}
+                />
 
-        <CModalBody>
-          <CRow>
-            <CCol md={12}>
+                <CFormLabel className="col-form-label">
+                  Remarks
+                </CFormLabel>
+                <textarea
+                  type="text"
+                  className="form-control form-control-sm mb-2 small-select"
+                  placeholder="Vehicle No"
 
-              <CFormLabel className="col-form-label">
-                vehicle No
-              </CFormLabel>
-                  <input
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No"
-               
-              />
+                />
 
-            <CFormLabel className="col-form-label">
-                                Set status
-                            </CFormLabel>
-                            <Select options={statuslist} isMulti={false} placeholder="Set the Status"
-                                size="sm"
-                                className='mb-2 small-select'
-                                classNamePrefix="custom-select"
-                                value={statusTobe}
-                                onChange={(selectedOption)=>setstatusTobe(selectedOption)}
-                            />
+                <CFormLabel className="col-form-label">
+                  Action taken
+                </CFormLabel>
+                <textarea
+                  type="text"
+                  className="form-control form-control-sm mb-2 small-select"
+                  placeholder="Vehicle No"
 
-            <CFormLabel className="col-form-label">
-                Remarks
-              </CFormLabel>
-                  <textarea
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No"
-               
-              />
-            
-            <CFormLabel className="col-form-label">
-                Action taken
-              </CFormLabel>
-                  <textarea
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No"
-               
-              />
+                />
 
 
-            </CCol>
-          </CRow>
-        </CModalBody>
+              </CCol>
+            </CRow>
+          </CModalBody>
 
-        <CModalFooter>
-          <CButton color="primary">Add</CButton>
-        </CModalFooter>
-      </CModal>}
+
+        </CModal>}
 
     </>
   )
