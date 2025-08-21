@@ -119,6 +119,8 @@ const Vehicleservice = () => {
 
   const [repairdetails,setrepairdetails] =useState([
     { date: 1, fault: "Puncture",desc:"...", engineer: "Person1" },
+    { date: 2, fault: "steering",desc:"...", engineer: "Person2" },
+    { date: 3, fault: "engine",desc:"...", engineer: "Person3" },
    
   ]);
   const historyColumns = useMemo(

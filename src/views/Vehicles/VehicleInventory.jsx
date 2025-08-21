@@ -615,6 +615,7 @@ useEffect(() => {
       { Header: 'Chassis number', accessor: 'chassis_num' },
       { Header: 'Wheels count', accessor: 'tyre_count' },
       { Header: 'HSN', accessor: 'hsn' },
+       { Header: 'Part', accessor: 'part' },
       { Header: 'Purchase date', accessor: 'purchase_date' },
       {
               Header: () => <FaBars />,
@@ -1054,8 +1055,13 @@ const updatevichile = async () => {
               <CFormLabel className="col-form-label">
               Brand
               </CFormLabel>
-              <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
+              <Select options={brandoption} 
+              isMulti={false}
+               placeholder="Select Brand" 
+               size="sm" 
+               className='mb-2 small-select'
               classNamePrefix="custom-select"
+              value={save_data.brand}
                         onChange={(selectedOption) => {
                         setsave_data((prev) => ({
                           ...prev,
@@ -1084,7 +1090,7 @@ const updatevichile = async () => {
               <CFormLabel className="col-form-label">
               Purchase Date
               </CFormLabel>
-              <CFormInput type="date" value={date_time} size="sm" 
+              <CFormInput type="date" value={save_data. purchasedate} size="sm" 
                 onChange={(e) =>
                 setsave_data((prev) => ({
                   ...prev,
@@ -1127,7 +1133,7 @@ const updatevichile = async () => {
                 }
                 placeholder="AMC File Number" />
 
-                <CFormInput type="date" value={date_time} size="sm" 
+                <CFormInput type="date" value={save_data.amcdate} size="sm" 
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1243,7 +1249,7 @@ const updatevichile = async () => {
               </CFormLabel>
 
                 <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
+                <CFormInput type="text" size="sm" value={save_data.insurancenumber}
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1252,7 +1258,7 @@ const updatevichile = async () => {
                 }
                 placeholder="Insurance Number" />
 
-                <CFormInput type="date" value={date_time} size="sm" 
+                <CFormInput type="date" value={save_data.insuranceenddate} size="sm" 
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1275,7 +1281,7 @@ const updatevichile = async () => {
                 }
                 placeholder="Fitness Certificate Number" />
 
-                <CFormInput type="date" value={date_time} size="sm" 
+                <CFormInput type="date" value={save_data.fitnessdate} size="sm" 
                  onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1300,7 +1306,7 @@ const updatevichile = async () => {
                  }
                 placeholder="Pollution Certificate Number" />
 
-                <CFormInput type="date" value={date_time} size="sm" 
+                <CFormInput type="date" value={save_data.pucdate} size="sm" 
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1323,7 +1329,7 @@ const updatevichile = async () => {
                  }
                 placeholder="Green Tax Number" />
 
-                <CFormInput type="date" value={date_time} size="sm" 
+                <CFormInput type="date" value={save_data.greendate} size="sm" 
                  onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1422,7 +1428,9 @@ const updatevichile = async () => {
               <CFormLabel className="col-form-label">
                Category
               </CFormLabel>
-                <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select' 
+                <Select options={categoryoption} isMulti={false}
+                 placeholder="Select Category"
+                  size="sm" className='mb-2 small-select' 
                 classNamePrefix="custom-select"
                  value={categoryoption.find(option => option.value === updated_data.category) || null}
                 onChange={(selectedOption) => {

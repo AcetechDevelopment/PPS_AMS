@@ -594,16 +594,24 @@ useEffect(() => {
               <CFormLabel className="col-form-label">
                Category
               </CFormLabel>
-                <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2' 
-                styles={customStyles}
+                <Select options={categoryoption}
+                 isMulti={false} placeholder="Select Category"
+                 size="sm"
+                  className='mb-2 small-select' 
+                   classNamePrefix="custom-select"
+                // styles={customStyles}
                 onChange={(e) => setcategoryid(e?.value)}
                 />
 
               <CFormLabel className="col-form-label">
               Brand
               </CFormLabel>
-              <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2' 
-                        styles={customStyles}
+              <Select options={brandoption}
+               isMulti={false}
+                placeholder="Select Brand" 
+                size="sm" className='mb-2 small-select' 
+                  classNamePrefix="custom-select"
+                        // styles={customStyles}
                         onChange={(e) => setbrandid(e?.value)}
                         />
 

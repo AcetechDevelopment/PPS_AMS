@@ -56,11 +56,11 @@ const Jobcard = () => {
     const columns = useMemo(
         () => [
 
-            { Header: 'ToolRooms', accessor: 'id', disableSortBy: true, },
-            { Header: 'RoomId', accessor: 'vehicle_number' },
-            { Header: 'RoomName', accessor: 'type' },
-            { Header: ' No of Racks', accessor: 'brand' },
-            { Header: 'Column per Rack', accessor: 'model' },
+            { Header: 'JobcardId', accessor: 'id', disableSortBy: true, },
+            { Header: 'Vehicle no', accessor: 'vehicle_number' },
+            { Header: 'Type of Sevice', accessor: 'type' },
+            { Header: 'Spares', accessor: 'brand' },
+            { Header: 'Tools', accessor: 'model' },
             { Header: 'Location', accessor: 'wheels_count' },
 
             {
