@@ -10,7 +10,7 @@ import {
   CModalFooter,
   CCardBody,
   CButtonGroup,
-  CTableHead,CTableRow,CTableHeaderCell,CTableBody,CTableDataCell,
+  CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
   CFormInput,
   CInputGroup,
   CRow,
@@ -22,7 +22,8 @@ import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { useMemo } from 'react';
 import { FaTrash, FaEdit, FaBars, FaEye, FaUserCog, FaClipboardCheck } from 'react-icons/fa';
-
+import Timeline from './Timeline';
+import { useNavigate } from 'react-router-dom';
 
 const Vehicleservice = () => {
   const [pageCount, setPageCount] = useState(0);
@@ -32,6 +33,8 @@ const Vehicleservice = () => {
   const [assign, setassign] = useState(false)
   const [status, setstatus] = useState(false)
   const [currentid, setcurrentid] = useState(null)
+  const [isjobCardtoggle, setjobCardtoggle] = useState(false)
+  const [currentjobcardid, setjobcardid] = useState(null)
 
   const handleClose = () => {
     setShow(false)
@@ -41,7 +44,7 @@ const Vehicleservice = () => {
   const handleShow = () => setShow(true);
 
   const handleviewshow = (id) => {
-    
+
     setcurrentid(id)
     setview(true)
   }
@@ -63,9 +66,9 @@ const Vehicleservice = () => {
   const handlestatusclose = () => { setstatus(false) }
 
   const [datas, setDatas] = useState([
-    { id: 1, fault: 'puncture', engineer: ' person1' },
-    { id: 2, fault: 'steering', engineer: ' person2' },
-    { id: 3, fault: 'engine', engineer: ' person3' }
+    { id: 1, fault: 'Puncture', engineer: ' Person1' },
+    { id: 2, fault: 'Steering', engineer: ' Person2' },
+    { id: 3, fault: 'Engine', engineer: ' Person3' }
   ]);
 
 
@@ -117,23 +120,25 @@ const Vehicleservice = () => {
     [datas]
   );
 
-  const [repairdetails,setrepairdetails] =useState([
-    { date: 1, fault: "Puncture",desc:"...", engineer: "Person1" },
-    { date: 2, fault: "steering",desc:"...", engineer: "Person2" },
-    { date: 3, fault: "engine",desc:"...", engineer: "Person3" },
-   
+  const [repairdetails, setrepairdetails] = useState([
+    { date: 1, fault: "Puncture", engineer: "Person1", jobcardid: "JC1" },
+    { date: 2, fault: "Steering", engineer: "Person2", jobcardid: "JC2" },
+    { date: 3, fault: "Engine", engineer: "Person3", jobcardid: "JC3" },
+    { date: 4, fault: "Disc", engineer: "Person4", jobcardid: "JC4" },
+
   ]);
   const historyColumns = useMemo(
     () => [
       { Header: "Date", accessor: "date" },
       { Header: "fault", accessor: "fault" },
-      { Header: "Description", accessor: "desc" },
       { Header: "Engineer", accessor: "engineer" },
+      { Header: "JobCardId", accessor: "jobcardid" },
     ],
     []
   );
- const historyTable = useTable({ columns: historyColumns, data: repairdetails });
-
+  const historyTable = useTable({ columns: historyColumns, data: repairdetails });
+ 
+  const navigate=useNavigate()
 
   const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
     setLoading(true);
@@ -222,6 +227,20 @@ const Vehicleservice = () => {
   { label: "condemnation", value: "condemnation" }]
 
   const [statusTobe, setstatusTobe] = useState("")
+
+  const handlejobcardopen = (alldatas) => {
+    setjobCardtoggle(true)
+    setjobcardid(alldatas.jobcardid)
+    setassign(false)
+    navigate(`/timeline/${currentid}/${alldatas.jobcardid}`)
+  }
+
+  const handlejobcardclose = () => {
+    setjobCardtoggle(false)
+  }
+  useEffect(() => {
+    console.log("jobCardtoggle changed:", isjobCardtoggle);
+  }, [isjobCardtoggle]);
   return (
     <>
       <CCard className="mb-4">
@@ -377,14 +396,14 @@ const Vehicleservice = () => {
             </CRow>
           </CModalBody>
         </CModal>
-        }
+      }
 
       {assign &&
         <CModal
           alignment="center"
           visible={assign}
-          size="xl"
-        
+          size="md"
+
           onClose={() => handleassignclose()}
           aria-labelledby="NewProcessing"
         >
@@ -394,7 +413,7 @@ const Vehicleservice = () => {
 
           <CModalBody>
             <CRow>
-              <CCol md={6}>
+              <CCol  sm={12}>
                 <CFormLabel className="col-form-label">
                   Select Engineer
                 </CFormLabel>
@@ -405,53 +424,54 @@ const Vehicleservice = () => {
                   value={engineer}
                   onChange={(selectedOption) => setengineer(selectedOption)}
                 />
-                </CCol>
+              </CCol>
 
-                <CCol md={6}>
+              <CCol sm={12} >
                 <CFormLabel className="col-form-label">
                   History of Repairs
                 </CFormLabel>
-                 <CTable striped bordered hover size="sm" {...historyTable.getTableProps()}>
-        <CTableHead>
-          {historyTable.headerGroups.map((headerGroup) => (
-            <CTableRow {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <CTableHeaderCell {...column.getHeaderProps()}>
-                  {column.render("Header")}
-                </CTableHeaderCell>
-              ))}
-            </CTableRow>
-          ))}
-        </CTableHead>
-        <CTableBody {...historyTable.getTableBodyProps()}>
-          {historyTable.rows.map((row) => {
-            historyTable.prepareRow(row);
-            return (
-              <CTableRow {...row.getRowProps()}>
-                {row.cells.map((cell) => (
-                  <CTableDataCell {...cell.getCellProps()}>
-                    {cell.render("Cell")}
-                  </CTableDataCell>
-                ))}
-              </CTableRow>
-            );
-          })}
-        </CTableBody>
-      </CTable>
-                </CCol>
-                <div className="d-flex justify-content-between " style={{ marginTop: "20px" }}>
-                  <CButton color="secondary" style={{ minWidth: "100px" }}>
-                    Reject
-                  </CButton>
-                  <CButton color="secondary" style={{ minWidth: "100px" }}>
-                    Approve
-                  </CButton>
-                </div>
-              
+                <CTable striped bordered hover size="sm" {...historyTable.getTableProps()}>
+                  <CTableHead>
+                    {historyTable.headerGroups.map((headerGroup) => (
+                      <CTableRow {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map((column) => (
+                          <CTableHeaderCell {...column.getHeaderProps()} style={{ textAlign: "center" ,fontSize:"1rem"}}>
+                            {column.render("Header")}
+                          </CTableHeaderCell>
+                        ))}
+                      </CTableRow>
+                    ))}
+                  </CTableHead>
+                  <CTableBody {...historyTable.getTableBodyProps()}>
+                    {historyTable.rows.map((row) => {
+                      historyTable.prepareRow(row);
+                      return (
+                        <CTableRow {...row.getRowProps()}>
+                          {row.cells.map((cell) => (
+                            <CTableDataCell {...cell.getCellProps()} style={{ textAlign: "center",fontSize:"0.8rem" }}
+                              onClick={cell.column.id === "jobcardid" ? () => handlejobcardopen(row.original) : undefined}>
+                              {cell.render("Cell")}
+                            </CTableDataCell>
+                          ))}
+                        </CTableRow>
+                      );
+                    })}
+                  </CTableBody>
+                </CTable>
+              </CCol>
+              <div className="d-flex justify-content-between " style={{ marginTop: "20px" }}>
+                <CButton color="secondary" style={{ minWidth: "100px" }}>
+                  Reject
+                </CButton>
+                <CButton color="secondary" style={{ minWidth: "100px" }}>
+                  Approve
+                </CButton>
+              </div>
+
             </CRow>
           </CModalBody>
         </CModal>
-        }
+      }
 
       {status &&
         <CModal
@@ -499,9 +519,7 @@ const Vehicleservice = () => {
                   type="text"
                   className="form-control form-control-sm mb-2 small-select"
                   placeholder="Vehicle No"
-
                 />
-
                 <CFormLabel className="col-form-label">
                   Action taken
                 </CFormLabel>
@@ -509,17 +527,54 @@ const Vehicleservice = () => {
                   type="text"
                   className="form-control form-control-sm mb-2 small-select"
                   placeholder="Vehicle No"
-
                 />
-
-
               </CCol>
             </CRow>
           </CModalBody>
-
-
         </CModal>}
+      
+      {/* {isjobCardtoggle && <CModal
+        alignment="center"
+        scrollable
+        visible={isjobCardtoggle}
+        size="md"
+        onClose={handlejobcardclose}
+        aria-labelledby="NewProcessing"
+      >
+        <CModalHeader className='bg-secondary'>
+          <CModalTitle id="NewProcessing">View Job card details</CModalTitle>
+        </CModalHeader>
 
+        <CModalBody>
+          <CRow>
+            <CCol md={12}>
+
+              <CFormLabel className="col-form-label">
+                vehicle No
+              </CFormLabel>
+              <input
+                type="text"
+                className="form-control form-control-sm mb-2 small-select"
+                placeholder="Vehicle No"
+                defaultValue={currentid}
+              
+              />
+
+              <CFormLabel className="col-form-label">
+                Jobcard Id
+              </CFormLabel>
+              <input
+                type="text"
+                className="form-control form-control-sm mb-2 small-select"
+                placeholder="Vehicle No"
+                defaultValue={currentjobcardid}
+                
+              />
+            </CCol>
+          </CRow>
+        </CModalBody>
+      </CModal> */}
+      
     </>
   )
 }

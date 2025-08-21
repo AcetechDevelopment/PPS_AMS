@@ -9,12 +9,13 @@ import Context from './components/Context';
 import { CSpinner, useColorModes } from '@coreui/react';
 import './scss/style.scss';
 import './scss/examples.scss';
+import Timeline from './views/services/Timeline';
 
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'));
 const Login = React.lazy(() => import('./views/pages/login/Login'));
 const Page404 = React.lazy(() => import('./Error/404'));
 
-export const  test = () =>{
+export const test = () => {
   return "test";
 }
 
@@ -36,35 +37,27 @@ const App = () => {
 
   return (
     <>
-    <Context>
-    <ToastContainer />
-    <BrowserRouter>
-      <Suspense
-        fallback={
-          <div className="pt-3 text-center">
-            <CSpinner color="primary" variant="grow" />
-          </div>
-        }
-      >
-       <Routes>
-         
-          {/* <Route path="/login" element={<Login />} /> */}
-          {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
-       
-            <Route path="/" element={<DefaultLayout />} />
-            <Route path="*" element={<DefaultLayout />} />
-        
-          <Route path="*" element={<Page404 />} />
+      <Context>
+        <ToastContainer />
+        <BrowserRouter>
+          <Suspense
+            fallback={
+              <div className="pt-3 text-center">
+                <CSpinner color="primary" variant="grow" />
+              </div>
+            }
+          >
+            <Routes>
+              <Route path="/" element={<DefaultLayout />} />
+              <Route path="*" element={<DefaultLayout />} />
+              <Route path="*" element={<Page404 />} />
+              <Route element={<Auth />}/>
 
+            </Routes>
 
-           <Route element={<Auth />}>
-            </Route>
-
-        </Routes>
-        
-      </Suspense>
-    </BrowserRouter>
-    </Context>
+          </Suspense>
+        </BrowserRouter>
+      </Context>
     </>
   );
 };
