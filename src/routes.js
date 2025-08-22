@@ -64,7 +64,7 @@ const routes = [
    { path: '/sparecondemn', name: 'Spare Condemnation ', element: Sparecondemn },
    { path: '/trailerservice', name: 'Trailer Service', element: Trailerservice },
    { path: '/trailercondemn', name: 'Tailer Condemnation ', element: Trailercondemn },
-    { path: '/timeline/:vehicleid/:jobcardid', name: 'Timeline', element: Timeline },
+    { path: '/timeline', name: 'Timeline', element: Timeline },
 
 
 

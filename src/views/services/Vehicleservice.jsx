@@ -23,7 +23,7 @@ import { useTable, usePagination, useSortBy } from 'react-table';
 import { useMemo } from 'react';
 import { FaTrash, FaEdit, FaBars, FaEye, FaUserCog, FaClipboardCheck } from 'react-icons/fa';
 import Timeline from './Timeline';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 const Vehicleservice = () => {
   const [pageCount, setPageCount] = useState(0);
@@ -36,6 +36,7 @@ const Vehicleservice = () => {
   const [isjobCardtoggle, setjobCardtoggle] = useState(false)
   const [currentjobcardid, setjobcardid] = useState(null)
 
+  console.log(currentid,currentjobcardid)
   const handleClose = () => {
     setShow(false)
 
@@ -130,15 +131,27 @@ const Vehicleservice = () => {
   const historyColumns = useMemo(
     () => [
       { Header: "Date", accessor: "date" },
-      { Header: "fault", accessor: "fault" },
+      { Header: "Fault", accessor: "fault" },
       { Header: "Engineer", accessor: "engineer" },
-      { Header: "JobCardId", accessor: "jobcardid" },
+      {
+        Header: () => <FaBars />,
+        accessor: "jobcardid",
+        Cell: ({ value, row }) => (
+          <span
+            className="jobcard-pointer"
+            onClick={() => handlejobcardopen(row.original)}
+          >
+            {value}
+          </span>
+        ),
+      },
     ],
     []
   );
+
   const historyTable = useTable({ columns: historyColumns, data: repairdetails });
- 
-  const navigate=useNavigate()
+
+  // const navigate = useNavigate()
 
   const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
     setLoading(true);
@@ -186,6 +199,8 @@ const Vehicleservice = () => {
     getTableProps,
     getTableBodyProps,
     headerGroups,
+    headerGroup,
+    headers,
     prepareRow,
     page,
     rows,
@@ -230,9 +245,10 @@ const Vehicleservice = () => {
 
   const handlejobcardopen = (alldatas) => {
     setjobCardtoggle(true)
+    
     setjobcardid(alldatas.jobcardid)
     setassign(false)
-    navigate(`/timeline/${currentid}/${alldatas.jobcardid}`)
+    // navigate(`/timeline/${currentid}/${alldatas.jobcardid}`)
   }
 
   const handlejobcardclose = () => {
@@ -413,7 +429,7 @@ const Vehicleservice = () => {
 
           <CModalBody>
             <CRow>
-              <CCol  sm={12}>
+              <CCol sm={12}>
                 <CFormLabel className="col-form-label">
                   Select Engineer
                 </CFormLabel>
@@ -435,7 +451,10 @@ const Vehicleservice = () => {
                     {historyTable.headerGroups.map((headerGroup) => (
                       <CTableRow {...headerGroup.getHeaderGroupProps()}>
                         {headerGroup.headers.map((column) => (
-                          <CTableHeaderCell {...column.getHeaderProps()} style={{ textAlign: "center" ,fontSize:"1rem"}}>
+                          <CTableHeaderCell {...column.getHeaderProps()} style={{
+                            textAlign: "center"
+                            , fontSize: "1rem",
+                          }}>
                             {column.render("Header")}
                           </CTableHeaderCell>
                         ))}
@@ -447,8 +466,13 @@ const Vehicleservice = () => {
                       historyTable.prepareRow(row);
                       return (
                         <CTableRow {...row.getRowProps()}>
-                          {row.cells.map((cell) => (
-                            <CTableDataCell {...cell.getCellProps()} style={{ textAlign: "center",fontSize:"0.8rem" }}
+                          {row.cells.map((cell, index) => (
+                            <CTableDataCell {...cell.getCellProps()} style={{
+                              textAlign: "center",
+                              fontSize: "0.8rem",
+                              
+                            }}
+                              className={index===row.cells.length-1?"pointer text-primary":"inherit"}
                               onClick={cell.column.id === "jobcardid" ? () => handlejobcardopen(row.original) : undefined}>
                               {cell.render("Cell")}
                             </CTableDataCell>
@@ -532,49 +556,31 @@ const Vehicleservice = () => {
             </CRow>
           </CModalBody>
         </CModal>}
-      
-      {/* {isjobCardtoggle && <CModal
-        alignment="center"
-        scrollable
-        visible={isjobCardtoggle}
-        size="md"
-        onClose={handlejobcardclose}
-        aria-labelledby="NewProcessing"
-      >
-        <CModalHeader className='bg-secondary'>
-          <CModalTitle id="NewProcessing">View Job card details</CModalTitle>
-        </CModalHeader>
 
-        <CModalBody>
-          <CRow>
-            <CCol md={12}>
 
-              <CFormLabel className="col-form-label">
-                vehicle No
-              </CFormLabel>
-              <input
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No"
-                defaultValue={currentid}
-              
-              />
 
-              <CFormLabel className="col-form-label">
-                Jobcard Id
-              </CFormLabel>
-              <input
-                type="text"
-                className="form-control form-control-sm mb-2 small-select"
-                placeholder="Vehicle No"
-                defaultValue={currentjobcardid}
-                
-              />
-            </CCol>
-          </CRow>
-        </CModalBody>
-      </CModal> */}
-      
+      {isjobCardtoggle &&
+        <CModal
+          alignment="center"
+          scrollable
+          visible={isjobCardtoggle}
+          size="xl"
+          onClose={handlejobcardclose}
+          aria-labelledby="NewProcessing"
+        >
+          <CModalHeader className='bg-secondary'>
+            <CModalTitle id="NewProcessing">Job Card Details</CModalTitle>
+          </CModalHeader>
+
+          <CModalBody>
+            <CRow>
+              <CCol md={12}>
+                {isjobCardtoggle && <Timeline  vehicleId={currentid} jobcardId={currentjobcardid}/>}
+              </CCol>
+            </CRow>
+          </CModalBody>
+        </CModal>}
+
     </>
   )
 }
