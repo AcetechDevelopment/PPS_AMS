@@ -115,11 +115,7 @@ const _nav = [
             name: 'Trailer Condemnation',
             to: '/trailercondemn',
           },
-          {
-            component: CNavItem,
-            name: 'Timeline',
-            to: '/timeline/:vehicleid/:jobcardid',
-          },
+         
     ]
   },
 

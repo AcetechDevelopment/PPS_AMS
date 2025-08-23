@@ -35,7 +35,7 @@ const Spareservice = React.lazy(() => import('./views/services/Spareservice'))
 const Sparecondemn = React.lazy(() => import('./views/services/Sparecondemn'))
 const Trailerservice = React.lazy(() => import('./views/services/Trailerservice'))
 const Trailercondemn = React.lazy(() => import('./views/services/Trailercondemn'))
-const Timeline=React.lazy(()=>import('./views/services/Timeline'))
+
 const routes = [
    { path: '/dashboard', exact: true, name: 'Home', element: dashboard },
    { path: '/processing', name: 'Processing', element: processing },
@@ -64,14 +64,8 @@ const routes = [
    { path: '/sparecondemn', name: 'Spare Condemnation ', element: Sparecondemn },
    { path: '/trailerservice', name: 'Trailer Service', element: Trailerservice },
    { path: '/trailercondemn', name: 'Tailer Condemnation ', element: Trailercondemn },
-    { path: '/timeline', name: 'Timeline', element: Timeline },
-
-
-
-
+   
    { path: '/inward', name: 'Inward', element: inward },
-
-
 ]
 
 export default routes
