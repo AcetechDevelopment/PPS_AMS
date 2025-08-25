@@ -137,7 +137,7 @@ const _nav = [
             {
               component: CNavItem,
               name: 'Tool Box',
-              to: '/processin',
+              to: '/toolsbox',
             }
           ]
     },
@@ -178,7 +178,13 @@ const _nav = [
     to: '/generalmaster',
     icon: <CIcon icon={cibTodoist} customClassName="nav-icon" />,
   },
-
+  
+   {
+    component: CNavItem,
+    name: 'User Master',
+    to: '/usermaster',
+    icon: <CIcon icon={cibTodoist} customClassName="nav-icon" />,
+  },
   {
     component: CNavItem,
     name: 'Tool Rooms',

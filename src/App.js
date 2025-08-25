@@ -10,6 +10,7 @@ import { CSpinner, useColorModes } from '@coreui/react';
 import './scss/style.scss';
 import './scss/examples.scss';
 import Timeline from './views/services/Timeline';
+const BASE = import.meta.env.VITE_BASE_URL;
 
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'));
 const Login = React.lazy(() => import('./views/pages/login/Login'));

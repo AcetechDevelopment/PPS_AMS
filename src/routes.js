@@ -10,12 +10,16 @@ const dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 
 
 // master
+
+const Usermaster=React.lazy(() => import('./views/master/Usermaster'))
+
+
 const Generalmaster = React.lazy(() => import('./views/master/general_master'))
 const Toolmaster = React.lazy(() => import('./views/master/Toolrooms'))
 const toolinventory = React.lazy(() => import('./views/master/ToolsInventory'))
 const Sparerooms = React.lazy(() => import('./views/master/Sparerooms'))
 const workshop = React.lazy(() => import('./views/master/Workshop'))
-
+const toolsbox=React.lazy(()=>import('./views/master/Toolsbox'))
 
 
 // inventory
@@ -45,7 +49,7 @@ const routes = [
    { path: '/spareasign', name: 'Spareassign', element: Spareassign },
    { path: '/tyreassign', name: 'Tyreassign', element: Tyreassign },
 
-
+    {path:"/usermaster",name:"Usermaster",element:Usermaster},
 
    { path: '/processlist', name: 'Processing', element: process_list },
    { path: '/neglist', name: 'negativewaste', element: negativelist },
@@ -56,6 +60,7 @@ const routes = [
    { path: '/toolinventory', name: 'General', element: toolinventory },
    { path: '/sparerooms', name: 'General', element: Sparerooms },
    { path: '/workshop', name: 'General', element: workshop },
+   { path: '/toolsbox', name: 'General', element: toolsbox },
 
    { path: '/jobcard', name: 'jobcard', element: Jobcard },
    { path: '/vehicleservice', name: 'Vehicle Service', element: VehicleService },

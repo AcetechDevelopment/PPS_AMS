@@ -182,7 +182,7 @@ const Vehiclecondemn = () => {
         <>
             <CCard className="mb-4">
                 <CCardHeader className='bg-secondary text-light'>
-                    Vehicle Service
+                    Vehicle Condemnation
                 </CCardHeader>
                 <CCardBody>
 
