@@ -14,5 +14,6 @@ const changeState = (state = initialState, { type, ...rest }) => {
   }
 }
 
+
 const store = createStore(changeState)
 export default store
