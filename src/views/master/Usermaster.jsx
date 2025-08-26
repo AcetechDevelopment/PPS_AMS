@@ -17,17 +17,18 @@ import {
   CRow,
   CCol,
   CFormLabel,
-  CImage
+  CImage,
 } from '@coreui/react'
+import { FaTrash, FaEdit } from 'react-icons/fa';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import {Table,Card,Modal,Button,Form,FloatingLabel} from 'react-bootstrap';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { toast } from 'react-toastify';
 const BASE = import.meta.env.VITE_BASE_URL;
 
+
 const ReactSwal = withReactContent(Swal);
-
-
 const User = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -45,14 +46,16 @@ const User = () => {
 
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
+  
+
   const handleSubmit = async () => {
     if (!name || !mobile || !email || !password || !confirmPassword || !role_id) {
-      alert('All fields are required!');
+        toast.error('All fields are required!');
       return;
     }
   
     if (password !== confirmPassword) {
-      alert('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
   
@@ -63,8 +66,6 @@ const User = () => {
       role_id,
       mobile
     };
-
-  
     try {
       const response = await fetch(`${BASE}auth/register`, {
         method: 'POST',
@@ -77,7 +78,7 @@ const User = () => {
   
       if (response.ok) {
         const result = await response.json();
-        alert('User created successfully!');
+        toast.success('User created successfully!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
         setName('');
@@ -89,13 +90,14 @@ const User = () => {
         setgroup_id('');
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message || 'Unable to register user'}`);
+        toast.error(`Error: ${error.message || 'Unable to register user'}`);
       }
     } catch (err) {
-      console.error('Error:', err);
-      alert('Failed to connect to the server. Please try again later.');
+      toast.error('Failed to connect to the server. Please try again later.');
     }
   };
+
+ 
   
 
   const fetchData = async ({ pageSize, pageIndex, sortBy, search }) => {
@@ -105,7 +107,7 @@ const User = () => {
   
     try {
       const response = await fetch(
-        `${base_url}user_list?pageSize=${pageSize}&pageIndex=${pageIndex+1}&sortBy=${sortColumn}&sortOrder=${sortOrder}&search=${search}`,
+        `${BASE}auth/userlist?pageSize=${pageSize}&pageIndex=${pageIndex+1}&sortBy=${sortColumn}&sortOrder=${sortOrder}&search=${search}`,
         {
           method: 'GET',
           headers: {
@@ -121,7 +123,7 @@ const User = () => {
       setData(result.data);
       setPageCount(result.pageCount);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Error fetching data:', error);
       setData([]);
     } finally {
       setLoading(false);
@@ -141,7 +143,7 @@ const User = () => {
       });
   
       if (result.isConfirmed) {
-        const response = await fetch(`${base_url}delete_user/${userId}`, {
+        const response = await fetch(`${BASE}auth/delete_user/${userId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -187,7 +189,7 @@ const User = () => {
     }
   
     try {
-      const response = await fetch(`${base_url}update_user/${userId}`, {
+      const response = await fetch(`${BASE}auth/update_user/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -197,13 +199,12 @@ const User = () => {
   
       if (response.ok) {
         const data = await response.json();
-        const ddata = data.data;
+        const ddata = data;
         setid(ddata.id);
         setName(ddata.name);
-        setUsername(ddata.username);
         setEmail(ddata.email);
         setMobile(ddata.mobile);
-        setrole_id(ddata.group_id);
+        setrole_id(ddata.role_id);
         setupdateShow(true);
       } else {
         const error = await response.json();
@@ -224,29 +225,22 @@ const User = () => {
   };
 
   const handleUpdate = async () => {
-    if (!name || !username || !email || !password || !confirmPassword || (group_id === null || group_id === undefined || group_id === '') || !mobile) {
-      alert('All fields are required!');
-      return;
-    }
-  
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
+    if (!name || !email || (role_id === null || role_id === undefined || role_id === '') || !mobile) {
+      toast.error('All fields are required!');
       return;
     }
   
       const payload = {
         id,
         name,
-        username,
         email,
-        password,
-        group_id,
+        role_id,
         mobile
       };
 
   
     try {
-      const response = await fetch(`${base_url}api/update_user`, {
+      const response = await fetch(`${BASE}auth/update_user`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -257,7 +251,7 @@ const User = () => {
   
       if (response.ok) {
         const result = await response.json();
-        alert('User created successfully!');
+        toast.success('User Updated successfully!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
         setName('');
@@ -269,37 +263,41 @@ const User = () => {
         setgroup_id('');
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message || 'Unable to register user'}`);
+        toast.error(`Error: ${error.message || 'Unable to register user'}`);
       }
     } catch (err) {
       console.error('Error:', err);
-      alert('Failed to connect to the server. Please try again later.');
+      toast.error('Failed to connect to the server. Please try again later.');
     }
   };
   
+  const roleMap = {
+  0: "Super Admin",
+  1: "Admin",
+  2: "Manager",
+  3: "Team Lead",
+  4: "Engineer",
+  5: "User Admin",
+  6: "User",
+};
   
   const columns = useMemo(
     () => [
-      { Header: 'SL', accessor: 'sl' },
+      { Header: 'SL',
+        Cell: ({ row }) => row.index + 1 + (pageIndex * pageSize)
+      },
       { Header: 'Name', accessor: 'name' },
       { Header: 'Email', accessor: 'email' },
-      { Header: 'Username', accessor: 'username' },
       { Header: 'Mobile', accessor: 'mobile' },
-      { Header: 'Group ID', accessor: 'group_id' },
+      { Header: 'Role', accessor: 'role_id',  
+        Cell: ({ value }) => roleMap[value] || "Unknown"
+      },
       {
         Header: 'Action',
-        accessor: 'action',
         Cell: ({ row }) => (
           <>
-          <i className="fas fa-edit pointer text-info"
-            onClick={() => edit_user(row.original.id)}
-            style={{marginRight: '10px' }}
-          >
-          </i>
-          <i className="fas fa-trash pointer text-danger"
-          onClick={() => delete_user(row.original.id)}
-        >
-        </i>
+          <FaEdit className="text-primary pointer" onClick={() => edit_user(row.original.id)} style={{marginRight: '10px', marginLeft: '10px' }} />
+          <FaTrash className="text-danger pointer" onClick={() => delete_user(row.original.id)} />
         </>
         ),
       },
@@ -363,8 +361,8 @@ const User = () => {
 
           <CCardBody>
                 <input
-                //   value={search}
-                //   onChange={(e) => setSearch(e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search..."
                   className="form-control form-control-sm mb-1 float-end w-auto"
                 />
@@ -514,86 +512,58 @@ const User = () => {
 
 
 {/* edit */}
-
-
-        <Modal show={updateshow} onHide={handleEClose} border="danger">
-        <Modal.Header closeButton className='bg-secondary'>
+         <Modal show={updateshow} onHide={handleEClose} border="danger">
+          <Modal.Header closeButton className='bg-secondary'>
           <Modal.Title className='text-light'>Update User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className='bg-secondary'>
+          </Modal.Header>
+           <Modal.Body>
         <Form>
               <Form.Control
                 size="sm"
                 type="text"
                 placeholder="Name"
-                className="mb-2 bg-secondary text-light"
+                className="mb-2"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              <Form.Control
+
+                <Form.Control
                 size="sm"
-                type="text"
-                placeholder="Username"
-                className="mb-2 bg-secondary text-light"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="tel"
+                placeholder="Mobile Number"
+                className="mb-2"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
               />
+             
               <Form.Control
                 size="sm"
                 type="email"
                 placeholder="Email"
-                className="mb-2 bg-secondary text-light"
+                className="mb-2"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <Form.Control
-                size="sm"
-                type="tel"
-                placeholder="Mobile Number"
-                className="mb-2 bg-secondary text-light"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-              />
-              <Form.Control
-                size="sm"
-                type="password"
-                placeholder="Password"
-                className="mb-2 bg-secondary text-light"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Form.Control
-                size="sm"
-                type="text"
-                placeholder="Confirm-Password"
-                className="mb-2 bg-secondary text-light"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
               <Form.Select
                 size="sm"
-                className="mb-2 bg-secondary text-light"
-                value={group_id}
+                className="mb-2"
+                value={role_id}
                 onChange={(e) => setrole_id(e.target.value)}
               >
                 <option selected value="">
-                  Select Department
+                  Select Role
                 </option>
-                <option value="0">All</option>
-                <option value="1">Disaster Management</option>
-                <option value="2">SWM</option>
-                <option value="3">Works</option>
-                <option value="4">Revenue</option>
-                <option value="5">Bridges</option>
-                <option value="6">Parks & Play Field</option>
-                <option value="7">Health</option>
-                <option value="8">SWD</option>
-                <option value="100">Super Admin</option>
+                <option value="1">Admin</option>
+                <option value="2">Manager</option>
+                <option value="3">Team Lead</option>
+                <option value="4">Engineer</option>
+                <option value="5">User Admin</option>
+                <option value="6">User</option>
               </Form.Select>
             </Form>
 
         </Modal.Body>
-        <Modal.Footer className='bg-secondary'>
+        <Modal.Footer>
           <Button variant="secondary" className="btn btn-sm btn-info" onClick={handleEClose}>
             Close
           </Button>

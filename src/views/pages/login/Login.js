@@ -3,9 +3,6 @@ import Cookies from "js-cookie";
 import './login.css';
 import { toast } from 'react-toastify';
 
-// import { ToastContainer } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
-
 const Login = () => {
     const [mobile, setmobile] = useState("");
     const [password, setPassword] = useState("");
@@ -40,7 +37,7 @@ const Login = () => {
         };
 
         try {
-          const response = await fetch(`${apiUrl}login`, {
+          const response = await fetch(`${apiUrl}auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -50,8 +47,9 @@ const Login = () => {
       
           if (response.ok) {
             const result = await response.json();
-             sessionStorage.setItem("authToken", JSON.stringify(result.token));
-             result.token?  window.location.href = "/dashboard" : '';
+             sessionStorage.setItem("authToken", JSON.stringify(result.access_token));
+             sessionStorage.setItem("Name", JSON.stringify(result.user.name));
+             result.access_token?  window.location.href = "/dashboard" : '';
             
           } else {
             const error = await response.json();
@@ -59,11 +57,8 @@ const Login = () => {
           }
         } catch (err) {
           console.error('Error:', err);
-          // alert('Failed to connect to the server. Please try again later.');
           toast.error('Failed to connect to the server. Please try again later.!');
         }
-
-
     };
     
 
