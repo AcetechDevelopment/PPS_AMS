@@ -20,7 +20,7 @@ import {
   cilPeople,
   cilTablet,
   cilFolderOpen,
-  cibTodoist
+  cibTodoist,cilUser,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -31,6 +31,7 @@ const _nav = [
     to: '/dashboard',
     icon: <CIcon icon={cilGrid} customClassName="nav-icon" />,
   },
+
   {
     component: CNavTitle,
     name: 'Vehicles operation',
