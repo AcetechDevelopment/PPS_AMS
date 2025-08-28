@@ -17,7 +17,7 @@ import {
   CRow,
   CCol,
   CFormLabel,
-  CImage
+  CImage,CTableBody,CTableRow,CTableHeaderCell,CTableDataCell
 } from '@coreui/react'
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -30,6 +30,8 @@ import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
 import { toast } from 'react-toastify';
 import { vehicleNum, validateHSN, ValidMonth, ValidSingleDigit } from '../../utils/validators';
+import Swal from 'sweetalert2';
+const BASE = import.meta.env.VITE_BASE_URL;
 
 
 const VehicleInventory = () => {
@@ -56,68 +58,40 @@ const VehicleInventory = () => {
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
+  
+  const[view,setview]=useState(false)
 
+  const intial_data = {
+      vno: '',
+      type: '',
+      category: '',
+      brand: '',
+      modal: '',
+      purchasedate: today,
+      warrentyyear: '',
+      amc: '',
+      amcdate: today,
+      tyrecnt: '',
+      stepnycnt: '',
+      fuel: '1',
+      enginenumber: '',
+      chassisnumber: '',
+      hsn: '',
+      insurancenumber: '',
+      insuranceenddate: today,
+      fitness: '',
+      fitnessdate: today,
+      puc: '',
+      pucdate: today,
+      greentax: '',
+      greendate: today,
+      file: null,
+    };
 
   // new vehicle
-  const [save_data, setsave_data] = useState(
-    {
-      vno: '',
-      type: '',
-      category: '',
-      brand: '',
-      modal: '',
-      purchasedate: today,
-      warrentyyear: '',
-      amc: '',
-      amcdate: today,
-      tyrecnt: '',
-      stepnycnt: '',
-      fuel: '1',
-      enginenumber: '',
-      chassisnumber: '',
-      hsn: '',
-      insurancenumber: '',
-      insuranceenddate: today,
-      fitness: '',
-      fitnessdate: today,
-      puc: '',
-      pucdate: today,
-      greentax: '',
-      greendate: today,
-      file: null,
-    },
-  );
-
+  const [save_data, setsave_data] = useState(intial_data);
   // update vehicle 
-
-  const [updated_data, setupdated_data] = useState(
-    {
-      vno: '',
-      type: '',
-      category: '',
-      brand: '',
-      modal: '',
-      purchasedate: today,
-      warrentyyear: '',
-      amc: '',
-      amcdate: today,
-      tyrecnt: '',
-      stepnycnt: '',
-      fuel: '1',
-      enginenumber: '',
-      chassisnumber: '',
-      hsn: '',
-      insurancenumber: '',
-      insuranceenddate: today,
-      fitness: '',
-      fitnessdate: today,
-      puc: '',
-      pucdate: today,
-      greentax: '',
-      greendate: today,
-      file: null,
-    },
-  );
+  const [updated_data, setupdated_data] = useState(intial_data);
 
   const submitvichile = async () => {
     const data = save_data;
@@ -621,12 +595,12 @@ const VehicleInventory = () => {
           const id = row.original.id;
 
           return (
-            <div className="flex gap-5">
-              <FaEye className="ms-2 pointer text-info" onClick={() => viewvehicle(id)} />
+            <div className="">
+              <FaEye     size={15}  className="ms-2 me-2 pointer text-info" onClick={() => viewvehicle(id)} />
 
-              <FaEdit className="ms-2 pointer text-primary" onClick={() => editvehicle(id)} />
+              <FaEdit  size={15}  className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
 
-              <FaTrash className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
+              <FaTrash   size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
 
             </div>
           );
@@ -716,7 +690,7 @@ const VehicleInventory = () => {
     }
 
     try {
-      const response = await fetch(`${base_url}vehicle/edit/${id}`, {
+      const response = await fetch(`${BASE}vehicle/edit/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -826,7 +800,7 @@ const VehicleInventory = () => {
     });
 
     try {
-      const response = await fetch(`${apiUrl}vehicle/update`, {
+      const response = await fetch(`${BASE}vehicle/update`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -840,36 +814,7 @@ const VehicleInventory = () => {
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
 
-        setupdated_data({
-          id: '',
-          vno: '',
-          type: '',
-          category: '',
-          brand: '',
-          modal: '',
-          purchasedate: today,
-          warrentyyear: '',
-          amc: '',
-          amcdate: today,
-          tyrecnt: '',
-          stepnycnt: '',
-          fuel: '1',
-          enginenumber: '',
-          chassisnumber: '',
-          hsn: '',
-          insurancenumber: '',
-          insuranceenddate: today,
-          fitness: '',
-          fitnessdate: today,
-          puc: '',
-          pucdate: today,
-          greentax: '',
-          greendate: today,
-          image: '',
-          file: null,
-        });
-
-
+        setupdated_data(intial_data);
       } else {
         const error = await response.json();
         const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
@@ -881,9 +826,74 @@ const VehicleInventory = () => {
     }
 
   };
+ 
+  const viewvehicle = async(id) => {
+    setview(true);
+    try {
+      const response = await fetch(`${BASE}vehicle/edit/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
-  const viewvehicle = (id) => {
+      if (response.ok) {
+        const data = await response.json();
+        const res = data.data;
+        setupdated_data({
+          id: res.id,
+          vno: res.vehicle_number,
+          type: res.type_id,
+          category: res.cat_id,
+          brand: res.brand_id,
+          modal: res.model_id,
+          purchasedate: res.purchase_date,
+          warrentyyear: res.year_warranty,
+          amc: res.amc,
+          amcdate: res.amc_date,
+          tyrecnt: res.tyre_count,
+          stepnycnt: res.step_count,
+          fuel: res.fuel_type,
+          enginenumber: res.engine_num,
+          chassisnumber: res.chassis_num,
+          hsn: res.hsn,
+          insurancenumber: res.insurance,
+          insuranceenddate: res.ins_date,
+          fitness: res.fc,
+          fitnessdate: res.fc_date,
+          puc: res.pc,
+          pucdate: res.pc_date,
+          greentax: res.green_tax,
+          greendate: res.gtax_date,
+          image: res.image,
+          file: null,
+        });
+        egetbrandlist(res.cat_id);
+        egetmodellist(res.brand_id);
+        
+        console.log("success")
+      } else {
+        const error = await response.json();
+        // ReactSwal.fire({
+        //   title: 'Error',
+        //   text: error.message || 'Unable to reach user data',
+        //   icon: 'error',
+        // });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      // ReactSwal.fire({
+      //   title: 'Error',
+      //   text: 'Failed to connect to the server. Please try again later.',
+      //   icon: 'error',
+      // });
+    }
 
+  }
+
+  const handleviewclose=()=>{
+    setview(false)
   }
 
   const deletevehicle = (id) => {
@@ -969,9 +979,11 @@ const VehicleInventory = () => {
                 return (
                   <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => (
-                      <div>
-                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                      </div>
+                  
+                        <td {...cell.getCellProps()}>
+                          {cell.render('Cell')}
+                          </td>
+                 
 
                     ))}
                   </tr>
@@ -1598,10 +1610,7 @@ const VehicleInventory = () => {
               </CInputGroup>
 
             </CCol>
-
             <CCol md={6}>
-
-
               <CFormLabel className="col-form-label">
                 Fuel Type
               </CFormLabel>
@@ -1778,12 +1787,9 @@ const VehicleInventory = () => {
                       file: e.target.files[0],
                     }))
                   }
-
                 />
               </div>
-
             </CCol>
-
           </CRow>
         </CModalBody>
 
@@ -1792,6 +1798,84 @@ const VehicleInventory = () => {
         </CModalFooter>
       </CModal>
 
+   
+{view && (
+  <CModal
+    alignment="center"
+    scrollable
+    visible={view}
+    size="md"
+    onClose={() => handleviewclose()}
+    aria-labelledby="NewProcessing"
+  >
+    <CModalHeader className="bg-secondary">
+      {updated_data.image ? (
+        <CImage
+          rounded
+          src={`${file_base_url}uploads/${updated_data.image}`}
+          width={50}
+          height={50}
+          className="me-2"
+        />
+      ) : (
+        ""
+      )}
+      <CModalTitle id="ViewVehicle">{updated_data.vno}</CModalTitle>
+    </CModalHeader>
+
+    <CModalBody>
+      <CTable bordered hover>
+        <CTableBody>
+          {[
+            { label: "Vehicle Number", value: updated_data.vno },
+            { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
+            { label: "Category", value: categoryoption.find((c) => c.value === updated_data.category)?.label },
+            { label: "Brand", value: ebrandoption.find((b) => b.value === updated_data.brand)?.label },
+            { label: "Model", value: emodeloption.find((m) => m.value === updated_data.modal)?.label },
+            { label: "Purchase Date", value: updated_data.purchasedate },
+            { label: "Months of Warranty", value: updated_data.warrentyyear },
+            { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
+            { label: "Tyre / Stepney Count", value: `${updated_data.tyrecnt} / ${updated_data.stepnycnt}` },
+            { label: "Fuel Type", value: { 1: "Diesel", 2: "Petrol", 3: "Gas", 4: "Battery" }[updated_data.fuel] },
+            { label: "Engine Number", value: updated_data.enginenumber },
+            { label: "Chassis Number", value: updated_data.chassisnumber },
+            { label: "HSN Number", value: updated_data.hsn },
+            { label: "Insurance", value: `${updated_data.insurancenumber} | ${updated_data.insuranceenddate}` },
+            { label: "Fitness Certificate", value: `${updated_data.fitness} | ${updated_data.fitnessdate}` },
+            { label: "Pollution Certificate", value: `${updated_data.puc} | ${updated_data.pucdate}` },
+            { label: "Green Tax", value: `${updated_data.greentax} | ${updated_data.greendate}` },
+          ].map((item, idx) => (
+            <CTableRow key={idx}>
+              <CTableHeaderCell className="fw-bold" style={{ width: "30%" }}>
+                {item.label}
+              </CTableHeaderCell>
+              <CTableDataCell>{item.value || "-"}</CTableDataCell>
+            </CTableRow>
+          ))}
+
+          {updated_data.image && (
+            <CTableRow>
+              <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
+              <CTableDataCell>
+                <CImage
+                  rounded
+                  src={`${file_base_url}uploads/${updated_data.image}`}
+                  width={200}
+                />
+              </CTableDataCell>
+            </CTableRow>
+          )}
+        </CTableBody>
+      </CTable>
+    </CModalBody>
+
+    <CModalFooter>
+      <CButton color="secondary" onClick={() => setVisible(false)}>
+        Close
+      </CButton>
+    </CModalFooter>
+  </CModal>
+)}
 
     </>
   )
