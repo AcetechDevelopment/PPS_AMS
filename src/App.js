@@ -49,12 +49,18 @@ const App = () => {
             }
           >
             <Routes>
-              <Route path="/" element={<DefaultLayout />} />
-              <Route path="*" element={<DefaultLayout />} />
-              <Route path="*" element={<Page404 />} />
-              <Route element={<Auth />}/>
+         
+          <Route path="/login" element={<Login />} />
+          
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          
+           <Route element={<Auth />}>
+                <Route path="/" element={<DefaultLayout />} />
+                <Route path="*" element={<DefaultLayout />} />
+                <Route path="*" element={<Page404 />} />
+            </Route>
 
-            </Routes>
+        </Routes>
 
           </Suspense>
         </BrowserRouter>

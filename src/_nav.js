@@ -17,6 +17,7 @@ import {
   cibMega,
   cibC,
   cilCarAlt,
+  cilPeople,
   cilTablet,
   cilFolderOpen,
   cibTodoist,cilUser,
@@ -184,7 +185,7 @@ const _nav = [
     component: CNavItem,
     name: 'User Master',
     to: '/usermaster',
-    icon: <CIcon icon={cibTodoist} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
