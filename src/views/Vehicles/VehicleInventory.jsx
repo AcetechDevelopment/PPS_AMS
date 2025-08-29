@@ -28,14 +28,17 @@ import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
-import { toast } from 'react-toastify';
 import { vehicleNum, validateHSN, ValidMonth, ValidSingleDigit } from '../../utils/validators';
-import Swal from 'sweetalert2';
+
 const BASE = import.meta.env.VITE_BASE_URL;
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { toast } from 'react-toastify';
 
 
 const VehicleInventory = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
+  const ReactSwal = withReactContent(Swal);
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -77,6 +80,7 @@ const VehicleInventory = () => {
       enginenumber: '',
       chassisnumber: '',
       hsn: '',
+      partnum:"",
       insurancenumber: '',
       insuranceenddate: today,
       fitness: '',
@@ -171,6 +175,7 @@ const VehicleInventory = () => {
           enginenumber: '',
           chassisnumber: '',
           hsn: '',
+          partnum:"",
           insurancenumber: '',
           insuranceenddate: today,
           fitness: '',
@@ -426,99 +431,7 @@ const VehicleInventory = () => {
   };
 
 
-  const delete_user = async (userId) => {
-    try {
-      const result = await ReactSwal.fire({
-        title: 'Are you sure?',
-        text: 'You will not be able to recover this user!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
-      });
-
-      if (result.isConfirmed) {
-        const response = await fetch(`${base_url}delete_user/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        });
-
-        if (response.ok) {
-          ReactSwal.fire({
-            title: 'Deleted!',
-            text: 'User deleted successfully!',
-            icon: 'success',
-          });
-
-          fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
-        } else {
-          const error = await response.json();
-          ReactSwal.fire({
-            title: 'Error',
-            text: error.message || 'Unable to delete user',
-            icon: 'error',
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  };
-
-  const edit_user = async (userId) => {
-    if (!authToken) {
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Unauthorized, please log in.',
-        icon: 'error',
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`${base_url}update_user/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const ddata = data.data;
-        setid(ddata.id);
-        setName(ddata.name);
-        setUsername(ddata.username);
-        setEmail(ddata.email);
-        setMobile(ddata.mobile);
-        setgroup_id(ddata.group_id);
-        setupdateShow(true);
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  };
+  
 
   const handleUpdate = async () => {
     if (!name || !username || !email || !password || !confirmPassword || (group_id === null || group_id === undefined || group_id === '') || !mobile) {
@@ -718,6 +631,7 @@ const VehicleInventory = () => {
           enginenumber: res.engine_num,
           chassisnumber: res.chassis_num,
           hsn: res.hsn,
+          partnum:res.partnum,
           insurancenumber: res.insurance,
           insuranceenddate: res.ins_date,
           fitness: res.fc,
@@ -858,6 +772,7 @@ const VehicleInventory = () => {
           enginenumber: res.engine_num,
           chassisnumber: res.chassis_num,
           hsn: res.hsn,
+          partnum:res.partnum,
           insurancenumber: res.insurance,
           insuranceenddate: res.ins_date,
           fitness: res.fc,
@@ -896,9 +811,52 @@ const VehicleInventory = () => {
     setview(false)
   }
 
-  const deletevehicle = (id) => {
+  const deletevehicle = async (id) => {
+    try {
+      const result = await ReactSwal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this user!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+      });
 
-  }
+      if (result.isConfirmed) {
+        const response = await fetch(`${BASE}vehicle/delete/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+
+        if (response.ok) {
+          ReactSwal.fire({
+            title: 'Deleted!',
+            text: 'User deleted successfully!',
+            icon: 'success',
+          });
+
+          fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
+        } else {
+          const error = await response.json();
+          ReactSwal.fire({
+            title: 'Error',
+            text: error.message || 'Unable to delete user',
+            icon: 'error',
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
+    }
+  };
    const data3 = [
     { id: 1, name: "Car", quantity: 5 },
     { id: 2, name: "Spare", quantity: 12 },
@@ -1262,9 +1220,10 @@ const VehicleInventory = () => {
 
 
               <CFormLabel className="col-form-label">
-                HSN Number
+                Part Number
               </CFormLabel>
-              <CFormInput type="text" size="sm"
+            <CInputGroup>
+                    <CFormInput type="text" size="sm"
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1279,6 +1238,23 @@ const VehicleInventory = () => {
                 }}
                 placeholder="HSN Number" className='mb-2' />
 
+                
+                     <CFormInput type="text" size="sm"
+                onChange={(e) =>
+                  setsave_data((prev) => ({
+                    ...prev,
+                    partnum: e.target.value,
+                  }))
+                }
+                // onKeyUp={(e) => {
+                //   const result = validateHSN(e.target.value);
+                //   if (e.target.value.length > 7 && !result.isValid) {
+                //     toast.error('HSN Number Invalid!');
+                //   }
+                // }}
+                placeholder="Part Number" className='mb-2' />
+              </CInputGroup>
+             
               <CFormLabel className="col-form-label">
                 Insurance
               </CFormLabel>
