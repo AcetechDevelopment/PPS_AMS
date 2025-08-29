@@ -12,6 +12,7 @@ const dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 // master
 
 const Usermaster=React.lazy(() => import('./views/master/Usermaster'))
+const Profile=React.lazy(()=>import("./views/master/Profile"))
 
 
 const Generalmaster = React.lazy(() => import('./views/master/general_master'))
@@ -50,6 +51,8 @@ const routes = [
    { path: '/tyreassign', name: 'Tyreassign', element: Tyreassign },
 
     {path:"/usermaster",name:"Usermaster",element:Usermaster},
+    {path:"/profile",name:"Profile",element:Profile},
+
 
    { path: '/processlist', name: 'Processing', element: process_list },
    { path: '/neglist', name: 'negativewaste', element: negativelist },
