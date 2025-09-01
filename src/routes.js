@@ -13,7 +13,7 @@ const dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 
 const Usermaster=React.lazy(() => import('./views/master/Usermaster'))
 const Profile=React.lazy(()=>import("./views/master/Profile"))
-
+const Settings=React.lazy(()=>import("./views/master/Settings"))
 
 const Generalmaster = React.lazy(() => import('./views/master/general_master'))
 const Toolmaster = React.lazy(() => import('./views/master/Toolrooms'))
@@ -52,6 +52,7 @@ const routes = [
 
     {path:"/usermaster",name:"Usermaster",element:Usermaster},
     {path:"/profile",name:"Profile",element:Profile},
+     {path:"/settings",name:"Settings",element:Settings},
 
 
    { path: '/processlist', name: 'Processing', element: process_list },

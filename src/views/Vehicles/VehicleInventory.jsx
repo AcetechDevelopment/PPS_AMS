@@ -145,7 +145,7 @@ const VehicleInventory = () => {
     });
 
     try {
-      const response = await fetch(`${apiUrl}vehicle/create`, {
+      const response = await fetch(`${BASE}vehicle/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -200,15 +200,15 @@ const VehicleInventory = () => {
 
   };
 
+   useEffect(()=>{getcategorylist()},[save_data.type])
 
-
-
+   useEffect(()=>{console.log(save_data)},[save_data])
 
   const getcategorylist = async () => {
     setcategoryoption([]);
     try {
       const response = await fetch(
-        `${apiUrl}options/category`,
+        `${BASE}vehicle/categories`,
         {
           method: 'GET',
           headers: {
@@ -221,16 +221,18 @@ const VehicleInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.id,
-        label: item.category
+      console.log(result)
+    
+      const datas = result?.map(item => ({
+        value:item. value,
+        label: item.label
       }));
       setcategoryoption(datas);
     }
     catch (err) {
 
     }
-  };
+  }
 
 
 
@@ -239,9 +241,10 @@ const VehicleInventory = () => {
 
   const getbrandlist = async (catid) => {
     setbrandoption([]);
+   
     try {
       const response = await fetch(
-        `${apiUrl}options/brand/${catid}`,
+        `${apiUrl}vehicle/brands/${catid}`,
         {
           method: 'GET',
           headers: {
@@ -254,9 +257,10 @@ const VehicleInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.brand_id,
-        label: item.brand
+      console.log(result)
+      const datas = result.map(item => ({
+        value: item.value,
+        label: item.label
       }));
       setbrandoption(datas);
     }
@@ -349,7 +353,7 @@ const VehicleInventory = () => {
     setmodeloption([]);
     try {
       const response = await fetch(
-        `${apiUrl}options/model/${brandid}`,
+        `${BASE}vehicle/models/${brandid}`,
         {
           method: 'GET',
           headers: {
@@ -362,9 +366,9 @@ const VehicleInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.id,
-        label: item.model
+      const datas = result.map(item => ({
+        value: item.value,
+        label: item.label
       }));
       setmodeloption(datas);
     }
@@ -720,8 +724,9 @@ const VehicleInventory = () => {
           'Authorization': `Bearer ${authToken}`,
         },
         body: formData,
+       
       });
-
+        console.log(formData)
       if (response.ok) {
         const result = await response.json();
         toast.success('Vehicle Updated!');
@@ -1054,7 +1059,7 @@ const VehicleInventory = () => {
                 size="sm"
                 className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.brand}
+                // value={save_data.brand}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -1443,14 +1448,14 @@ const VehicleInventory = () => {
                 placeholder="Select Category"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={categoryoption.find(option => option.value === updated_data.category) || null}
+                // value={categoryoption.find(option => option.value === updated_data.category) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
                     category: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    ebrandoption(selectedOption.value);
+                    getbrandlist(selectedOption.value);
                   }
                 }}
               />
@@ -1458,16 +1463,16 @@ const VehicleInventory = () => {
               <CFormLabel className="col-form-label">
                 Brand
               </CFormLabel>
-              <Select options={ebrandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
+              <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={ebrandoption.find(option => option.value === updated_data.brand) || null}
+                // value={brandoption.find(option => option.value === updated_data.brand) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
                     brand: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    egetmodellist(selectedOption.value);
+                    getmodellist(selectedOption.value);
                   }
                 }}
               />
@@ -1476,7 +1481,7 @@ const VehicleInventory = () => {
                 Model
               </CFormLabel>
 
-              <Select options={emodeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
+              <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 value={emodeloption.find(option => option.value === updated_data.modal) || null}
                 onChange={(selectedOption) => {

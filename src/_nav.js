@@ -19,6 +19,7 @@ import {
   cilCarAlt,
   cilPeople,
   cilTablet,
+    cilSettings,
   cilFolderOpen,
   cibTodoist,cilUser,
 } from '@coreui/icons'
@@ -64,7 +65,7 @@ const _nav = [
       }, 
       {
         component: CNavItem,
-        name: 'Vehicle Spare Assign',
+        name: ' Spare Assign',
         to: '/spareasign',
       },
       {
@@ -205,6 +206,12 @@ const _nav = [
     name: 'Workshops',
     to: '/workshop',
     icon: <CIcon icon={cilGarage} customClassName="nav-icon" />,
+  },
+    {
+    component: CNavItem,
+    name: 'Settings',
+    to: '/settings',
+    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
   // {
   //   component: CNavItem,
