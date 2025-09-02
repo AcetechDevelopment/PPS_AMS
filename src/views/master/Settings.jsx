@@ -4,6 +4,7 @@ import Select from "react-select";
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { checkPropTypes } from 'prop-types';
 const Settings = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const BASE = import.meta.env.VITE_BASE_URL;
@@ -53,6 +54,7 @@ const Settings = () => {
         { value: "technician", label: "Technician" },
         { value: "user", label: "User" },
     ];
+    const [checkedItems, setCheckedItems] = useState([]);
 
     //how much rowspan should heading occupy..menus children
     const getHeadingRowSpan = (heading) => {
@@ -66,6 +68,13 @@ const Settings = () => {
         setselectedrole(selectedOption);
         setisselectrole(true)
     };
+
+    const handlecheckbox = (name, isChecked) => {
+
+       setCheckedItems((pre)=>(pre.map((item2.children?.map((item3.children?.map((item4)=>(ischecked?)))))))
+    }
+
+    useEffect(() => { console.log(checkedItems) }, [checkedItems])
     return (
         <div>
             <CCard>
@@ -87,17 +96,17 @@ const Settings = () => {
                                 <tr style={{ background: "#5a646d", color: "#fff" }}>
                                     <th></th>
                                     <th colSpan={2} style={{ textAlign: "center" }}>Menu</th>
-                                    <th colSpan={5} style={{ textAlign: "center" }}>Action</th>
+                                    {/* <th colSpan={5} style={{ textAlign: "center" }}>Action</th> */}
                                 </tr>
                                 <tr style={{ background: "#17a2b8", color: "#fff" }}>
                                     <th>Heading</th>
                                     <th>Main menu</th>
                                     <th>Sub Menu</th>
-                                    <th>View</th>
+                                    {/* <th>View</th>
                                     <th>Create</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
-                                    <th>Print</th>
+                                    <th>Print</th> */}
                                 </tr>
                             </thead>
 
@@ -117,7 +126,15 @@ const Settings = () => {
                                                         rowSpan={headingRowSpan}  // ✅ correct variable
                                                         style={{ color: "blue", fontWeight: 700, verticalAlign: "top" }}
                                                     >
-                                                        {item.name}
+                                                        <p>{<span style={{ marginRight: ".3rem" }}>
+                                                            <td>
+                                                                <input type="checkbox"
+
+                                                                    checked={checkedItems.includes(item.name)}
+                                                                    onChange={(e) => { handlecheckbox(item.name, e.target.checked) }}
+                                                                    style={{ transform: "scale(1.5)" }} />
+                                                            </td>
+                                                        </span>}{item.name} </p>
                                                     </td>
                                                 )}
 
@@ -127,21 +144,29 @@ const Settings = () => {
                                                         rowSpan={mSpan}
                                                         style={{ color: "red", fontWeight: 700, verticalAlign: "top" }}
                                                     >
-                                                        {menu.name}
+                                                        <p>{menu && <span style={{ marginRight: ".3rem" }}> <td>
+                                                            < input type="checkbox"
+                                                                checked={checkedItems}
+                                                                onChange={(e) => { handlecheckbox(menu.name, e.target.checked) }}
+                                                                style={{ transform: "scale(1.5)" }} /></td></span>}{menu.name}</p>
                                                     </td>
                                                 )}
 
                                                 {/* Sub Menu (may be empty if no children) */}
                                                 <td style={{ color: "green", fontWeight: 700 }}>
-                                                    {sub ? sub.name : ""}
+                                                    <p>{sub && <span style={{ marginRight: ".3rem" }}> 
+                                                        <td><input type="checkbox" 
+                                                        checked={checkedItems.includes(sub.name)}
+                                                                     onChange={(e) => { handlecheckbox(sub.name, e.target.checked) }}
+                                                         style={{ transform: "scale(1.5)" }} /></td></span>}{sub ? sub.name : ""}</p>
                                                 </td>
 
                                                 {/* Actions */}
+                                                {/* <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
                                                 <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
                                                 <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
                                                 <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
-                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
-                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
+                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td> */}
                                             </tr>
                                         ));
                                     });

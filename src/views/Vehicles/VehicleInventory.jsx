@@ -17,7 +17,7 @@ import {
   CRow,
   CCol,
   CFormLabel,
-  CImage,CTableBody,CTableRow,CTableHeaderCell,CTableDataCell
+  CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -61,36 +61,36 @@ const VehicleInventory = () => {
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
-  
-  const[view,setview]=useState(false)
+
+  const [view, setview] = useState(false)
 
   const intial_data = {
-      vno: '',
-      type: '',
-      category: '',
-      brand: '',
-      modal: '',
-      purchasedate: today,
-      warrentyyear: '',
-      amc: '',
-      amcdate: today,
-      tyrecnt: '',
-      stepnycnt: '',
-      fuel: '1',
-      enginenumber: '',
-      chassisnumber: '',
-      hsn: '',
-      partnum:"",
-      insurancenumber: '',
-      insuranceenddate: today,
-      fitness: '',
-      fitnessdate: today,
-      puc: '',
-      pucdate: today,
-      greentax: '',
-      greendate: today,
-      file: null,
-    };
+    vno: '',
+    type: '',
+    category: '',
+    brand: '',
+    modal: '',
+    purchasedate: today,
+    warrentyyear: '',
+    amc: '',
+    amcdate: today,
+    tyrecnt: '',
+    stepnycnt: '',
+    fuel: '1',
+    enginenumber: '',
+    chassisnumber: '',
+    hsn: '',
+    partnum: "",
+    insurancenumber: '',
+    insuranceenddate: today,
+    fitness: '',
+    fitnessdate: today,
+    puc: '',
+    pucdate: today,
+    greentax: '',
+    greendate: today,
+    file: null,
+  };
 
   // new vehicle
   const [save_data, setsave_data] = useState(intial_data);
@@ -175,7 +175,7 @@ const VehicleInventory = () => {
           enginenumber: '',
           chassisnumber: '',
           hsn: '',
-          partnum:"",
+          partnum: "",
           insurancenumber: '',
           insuranceenddate: today,
           fitness: '',
@@ -200,9 +200,9 @@ const VehicleInventory = () => {
 
   };
 
-   useEffect(()=>{getcategorylist()},[save_data.type])
+  useEffect(() => { getcategorylist() }, [save_data.type])
 
-   useEffect(()=>{console.log(save_data)},[save_data])
+  useEffect(() => { console.log(save_data) }, [save_data])
 
   const getcategorylist = async () => {
     setcategoryoption([]);
@@ -222,9 +222,9 @@ const VehicleInventory = () => {
       }
       const result = await response.json();
       console.log(result)
-    
+
       const datas = result?.map(item => ({
-        value:item. value,
+        value: item.value,
         label: item.label
       }));
       setcategoryoption(datas);
@@ -241,7 +241,7 @@ const VehicleInventory = () => {
 
   const getbrandlist = async (catid) => {
     setbrandoption([]);
-   
+
     try {
       const response = await fetch(
         `${apiUrl}vehicle/brands/${catid}`,
@@ -407,7 +407,7 @@ const VehicleInventory = () => {
 
     try {
       const response = await fetch(
-        `${apiUrl}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
+        `${BASE}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
         {
           method: 'GET',
           headers: {
@@ -435,7 +435,7 @@ const VehicleInventory = () => {
   };
 
 
-  
+
 
   const handleUpdate = async () => {
     if (!name || !username || !email || !password || !confirmPassword || (group_id === null || group_id === undefined || group_id === '') || !mobile) {
@@ -503,7 +503,7 @@ const VehicleInventory = () => {
       { Header: 'Chassis number', accessor: 'chassis_num' },
       { Header: 'Wheels count', accessor: 'tyre_count' },
       { Header: 'HSN', accessor: 'hsn' },
-      { Header: 'Part', accessor: 'part' },
+      { Header: 'Part', accessor: 'part_num' },
       { Header: 'Purchase date', accessor: 'purchase_date' },
       {
         Header: () => <FaBars />,
@@ -513,11 +513,11 @@ const VehicleInventory = () => {
 
           return (
             <div className="">
-              <FaEye     size={15}  className="ms-2 me-2 pointer text-info" onClick={() => viewvehicle(id)} />
+              <FaEye size={15} className="ms-2 me-2 pointer text-info" onClick={() => viewvehicle(id)} />
 
-              <FaEdit  size={15}  className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
+              <FaEdit size={15} className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
 
-              <FaTrash   size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
+              <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
 
             </div>
           );
@@ -597,6 +597,7 @@ const VehicleInventory = () => {
   const handleEClose = () => setupdateShow(false);
 
   const editvehicle = async (id) => {
+    console.log("edit btn")
     if (!authToken) {
       ReactSwal.fire({
         title: 'Error',
@@ -635,7 +636,7 @@ const VehicleInventory = () => {
           enginenumber: res.engine_num,
           chassisnumber: res.chassis_num,
           hsn: res.hsn,
-          partnum:res.partnum,
+          partnum: res.part_num,
           insurancenumber: res.insurance,
           insuranceenddate: res.ins_date,
           fitness: res.fc,
@@ -647,8 +648,8 @@ const VehicleInventory = () => {
           image: res.image,
           file: null,
         });
-        egetbrandlist(res.cat_id);
-        egetmodellist(res.brand_id);
+        getbrandlist(res.cat_id);
+        getmodellist(res.brand_id);
         setupdateShow(true);
       } else {
         const error = await response.json();
@@ -716,7 +717,7 @@ const VehicleInventory = () => {
         formData.append(key, value?.toString() || '');
       }
     });
-
+     console.log(formData)
     try {
       const response = await fetch(`${BASE}vehicle/update`, {
         method: 'POST',
@@ -724,11 +725,12 @@ const VehicleInventory = () => {
           'Authorization': `Bearer ${authToken}`,
         },
         body: formData,
-       
+
       });
-        console.log(formData)
+    
       if (response.ok) {
         const result = await response.json();
+          console.log(response)
         toast.success('Vehicle Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
@@ -745,8 +747,8 @@ const VehicleInventory = () => {
     }
 
   };
- 
-  const viewvehicle = async(id) => {
+
+  const viewvehicle = async (id) => {
     setview(true);
     try {
       const response = await fetch(`${BASE}vehicle/edit/${id}`, {
@@ -777,7 +779,7 @@ const VehicleInventory = () => {
           enginenumber: res.engine_num,
           chassisnumber: res.chassis_num,
           hsn: res.hsn,
-          partnum:res.partnum,
+          partnum: res.part_num,
           insurancenumber: res.insurance,
           insuranceenddate: res.ins_date,
           fitness: res.fc,
@@ -789,9 +791,9 @@ const VehicleInventory = () => {
           image: res.image,
           file: null,
         });
-        egetbrandlist(res.cat_id);
-        egetmodellist(res.brand_id);
-        
+        getbrandlist(res.cat_id);
+        getmodellist(res.brand_id);
+
         console.log("success")
       } else {
         const error = await response.json();
@@ -812,7 +814,7 @@ const VehicleInventory = () => {
 
   }
 
-  const handleviewclose=()=>{
+  const handleviewclose = () => {
     setview(false)
   }
 
@@ -862,14 +864,14 @@ const VehicleInventory = () => {
       });
     }
   };
-   const data3 = [
+  const data3 = [
     { id: 1, name: "Car", quantity: 5 },
     { id: 2, name: "Spare", quantity: 12 },
     { id: 3, name: "Trailer", quantity: 2 },
   ];
-  const  handleExport=()=>{
+  const handleExport = () => {
     alert("preparing excel")
-      const worksheet = XLSX.utils.json_to_sheet(data3);
+    const worksheet = XLSX.utils.json_to_sheet(data3);
 
     // Create a new workbook and append the sheet
     const workbook = XLSX.utils.book_new();
@@ -882,7 +884,7 @@ const VehicleInventory = () => {
     const file = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(file, "data3.xlsx");
   }
-  
+
   const generatePDF = () => {
     const doc = new jsPDF();
 
@@ -906,11 +908,11 @@ const VehicleInventory = () => {
 
           <CButtonGroup role="group" aria-label="Basic example">
             <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" 
-            onClick={() => {
-              
-              handleExport();
-            }}>
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+
+                handleExport();
+              }}>
               Excel </CButton>
             <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
             <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Print </CButton>
@@ -942,11 +944,11 @@ const VehicleInventory = () => {
                 return (
                   <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => (
-                  
-                        <td {...cell.getCellProps()}>
-                          {cell.render('Cell')}
-                          </td>
-                 
+
+                      <td {...cell.getCellProps()}>
+                        {cell.render('Cell')}
+                      </td>
+
 
                     ))}
                   </tr>
@@ -1225,41 +1227,36 @@ const VehicleInventory = () => {
 
 
               <CFormLabel className="col-form-label">
-                Part Number
+                HSN Number/  Part Number
               </CFormLabel>
-            <CInputGroup>
-                    <CFormInput type="text" size="sm"
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    hsn: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = validateHSN(e.target.value);
-                  if (e.target.value.length > 7 && !result.isValid) {
-                    toast.error('HSN Number Invalid!');
+              <CInputGroup>
+                <CFormInput type="text" size="sm"
+                  onChange={(e) =>
+                    setsave_data((prev) => ({
+                      ...prev,
+                      hsn: e.target.value,
+                    }))
                   }
-                }}
-                placeholder="HSN Number" className='mb-2' />
+                  onKeyUp={(e) => {
+                    const result = validateHSN(e.target.value);
+                    if (e.target.value.length > 7 && !result.isValid) {
+                      toast.error('HSN Number Invalid!');
+                    }
+                  }}
+                  placeholder="HSN Number" className='mb-2' />
 
+
+                <CFormInput type="text" size="sm"
+                  onChange={(e) =>
+                    setsave_data((prev) => ({
+                      ...prev,
+                      partnum: e.target.value,
+                    }))
+                  }
                 
-                     <CFormInput type="text" size="sm"
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    partnum: e.target.value,
-                  }))
-                }
-                // onKeyUp={(e) => {
-                //   const result = validateHSN(e.target.value);
-                //   if (e.target.value.length > 7 && !result.isValid) {
-                //     toast.error('HSN Number Invalid!');
-                //   }
-                // }}
-                placeholder="Part Number" className='mb-2' />
+                  placeholder="Part Number" className='mb-2' />
               </CInputGroup>
-             
+
               <CFormLabel className="col-form-label">
                 Insurance
               </CFormLabel>
@@ -1402,7 +1399,7 @@ const VehicleInventory = () => {
             <CCol md={6}>
 
               <CFormLabel className="col-form-label">
-                Vehicle Number
+                Vehicle Numbr
               </CFormLabel>
               <CFormInput
                 type="text"
@@ -1448,7 +1445,7 @@ const VehicleInventory = () => {
                 placeholder="Select Category"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                // value={categoryoption.find(option => option.value === updated_data.category) || null}
+                 value={categoryoption.find(option => option.value === updated_data.category) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1465,7 +1462,7 @@ const VehicleInventory = () => {
               </CFormLabel>
               <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                // value={brandoption.find(option => option.value === updated_data.brand) || null}
+               value={brandoption.find(option => option.value === updated_data.brand) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1483,7 +1480,7 @@ const VehicleInventory = () => {
 
               <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={emodeloption.find(option => option.value === updated_data.modal) || null}
+                 value={modeloption.find(option => option.value === updated_data.modal) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1636,25 +1633,40 @@ const VehicleInventory = () => {
                 }
                 placeholder="Chassis number" className='mb-2' />
 
-
               <CFormLabel className="col-form-label">
-                HSN Number
+                HSN Number/ Part Number
               </CFormLabel>
-              <CFormInput type="text" size="sm"
+              <CInputGroup>
+                <CFormInput type="text" size="sm"
                 value={updated_data.hsn}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    hsn: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = validateHSN(e.target.value);
-                  if (e.target.value.length > 7 && !result.isValid) {
-                    toast.error('HSN Number Invalid!');
+                  onChange={(e) =>
+                    setupdated_data((prev) => ({
+                      ...prev,
+                      hsn: e.target.value,
+                    }))
                   }
-                }}
-                placeholder="HSN Number" className='mb-2' />
+                  onKeyUp={(e) => {
+                    const result = validateHSN(e.target.value);
+                    if (e.target.value.length > 7 && !result.isValid) {
+                      toast.error('HSN Number Invalid!');
+                    }
+                  }}
+                  placeholder="HSN Number" className='mb-2' />
+
+
+                <CFormInput type="text" size="sm"
+                value={updated_data.partnum}
+                  onChange={(e) =>
+                    setupdated_data((prev) => ({
+                      ...prev,
+                      partnum: e.target.value,
+                    }))
+                  }
+
+                  placeholder="Part Number" className='mb-2' />
+              </CInputGroup>
+
+
 
               <CFormLabel className="col-form-label">
                 Insurance
@@ -1779,84 +1791,85 @@ const VehicleInventory = () => {
         </CModalFooter>
       </CModal>
 
-   
-{view && (
-  <CModal
-    alignment="center"
-    scrollable
-    visible={view}
-    size="md"
-    onClose={() => handleviewclose()}
-    aria-labelledby="NewProcessing"
-  >
-    <CModalHeader className="bg-secondary">
-      {updated_data.image ? (
-        <CImage
-          rounded
-          src={`${file_base_url}uploads/${updated_data.image}`}
-          width={50}
-          height={50}
-          className="me-2"
-        />
-      ) : (
-        ""
+
+      {view && (
+        <CModal
+          alignment="center"
+          scrollable
+          visible={view}
+          size="md"
+          onClose={() => handleviewclose()}
+          aria-labelledby="NewProcessing"
+        >
+          <CModalHeader className="bg-secondary">
+            {updated_data.image ? (
+              <CImage
+                rounded
+                src={`${file_base_url}uploads/${updated_data.image}`}
+                width={50}
+                height={50}
+                className="me-2"
+              />
+            ) : (
+              ""
+            )}
+            <CModalTitle id="ViewVehicle">{updated_data.vno}</CModalTitle>
+          </CModalHeader>
+
+          <CModalBody>
+            <CTable bordered hover>
+              <CTableBody>
+                {[
+                  { label: "Vehicle Number", value: updated_data.vno },
+                  { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
+                  { label: "Category", value: categoryoption.find((c) => c.value === updated_data.category)?.label },
+                  { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brand)?.label },
+                  { label: "Model", value: modeloption.find((m) => m.value === updated_data.modal)?.label },
+                  { label: "Purchase Date", value: updated_data.purchasedate },
+                  { label: "Months of Warranty", value: updated_data.warrentyyear },
+                  { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
+                  { label: "Tyre / Stepney Count", value: `${updated_data.tyrecnt} / ${updated_data.stepnycnt}` },
+                  { label: "Fuel Type", value: { 1: "Diesel", 2: "Petrol", 3: "Gas", 4: "Battery" }[updated_data.fuel] },
+                  { label: "Engine Number", value: updated_data.enginenumber },
+                  { label: "Chassis Number", value: updated_data.chassisnumber },
+                  { label: "HSN Number", value: updated_data.hsn },
+                   { label: "Part Number", value: updated_data.partnum },
+                  { label: "Insurance", value: `${updated_data.insurancenumber} | ${updated_data.insuranceenddate}` },
+                  { label: "Fitness Certificate", value: `${updated_data.fitness} | ${updated_data.fitnessdate}` },
+                  { label: "Pollution Certificate", value: `${updated_data.puc} | ${updated_data.pucdate}` },
+                  { label: "Green Tax", value: `${updated_data.greentax} | ${updated_data.greendate}` },
+                ].map((item, idx) => (
+                  <CTableRow key={idx}>
+                    <CTableHeaderCell className="fw-bold" style={{ width: "30%" }}>
+                      {item.label}
+                    </CTableHeaderCell>
+                    <CTableDataCell>{item.value || "-"}</CTableDataCell>
+                  </CTableRow>
+                ))}
+
+                {updated_data.image && (
+                  <CTableRow>
+                    <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
+                    <CTableDataCell>
+                      <CImage
+                        rounded
+                        src={`${file_base_url}uploads/${updated_data.image}`}
+                        width={200}
+                      />
+                    </CTableDataCell>
+                  </CTableRow>
+                )}
+              </CTableBody>
+            </CTable>
+          </CModalBody>
+
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setVisible(false)}>
+              Close
+            </CButton>
+          </CModalFooter>
+        </CModal>
       )}
-      <CModalTitle id="ViewVehicle">{updated_data.vno}</CModalTitle>
-    </CModalHeader>
-
-    <CModalBody>
-      <CTable bordered hover>
-        <CTableBody>
-          {[
-            { label: "Vehicle Number", value: updated_data.vno },
-            { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
-            { label: "Category", value: categoryoption.find((c) => c.value === updated_data.category)?.label },
-            { label: "Brand", value: ebrandoption.find((b) => b.value === updated_data.brand)?.label },
-            { label: "Model", value: emodeloption.find((m) => m.value === updated_data.modal)?.label },
-            { label: "Purchase Date", value: updated_data.purchasedate },
-            { label: "Months of Warranty", value: updated_data.warrentyyear },
-            { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
-            { label: "Tyre / Stepney Count", value: `${updated_data.tyrecnt} / ${updated_data.stepnycnt}` },
-            { label: "Fuel Type", value: { 1: "Diesel", 2: "Petrol", 3: "Gas", 4: "Battery" }[updated_data.fuel] },
-            { label: "Engine Number", value: updated_data.enginenumber },
-            { label: "Chassis Number", value: updated_data.chassisnumber },
-            { label: "HSN Number", value: updated_data.hsn },
-            { label: "Insurance", value: `${updated_data.insurancenumber} | ${updated_data.insuranceenddate}` },
-            { label: "Fitness Certificate", value: `${updated_data.fitness} | ${updated_data.fitnessdate}` },
-            { label: "Pollution Certificate", value: `${updated_data.puc} | ${updated_data.pucdate}` },
-            { label: "Green Tax", value: `${updated_data.greentax} | ${updated_data.greendate}` },
-          ].map((item, idx) => (
-            <CTableRow key={idx}>
-              <CTableHeaderCell className="fw-bold" style={{ width: "30%" }}>
-                {item.label}
-              </CTableHeaderCell>
-              <CTableDataCell>{item.value || "-"}</CTableDataCell>
-            </CTableRow>
-          ))}
-
-          {updated_data.image && (
-            <CTableRow>
-              <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
-              <CTableDataCell>
-                <CImage
-                  rounded
-                  src={`${file_base_url}uploads/${updated_data.image}`}
-                  width={200}
-                />
-              </CTableDataCell>
-            </CTableRow>
-          )}
-        </CTableBody>
-      </CTable>
-    </CModalBody>
-
-    <CModalFooter>
-      <CButton color="secondary" onClick={() => setVisible(false)}>
-        Close
-      </CButton>
-    </CModalFooter>
-  </CModal>
-)}
 
     </>
   )
