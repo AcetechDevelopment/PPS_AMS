@@ -11,11 +11,21 @@ const Settings = () => {
     const ReactSwal = withReactContent(Swal);
     const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
     const [allmenus, setallmenus] = useState([])
-    const [selectedrole, setselectedrole] = useState("")
+    const [roleoptions, setroleoptions] = useState([])
+    const[selectedrole,setselectedrole]=useState("")
     const [isselectrole, setisselectrole] = useState(false)
+   
+    const initNodes = (nodes = []) =>
+        nodes.map((n) => ({
+            ...n,
+            isChecked: !!n.isChecked,
+            indeterminate: !!n.indeterminate,
+            children: n.children ? initNodes(n.children) : undefined,
+        }));
+
     const fetchmenus = async () => {
         try {
-            const response = await fetch(`${BASE}permission/lists`, {
+            const response = await fetch(`${BASE}permission/role`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -26,7 +36,7 @@ const Settings = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log(data)
-                setallmenus(data)
+                setallmenus(initNodes(data))
 
             } else {
                 const error = await response.json();
@@ -45,17 +55,41 @@ const Settings = () => {
             });
         }
     }
+    const getrolelist = async () => {
+        try {
+            const response = fetch(`${BASE}vehicle/models`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                }
+            })
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+            const result = await response.json();
+            const datas = result?.map(item => ({
+        value: item.role_id,
+        label: item.name
+      }));
+       setroleoptions(datas)
+        }
+        catch (err) {
 
-    useEffect(() => { fetchmenus() }, [selectedrole])
+        }
 
-    const roleOptions = [
-        { value: "admin", label: "Admin" },
-        { value: "manager", label: "Manager" },
-        { value: "technician", label: "Technician" },
-        { value: "user", label: "User" },
-    ];
-    const [checkedItems, setCheckedItems] = useState([]);
+    }
+    useEffect(() => {
+        fetchmenus()
+        getrolelist()
+    }, [])
 
+    // const roleOptions = [
+    //     { value: "admin", label: "Admin" },
+    //     { value: "manager", label: "Manager" },
+    //     { value: "technician", label: "Technician" },
+    //     { value: "user", label: "User" },
+    // ];
     //how much rowspan should heading occupy..menus children
     const getHeadingRowSpan = (heading) => {
         if (!heading.children) return 1;
@@ -69,12 +103,96 @@ const Settings = () => {
         setisselectrole(true)
     };
 
-    const handlecheckbox = (name, isChecked) => {
+    const handlecheckbox = (clickeditem) => {
+        setallmenus((allstate) => {
+            const toggled = toggleNode(allstate, clickeditem)
+            return updateparents(toggled)
+        }
 
-       setCheckedItems((pre)=>(pre.map((item2.children?.map((item3.children?.map((item4)=>(ischecked?)))))))
+        )
+    }
+    const toggleNode = (prev, clicked) => {
+        return prev.map((heading) => {
+            if (heading.id === clicked.id)
+            //if heading is clicked
+            {
+                const newChecked = !heading.isChecked
+                return {
+                    ...heading,
+                    isChecked: newChecked,
+                    indeterminate: false,
+                    //propagate change downward to all children
+                    children: heading.children?.map((menu) =>
+                        applyDownward(menu, newChecked)
+                        //if it has children then call applyDownward(child,parent toggler)
+                    )
+                }
+            }
+            if (heading.children) {
+                return { ...heading, children: toggleNode(heading.children, clicked) }
+            }
+            return heading
+        })
     }
 
-    useEffect(() => { console.log(checkedItems) }, [checkedItems])
+
+    const applyDownward = (node, checked) => ({
+        ...node,
+        isChecked: checked,
+        indeterminate: false,
+        children: node.children?.map((child) => applyDownward(child, checked)),
+
+    })
+    const updateparents = (nodes) => {
+        return nodes.map((node) => {
+            if (node.children?.length) {
+                const updatedChildren = updateparents(node.children);
+                const allChecked = updatedChildren.every((c) => c.isChecked);
+                const someChecked = updatedChildren.some((c) => c.isChecked || c.indeterminate);
+
+                return {
+                    ...node,
+                    children: updatedChildren,
+                    isChecked: allChecked,
+                    indeterminate: !allChecked && someChecked,
+                };
+            }
+            return node;
+        });
+    }
+
+    // toggleNode → handles the clicked node + downward propagation.
+
+    // applyDownward → applies parent’s state to children.
+
+    // updateparents → recalculates parent’s state after children change.
+
+    // setallmenus((pre)=>(pre.map((item)=>(item.id===heading.id?{...item,isChecked:!item.isChecked}:item))))
+    //   setallmenus((prev)=>(prev.map((heading)=>(heading.id===clickeditem.id?{
+    //     ...heading,
+    //     isChecked:!heading.isChecked,
+    //     children:heading.children?.map((menu)=>({
+    //         ...menu,
+    //         isChecked:!heading.isChecked,
+    //         children:menu.children?.map((submenu)=>({
+    //             ...submenu,
+    //             isChecked:!heading.isChecked,
+
+    //         }))}))}
+    //   :{...heading,
+    //     children:heading.children?.map((menu)=>(menu.id===clickeditem.id?{
+    //     ...menu,
+    //     isChecked:!menu.isChecked,
+    //     children:menu.children?.map((submenu)=>({...submenu,
+    //         isChecked:!menu.isChecked}
+    //     ))
+    //   }:{
+    //     ...menu,children:menu.children?.map((submenu)=>(submenu.id===clickeditem.id?{...submenu,
+    //         isChecked:!submenu.isChecked}:submenu))
+    //   }))}))))
+
+
+
     return (
         <div>
             <CCard>
@@ -83,10 +201,10 @@ const Settings = () => {
                 </CCardHeader>
                 <CCardBody>
                     <CFormLabel className='fw-bold'>Select Role</CFormLabel>
-                    <Select options={roleOptions}
+                    <Select options={roleoptions}
                         className="w-25 mb-3"
                         value={selectedrole}
-                        onChange={handleSelectRole}
+                        onChange={(selectedOption)=>(setselectedrole(selectedOption))}
                         placeholder="select role"
                     />
 
@@ -127,13 +245,13 @@ const Settings = () => {
                                                         style={{ color: "blue", fontWeight: 700, verticalAlign: "top" }}
                                                     >
                                                         <p>{<span style={{ marginRight: ".3rem" }}>
-                                                            <td>
-                                                                <input type="checkbox"
+                                                            <input type="checkbox"
 
-                                                                    checked={checkedItems.includes(item.name)}
-                                                                    onChange={(e) => { handlecheckbox(item.name, e.target.checked) }}
-                                                                    style={{ transform: "scale(1.5)" }} />
-                                                            </td>
+                                                                checked={item.isChecked}
+                                                                ref={el => { if (el) el.indeterminate = item.indeterminate }}
+                                                                onChange={() => { handlecheckbox(item) }}
+                                                                style={{ transform: "scale(1.5)" }} />
+
                                                         </span>}{item.name} </p>
                                                     </td>
                                                 )}
@@ -144,21 +262,23 @@ const Settings = () => {
                                                         rowSpan={mSpan}
                                                         style={{ color: "red", fontWeight: 700, verticalAlign: "top" }}
                                                     >
-                                                        <p>{menu && <span style={{ marginRight: ".3rem" }}> <td>
+                                                        <p>{menu && <span style={{ marginRight: ".3rem" }}>
                                                             < input type="checkbox"
-                                                                checked={checkedItems}
-                                                                onChange={(e) => { handlecheckbox(menu.name, e.target.checked) }}
-                                                                style={{ transform: "scale(1.5)" }} /></td></span>}{menu.name}</p>
+                                                                checked={menu.isChecked}
+                                                                ref={el => { if (el) el.indeterminate = menu.indeterminate }}
+                                                                onChange={() => { handlecheckbox(menu) }}
+                                                                style={{ transform: "scale(1.5)" }} /></span>}{menu.name}</p>
                                                     </td>
                                                 )}
 
                                                 {/* Sub Menu (may be empty if no children) */}
                                                 <td style={{ color: "green", fontWeight: 700 }}>
-                                                    <p>{sub && <span style={{ marginRight: ".3rem" }}> 
-                                                        <td><input type="checkbox" 
-                                                        checked={checkedItems.includes(sub.name)}
-                                                                     onChange={(e) => { handlecheckbox(sub.name, e.target.checked) }}
-                                                         style={{ transform: "scale(1.5)" }} /></td></span>}{sub ? sub.name : ""}</p>
+                                                    <p>{sub && <span style={{ marginRight: ".3rem" }}>
+                                                        <input type="checkbox"
+                                                            checked={sub.isChecked}
+                                                            ref={el => { if (el) el.indeterminate = sub.indeterminate }}
+                                                            onChange={() => { handlecheckbox(sub) }}
+                                                            style={{ transform: "scale(1.5)" }} /></span>}{sub ? sub.name : ""}</p>
                                                 </td>
 
                                                 {/* Actions */}
