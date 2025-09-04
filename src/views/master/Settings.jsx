@@ -1,20 +1,22 @@
-import { CCardHeader, CCardTitle, CTableHeaderCell, CCard, CCardBody, CFormLabel, CTable, CTableRow, CTableHead } from '@coreui/react'
+import { CCardHeader, CCardTitle, CTableHeaderCell, CCard, CCardBody, CFormLabel, CTable, CTableRow, CTableHead, CButton } from '@coreui/react'
 import React, { useEffect } from 'react'
 import Select from "react-select";
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { checkPropTypes } from 'prop-types';
+
+
 const Settings = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const BASE = import.meta.env.VITE_BASE_URL;
     const ReactSwal = withReactContent(Swal);
     const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
     const [allmenus, setallmenus] = useState([])
+    const [checkedlist, setcheckedlist] = useState([])
     const [roleoptions, setroleoptions] = useState([])
-    const[selectedrole,setselectedrole]=useState("")
+    const [selectedrole, setselectedrole] = useState(null)
     const [isselectrole, setisselectrole] = useState(false)
-   
+
     const initNodes = (nodes = []) =>
         nodes.map((n) => ({
             ...n,
@@ -23,9 +25,13 @@ const Settings = () => {
             children: n.children ? initNodes(n.children) : undefined,
         }));
 
+
+
+
     const fetchmenus = async () => {
+        console.log("fetch")
         try {
-            const response = await fetch(`${BASE}permission/role`, {
+            const response = await fetch(`${BASE}permission/lists`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,41 +62,56 @@ const Settings = () => {
         }
     }
     const getrolelist = async () => {
+        console.log("getrolelist")
         try {
-            const response = fetch(`${BASE}vehicle/models`, {
+            const response = await fetch(`${BASE}permission/role`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 }
             })
+            if (response.ok) {
+                const result = await response.json();
+                //  console.log(result.roles)
+                const datas = result?.map(item => ({
+                    value: item.role_id,
+                    label: item.name
+                }));
+                setroleoptions(datas)
+            }
+
+
             if (!response.ok) {
                 throw new Error(`Error: ${response.status} ${response.statusText}`);
             }
-            const result = await response.json();
-            const datas = result?.map(item => ({
-        value: item.role_id,
-        label: item.name
-      }));
-       setroleoptions(datas)
         }
         catch (err) {
-
+            console.error('Error:', err);
+            ReactSwal.fire({
+                title: 'Error',
+                text: 'Failed to connect to the server. Please try again later.',
+                icon: 'error',
+            });
         }
 
     }
+    const handleselectrole = (selectedOption) => {
+        setselectedrole(selectedOption?.value)
+        setisselectrole(true)
+    }
+
+    console.log(roleoptions)
     useEffect(() => {
-        fetchmenus()
         getrolelist()
     }, [])
 
-    // const roleOptions = [
-    //     { value: "admin", label: "Admin" },
-    //     { value: "manager", label: "Manager" },
-    //     { value: "technician", label: "Technician" },
-    //     { value: "user", label: "User" },
-    // ];
-    //how much rowspan should heading occupy..menus children
+    useEffect(() => {
+        fetchmenus()
+        console.log(selectedrole)
+    }, [selectedrole])
+
+
     const getHeadingRowSpan = (heading) => {
         if (!heading.children) return 1;
         return heading.children.reduce((sum, menu) => {
@@ -98,10 +119,7 @@ const Settings = () => {
         }, 0);
     };
 
-    const handleSelectRole = (selectedOption) => {
-        setselectedrole(selectedOption);
-        setisselectrole(true)
-    };
+
 
     const handlecheckbox = (clickeditem) => {
         setallmenus((allstate) => {
@@ -110,6 +128,7 @@ const Settings = () => {
         }
 
         )
+        console.log(allmenus)
     }
     const toggleNode = (prev, clicked) => {
         return prev.map((heading) => {
@@ -144,7 +163,7 @@ const Settings = () => {
 
     })
     const updateparents = (nodes) => {
-        return nodes.map((node) => {
+        return nodes?.map((node) => {
             if (node.children?.length) {
                 const updatedChildren = updateparents(node.children);
                 const allChecked = updatedChildren.every((c) => c.isChecked);
@@ -159,6 +178,65 @@ const Settings = () => {
             }
             return node;
         });
+    }
+
+    const collectallids = (allmenus, visited = new Set()) => {
+        let checked_items = []
+
+        allmenus.forEach((node) => {
+            if (visited.has(node.id)) return; // 🚫 prevent infinite loop
+            visited.add(node.id);
+            if (node.isChecked || node.indeterminate) {
+                checked_items.push(node.id)
+            }
+            if (node.children) {
+                checked_items = checked_items.concat(collectallids(node.children, visited))
+            }
+        }
+
+        )
+        return checked_items
+    }
+
+    // allmenus.map((prev)=>(prev.isChecked?checked_items.push(prev.id):[]))
+    // allmenus.map((prev) => {
+    //     prev.isChecked ? checked_items.push(prev.id) :
+    //         prev.children?.map((menu) => menu.isChecked ? checked_items.push(prev.id, menu.id) :
+    //             menu.children?.map((sub) => sub.isChecked ? checked_items.push(prev.id, menu.id, sub.id) : []))
+    // })
+    const handlesubmit = async () => {
+        const array_list = collectallids(allmenus)
+        console.log(array_list)
+        const payload = {
+            role_id: selectedrole,                // single integer
+            main_menu_ids: array_list,    // array of integers
+        };
+        try {
+            const response = await fetch(`${BASE}role/create`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    'Authorization': `Bearer${authToken}`
+                },
+                body: JSON.stringify(payload)
+            })
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log("Server response:", result);
+            toast.success("Submitted successfully!");
+        }
+        catch (err) {
+            console.error('Error:', err);
+            ReactSwal.fire({
+                title: 'Error',
+                text: 'Failed to connect to the server. Please try again later.',
+                icon: 'error',
+            });
+        }
+
     }
 
     // toggleNode → handles the clicked node + downward propagation.
@@ -191,7 +269,12 @@ const Settings = () => {
     //         isChecked:!submenu.isChecked}:submenu))
     //   }))}))))
 
+   const handleview=(e)=>{
+      const{id,checked}=e.target
+      console.log(checked)
+      console.log(e)
 
+   }
 
     return (
         <div>
@@ -203,8 +286,9 @@ const Settings = () => {
                     <CFormLabel className='fw-bold'>Select Role</CFormLabel>
                     <Select options={roleoptions}
                         className="w-25 mb-3"
-                        value={selectedrole}
-                        onChange={(selectedOption)=>(setselectedrole(selectedOption))}
+                        value={roleoptions.find((item) => item.value === selectedrole)}
+                        // onChange={(selectedOption) => (setselectedrole(selectedOption?.value))}
+                        onChange={(selectedoption) => handleselectrole(selectedoption)}
                         placeholder="select role"
                     />
 
@@ -220,11 +304,10 @@ const Settings = () => {
                                     <th>Heading</th>
                                     <th>Main menu</th>
                                     <th>Sub Menu</th>
-                                    {/* <th>View</th>
-                                    <th>Create</th>
+                                    <th>View</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
-                                    <th>Print</th> */}
+                                    <th>Print</th>
                                 </tr>
                             </thead>
 
@@ -244,7 +327,7 @@ const Settings = () => {
                                                         rowSpan={headingRowSpan}  // ✅ correct variable
                                                         style={{ color: "blue", fontWeight: 700, verticalAlign: "top" }}
                                                     >
-                                                        <p>{<span style={{ marginRight: ".3rem" }}>
+                                                        {/* <p>{<span style={{ marginRight: ".3rem" }}>
                                                             <input type="checkbox"
 
                                                                 checked={item.isChecked}
@@ -252,9 +335,11 @@ const Settings = () => {
                                                                 onChange={() => { handlecheckbox(item) }}
                                                                 style={{ transform: "scale(1.5)" }} />
 
-                                                        </span>}{item.name} </p>
+                                                        </span>}{item.name} </p> */}
+                                                        <p>{item.name}</p>
                                                     </td>
                                                 )}
+
 
                                                 {/* Menu: only once per menu, top-aligned */}
                                                 {sIdx === 0 && (
@@ -262,31 +347,33 @@ const Settings = () => {
                                                         rowSpan={mSpan}
                                                         style={{ color: "red", fontWeight: 700, verticalAlign: "top" }}
                                                     >
-                                                        <p>{menu && <span style={{ marginRight: ".3rem" }}>
+                                                        {/* <p>{menu && <span style={{ marginRight: ".3rem" }}>
                                                             < input type="checkbox"
                                                                 checked={menu.isChecked}
                                                                 ref={el => { if (el) el.indeterminate = menu.indeterminate }}
                                                                 onChange={() => { handlecheckbox(menu) }}
-                                                                style={{ transform: "scale(1.5)" }} /></span>}{menu.name}</p>
+                                                                style={{ transform: "scale(1.5)" }} /></span>}{menu.name}</p> */}
+                                                        <p>{menu.name}</p>
                                                     </td>
                                                 )}
 
                                                 {/* Sub Menu (may be empty if no children) */}
                                                 <td style={{ color: "green", fontWeight: 700 }}>
-                                                    <p>{sub && <span style={{ marginRight: ".3rem" }}>
+                                                    {/* <p>{sub && <span style={{ marginRight: ".3rem" }}>
                                                         <input type="checkbox"
                                                             checked={sub.isChecked}
                                                             ref={el => { if (el) el.indeterminate = sub.indeterminate }}
                                                             onChange={() => { handlecheckbox(sub) }}
-                                                            style={{ transform: "scale(1.5)" }} /></span>}{sub ? sub.name : ""}</p>
+                                                            style={{ transform: "scale(1.5)" }} /></span>}{sub ? sub.name : ""}</p> */}
+                                                    <p>{sub ? sub.name : ""}</p>
                                                 </td>
 
-                                                {/* Actions */}
-                                                {/* <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
-                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
-                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
-                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td>
-                                                <td><input type="checkbox" defaultChecked style={{ transform: "scale(1.5)" }} /></td> */}
+                                                {/* Actions  */}
+                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={(e)=>handleview(e)} /></td>
+                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={()=>handleedit()}/></td>
+                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={()=>handledelete()}/></td>
+                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={()=>handlePrint()}/></td>
+                                                
                                             </tr>
                                         ));
                                     });
@@ -298,7 +385,9 @@ const Settings = () => {
 
                     }
 
-
+                    {/* <div className="d-flex justify-content-end">
+                        <CButton color="primary" variant="outline" onClick={handlesubmit}>Submit</CButton>
+                    </div> */}
 
                 </CCardBody>
             </CCard>

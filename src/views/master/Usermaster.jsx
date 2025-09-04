@@ -120,6 +120,7 @@ const User = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
+      console.log(result)
       setData(result.data);
       setPageCount(result.pageCount);
     } catch (error) {
