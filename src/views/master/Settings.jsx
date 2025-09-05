@@ -4,6 +4,7 @@ import Select from "react-select";
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { toast } from 'react-toastify';
 
 
 const Settings = () => {
@@ -16,14 +17,16 @@ const Settings = () => {
     const [roleoptions, setroleoptions] = useState([])
     const [selectedrole, setselectedrole] = useState(null)
     const [isselectrole, setisselectrole] = useState(false)
+    const [isview, setisview] = useState(false)
+    const [updated_menus, setupdated_menus] = useState([])
 
-    const initNodes = (nodes = []) =>
-        nodes.map((n) => ({
-            ...n,
-            isChecked: !!n.isChecked,
-            indeterminate: !!n.indeterminate,
-            children: n.children ? initNodes(n.children) : undefined,
-        }));
+    // const initNodes = (nodes = []) =>
+    //     nodes.map((n) => ({
+    //         ...n,
+    //         isChecked: !!n.isChecked,
+    //         indeterminate: !!n.indeterminate,
+    //         children: n.children ? initNodes(n.children) : undefined,
+    //     }));
 
 
 
@@ -42,7 +45,7 @@ const Settings = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log(data)
-                setallmenus(initNodes(data))
+                setallmenus(data)
 
             } else {
                 const error = await response.json();
@@ -121,96 +124,16 @@ const Settings = () => {
 
 
 
-    const handlecheckbox = (clickeditem) => {
-        setallmenus((allstate) => {
-            const toggled = toggleNode(allstate, clickeditem)
-            return updateparents(toggled)
-        }
-
-        )
-        console.log(allmenus)
-    }
-    const toggleNode = (prev, clicked) => {
-        return prev.map((heading) => {
-            if (heading.id === clicked.id)
-            //if heading is clicked
-            {
-                const newChecked = !heading.isChecked
-                return {
-                    ...heading,
-                    isChecked: newChecked,
-                    indeterminate: false,
-                    //propagate change downward to all children
-                    children: heading.children?.map((menu) =>
-                        applyDownward(menu, newChecked)
-                        //if it has children then call applyDownward(child,parent toggler)
-                    )
-                }
-            }
-            if (heading.children) {
-                return { ...heading, children: toggleNode(heading.children, clicked) }
-            }
-            return heading
-        })
-    }
-
-
-    const applyDownward = (node, checked) => ({
-        ...node,
-        isChecked: checked,
-        indeterminate: false,
-        children: node.children?.map((child) => applyDownward(child, checked)),
-
-    })
-    const updateparents = (nodes) => {
-        return nodes?.map((node) => {
-            if (node.children?.length) {
-                const updatedChildren = updateparents(node.children);
-                const allChecked = updatedChildren.every((c) => c.isChecked);
-                const someChecked = updatedChildren.some((c) => c.isChecked || c.indeterminate);
-
-                return {
-                    ...node,
-                    children: updatedChildren,
-                    isChecked: allChecked,
-                    indeterminate: !allChecked && someChecked,
-                };
-            }
-            return node;
-        });
-    }
-
-    const collectallids = (allmenus, visited = new Set()) => {
-        let checked_items = []
-
-        allmenus.forEach((node) => {
-            if (visited.has(node.id)) return; // 🚫 prevent infinite loop
-            visited.add(node.id);
-            if (node.isChecked || node.indeterminate) {
-                checked_items.push(node.id)
-            }
-            if (node.children) {
-                checked_items = checked_items.concat(collectallids(node.children, visited))
-            }
-        }
-
-        )
-        return checked_items
-    }
-
-    // allmenus.map((prev)=>(prev.isChecked?checked_items.push(prev.id):[]))
-    // allmenus.map((prev) => {
-    //     prev.isChecked ? checked_items.push(prev.id) :
-    //         prev.children?.map((menu) => menu.isChecked ? checked_items.push(prev.id, menu.id) :
-    //             menu.children?.map((sub) => sub.isChecked ? checked_items.push(prev.id, menu.id, sub.id) : []))
-    // })
     const handlesubmit = async () => {
-        const array_list = collectallids(allmenus)
-        console.log(array_list)
-        const payload = {
-            role_id: selectedrole,                // single integer
-            main_menu_ids: array_list,    // array of integers
+        const updated_menus = collectupdatedmenus(allmenus)
+        setupdated_menus(updated_menus)
+        console.log(updated_menus)
+  const payload = {
+            permissions: updated_menus,       
+            role_id: selectedrole,               
+          
         };
+        console.log(payload)
         try {
             const response = await fetch(`${BASE}role/create`, {
                 method: 'POST',
@@ -239,42 +162,68 @@ const Settings = () => {
 
     }
 
-    // toggleNode → handles the clicked node + downward propagation.
+    function collectupdatedmenus(allmenus,result=[]) {
+        allmenus.forEach((menu) => {
+            if (menu.isView || menu.isEdit || menu.isDelete || menu.isPrint) {
+                result.push({
+                    main_menu_ids: menu.id,
+                    isView: !!menu.isView,
+                    isEdit: !!menu.isEdit,
+                    isDelete: !!menu.isDelete,
+                    isPrint: !!menu.isPrint
+                })
 
-    // applyDownward → applies parent’s state to children.
+            }
+            if(menu.children)
+            {
+                collectupdatedmenus(menu.children,result)
+            }
 
-    // updateparents → recalculates parent’s state after children change.
+        })
+        return result
+    }
 
-    // setallmenus((pre)=>(pre.map((item)=>(item.id===heading.id?{...item,isChecked:!item.isChecked}:item))))
-    //   setallmenus((prev)=>(prev.map((heading)=>(heading.id===clickeditem.id?{
-    //     ...heading,
-    //     isChecked:!heading.isChecked,
-    //     children:heading.children?.map((menu)=>({
-    //         ...menu,
-    //         isChecked:!heading.isChecked,
-    //         children:menu.children?.map((submenu)=>({
-    //             ...submenu,
-    //             isChecked:!heading.isChecked,
+    const updateview = (all_menus, targetId, checked, key) => {
+        return all_menus.map((menu) => {
+            if (menu.id === targetId) {
 
-    //         }))}))}
-    //   :{...heading,
-    //     children:heading.children?.map((menu)=>(menu.id===clickeditem.id?{
-    //     ...menu,
-    //     isChecked:!menu.isChecked,
-    //     children:menu.children?.map((submenu)=>({...submenu,
-    //         isChecked:!menu.isChecked}
-    //     ))
-    //   }:{
-    //     ...menu,children:menu.children?.map((submenu)=>(submenu.id===clickeditem.id?{...submenu,
-    //         isChecked:!submenu.isChecked}:submenu))
-    //   }))}))))
+                return { ...menu, [key]: checked }
+            }
+            if (menu.children) {
+                return {
+                    ...menu,
+                    children: updateview(menu.children, targetId, checked, key)
+                }
+            }
+            return menu
+        })
 
-   const handleview=(e)=>{
-      const{id,checked}=e.target
-      console.log(checked)
-      console.log(e)
+    }
 
-   }
+    useEffect(() => {
+        handlesubmit()
+
+    }, [allmenus])
+
+    // const handleview = (e, sub) => {
+    //     const { name, checked } = e.target
+
+    //     // console.log(sub?.isView)
+    //     // console.log(sub?.id)
+    //     // console.log(e.target)
+
+    //     setallmenus((prev) => updateview(prev, sub?.id, checked))
+
+
+    // }
+    // console.log(allmenus)
+
+    const handlePermissionChange = (e, targetId, action) => {
+        const { checked } = e.target
+        setallmenus((prev) => updateview(prev, targetId, checked, action))
+    }
+
+
 
     return (
         <div>
@@ -336,7 +285,7 @@ const Settings = () => {
                                                                 style={{ transform: "scale(1.5)" }} />
 
                                                         </span>}{item.name} </p> */}
-                                                        <p>{item.name}</p>
+                                                        {item.name}
                                                     </td>
                                                 )}
 
@@ -357,23 +306,83 @@ const Settings = () => {
                                                     </td>
                                                 )}
 
-                                                {/* Sub Menu (may be empty if no children) */}
                                                 <td style={{ color: "green", fontWeight: 700 }}>
-                                                    {/* <p>{sub && <span style={{ marginRight: ".3rem" }}>
+                                                    {sub?.name || ""}
+                                                </td>
+
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        style={{ transform: "scale(1.3)" }}
+                                                        checked={sub?.isView}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isView") }}
+                                                    />
+                                                </td>
+
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        style={{ transform: "scale(1.3)" }}
+                                                        checked={sub?.isEdit}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isEdit") }}
+                                                    />
+                                                </td>
+
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        style={{ transform: "scale(1.3)" }}
+                                                        checked={sub?.isDelete}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isDelete") }}
+                                                    />
+                                                </td>
+
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        style={{ transform: "scale(1.3)" }}
+                                                        checked={sub?.isPrint}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isPrint") }}
+                                                    />
+                                                </td>
+                                                {/* Sub Menu (may be empty if no children) */}
+                                                {/* <p>{sub && <span style={{ marginRight: ".3rem" }}>
                                                         <input type="checkbox"
                                                             checked={sub.isChecked}
                                                             ref={el => { if (el) el.indeterminate = sub.indeterminate }}
                                                             onChange={() => { handlecheckbox(sub) }}
                                                             style={{ transform: "scale(1.5)" }} /></span>}{sub ? sub.name : ""}</p> */}
-                                                    <p>{sub ? sub.name : ""}</p>
-                                                </td>
+                                                {/* 
+                                                <td style={{ color: "green", fontWeight: 700 }}>
 
-                                                {/* Actions  */}
-                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={(e)=>handleview(e)} /></td>
-                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={()=>handleedit()}/></td>
-                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={()=>handledelete()}/></td>
-                                                <td><input type="checkbox" style={{ transform: "scale(1.5)" }} onChange={()=>handlePrint()}/></td>
-                                                
+                                                    <p>{sub ? sub.name : ""}
+                                                        <td>
+                                                            <input type="checkbox"
+                                                                style={{ transform: "scale(1.5)" }}
+                                                                onChange={(e) => handleview(e, sub)}
+                                                                checked={sub?.isview} />
+                                                        </td>
+
+                                                        <td>
+                                                            <input type="checkbox" style={{ transform: "scale(1.5)" }}
+                                                                onChange={(e) => handleedit(e,sub)} />
+                                                        </td>
+
+                                                         <td><input type="checkbox" style={{ transform: "scale(1.5)" }} 
+                                                         onChange={() => handledelete()} /></td>
+
+                                                         <td><input type="checkbox" style={{ transform: "scale(1.5)" }}
+                                                          onChange={() => handlePrint()} /></td>
+                                                    </p>
+
+                                                </td>
+                                                Actions  */}
+
+
+
+
+
+
                                             </tr>
                                         ));
                                     });
@@ -384,7 +393,6 @@ const Settings = () => {
                         </table>
 
                     }
-
                     {/* <div className="d-flex justify-content-end">
                         <CButton color="primary" variant="outline" onClick={handlesubmit}>Submit</CButton>
                     </div> */}
