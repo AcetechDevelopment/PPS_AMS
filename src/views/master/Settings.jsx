@@ -1,10 +1,11 @@
 import { CCardHeader, CCardTitle, CTableHeaderCell, CCard, CCardBody, CFormLabel, CTable, CTableRow, CTableHead, CButton } from '@coreui/react'
-import React, { useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import Select from "react-select";
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { toast } from 'react-toastify';
+import { Sharedcontext } from '../../components/Context';
 
 
 const Settings = () => {
@@ -20,10 +21,7 @@ const Settings = () => {
     const [isview, setisview] = useState(false)
     const [updated_menus, setupdated_menus] = useState([])
 
-   
-
-
-
+    const { role_selected, setroleSelected } = useContext(Sharedcontext)
 
     const fetchmenus = async () => {
         console.log("fetch")
@@ -95,6 +93,7 @@ const Settings = () => {
     }
     const handleselectrole = (selectedOption) => {
         setselectedrole(selectedOption?.value)
+        setroleSelected(selectedOption?.value)
         setisselectrole(true)
     }
 
@@ -106,6 +105,7 @@ const Settings = () => {
     useEffect(() => {
         fetchmenus()
         console.log(selectedrole)
+        console.log(role_selected)
     }, [selectedrole])
 
 
@@ -128,6 +128,7 @@ const Settings = () => {
 
         };
         console.log(payload)
+
         try {
             const response = await fetch(`${BASE}role/create`, {
                 method: 'POST',
@@ -199,11 +200,17 @@ const Settings = () => {
         })
 
     }
-
     useEffect(() => {
-        handlesubmit()
+        if (allmenus.length > 0 && selectedrole) {
+            const timer = setTimeout(() => { handlesubmit() }, 800)
+            return () => clearTimeout(timer)
+        }
+    }, [allmenus, selectedrole]);
 
-    }, [allmenus])
+    // useEffect(() => {
+    //     handlesubmit()
+
+    // }, [allmenus])
 
     // const handleview = (e, sub) => {
     //     const { name, checked } = e.target
@@ -314,8 +321,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?sub.isView:menu.isView}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isView") }}
+                                                        checked={sub ? sub.isView : menu.isView}
+                                                        onChange={(e) => { handlePermissionChange(e, sub ? sub.id : menu.id, "isView") }}
                                                     />
                                                 </td>
 
@@ -323,8 +330,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?sub.isEdit:menu.isEdit}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isEdit") }}
+                                                        checked={sub ? sub.isEdit : menu.isEdit}
+                                                        onChange={(e) => { handlePermissionChange(e, sub ? sub.id : menu.id, "isEdit") }}
                                                     />
                                                 </td>
 
@@ -332,8 +339,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?sub.isDelete:menu.isDelete}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isDelete") }}
+                                                        checked={sub ? sub.isDelete : menu.isDelete}
+                                                        onChange={(e) => { handlePermissionChange(e, sub ? sub.id : menu.id, "isDelete") }}
                                                     />
                                                 </td>
 
@@ -341,8 +348,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?sub.isPrint:menu.isPrint}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isPrint") }}
+                                                        checked={sub ? sub.isPrint : menu.isPrint}
+                                                        onChange={(e) => { handlePermissionChange(e, sub ? sub.id : menu.id, "isPrint") }}
                                                     />
                                                 </td>
                                                 {/* Sub Menu (may be empty if no children) */}

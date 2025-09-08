@@ -26,8 +26,9 @@ const isNumberKey = (e) => {
 }
 
 const Context = ({ children }) => {
+  const[role_selected,setroleSelected] =useState (0)
   return (
-    <Sharedcontext.Provider value={{ isNumberKey}}>{children}</Sharedcontext.Provider>
+    <Sharedcontext.Provider value={{ isNumberKey,role_selected,setroleSelected}}>{children}</Sharedcontext.Provider>
   )
 }
 

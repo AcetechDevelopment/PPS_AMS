@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createRef, useMemo } from 'react'
+import React, { useEffect, useState, createRef, useMemo, useContext } from 'react'
 import {
   CButton,
   CModal,
@@ -34,6 +34,7 @@ const BASE = import.meta.env.VITE_BASE_URL;
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { toast } from 'react-toastify';
+import { Sharedcontext } from '../../components/Context';
 
 
 const VehicleInventory = () => {
@@ -63,7 +64,9 @@ const VehicleInventory = () => {
   const [id, setid] = useState('');
 
   const [view, setview] = useState(false)
-
+  const [action_details, setactiondetails] = useState({})
+  const { role_selected } = useContext(Sharedcontext)
+  console.log(role_selected)
   const intial_data = {
     vno: '',
     type: '',
@@ -208,7 +211,7 @@ const VehicleInventory = () => {
     setcategoryoption([]);
     try {
       const response = await fetch(
-        `${BASE}vehicle/categories`,
+        `${BASE}options/category`,
         {
           method: 'GET',
           headers: {
@@ -244,7 +247,7 @@ const VehicleInventory = () => {
 
     try {
       const response = await fetch(
-        `${apiUrl}vehicle/brands/${catid}`,
+        `${apiUrl}options/brand/${catid}`,
         {
           method: 'GET',
           headers: {
@@ -353,7 +356,7 @@ const VehicleInventory = () => {
     setmodeloption([]);
     try {
       const response = await fetch(
-        `${BASE}vehicle/models/${brandid}`,
+        `${BASE}options/model/${brandid}`,
         {
           method: 'GET',
           headers: {
@@ -491,6 +494,8 @@ const VehicleInventory = () => {
     }
   };
 
+  //completely hide the icon
+  //   
 
   const columns = useMemo(
     () => [
@@ -510,14 +515,43 @@ const VehicleInventory = () => {
         id: 'actions',
         Cell: ({ row }) => {
           const id = row.original.id;
-
+         if(!action_details)return null
           return (
             <div className="">
-              <FaEye size={15} className="ms-2 me-2 pointer text-info" onClick={() => viewvehicle(id)} />
+              {/* <FaEye size={15} className={`ms-2 me-2 pointer ${action_details?.isView?"text-info":"text-secondary opacity-50"}`} onClick={() => {
+                if(action_details?.isView)
+                {
+                  console.log("working")
+                   viewvehicle(id)
+                }
+               }} /> */}
+              
+              {action_details?.isView && (
+                <FaEye
+                  size={15}
+                  className="ms-2 me-2 pointer text-info"
+                  onClick={() => viewvehicle(id)}
+                />
+              )}
+              {action_details?.isView && (
+                <FaEdit
+                  size={15}
+                  className="ms-2 me-2 pointer text-info"
+                  onClick={() => editvehicle(id)}
+                />
+              )}
 
+              {action_details?.isView && (
+                <FaTrash
+                  size={15}
+                  className="ms-2 me-2 pointer text-info"
+                  onClick={() => deletevehicle(id)}
+                />
+              )}
+{/* 
               <FaEdit size={15} className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
 
-              <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
+              <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} /> */}
 
             </div>
           );
@@ -525,7 +559,7 @@ const VehicleInventory = () => {
         disableSortBy: true,
       },
     ],
-    []
+    [action_details]
   );
 
 
@@ -717,7 +751,7 @@ const VehicleInventory = () => {
         formData.append(key, value?.toString() || '');
       }
     });
-     console.log(formData)
+    console.log(formData)
     try {
       const response = await fetch(`${BASE}vehicle/update`, {
         method: 'POST',
@@ -727,10 +761,10 @@ const VehicleInventory = () => {
         body: formData,
 
       });
-    
+
       if (response.ok) {
         const result = await response.json();
-          console.log(response)
+        console.log(response)
         toast.success('Vehicle Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
@@ -891,6 +925,46 @@ const VehicleInventory = () => {
     doc.text(data3);
     doc.save("vehicleinventory.pdf");
   };
+
+  const fetchActionDetails = async () => {
+    console.log("fetch")
+    try {
+      const response = await fetch(`${BASE}permission/lists/${role_selected}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("fetching")
+        const data = await response.json();
+        const veh_invent = data[1].children[0].children[0]
+        console.log(veh_invent)
+        console.log(veh_invent?.isView)
+        setactiondetails(veh_invent)
+
+
+      } else {
+        const error = await response.json();
+        ReactSwal.fire({
+          title: 'Error',
+          text: error.message || 'Unable to reach user data',
+          icon: 'error',
+        });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
+    }
+  }
+  useEffect(() => { fetchActionDetails() }, [role_selected])
+  // useEffect(()=>{console.log(action_details?.isView)},[action_details])
   return (
     <>
       <CCard className="mb-4">
@@ -915,7 +989,7 @@ const VehicleInventory = () => {
               }}>
               Excel </CButton>
             <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Print </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow} disabled={!action_details?.isPrint}> Print </CButton>
           </CButtonGroup>
 
 
@@ -1253,7 +1327,7 @@ const VehicleInventory = () => {
                       partnum: e.target.value,
                     }))
                   }
-                
+
                   placeholder="Part Number" className='mb-2' />
               </CInputGroup>
 
@@ -1445,7 +1519,7 @@ const VehicleInventory = () => {
                 placeholder="Select Category"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                 value={categoryoption.find(option => option.value === updated_data.category) || null}
+                value={categoryoption.find(option => option.value === updated_data.category) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1462,7 +1536,7 @@ const VehicleInventory = () => {
               </CFormLabel>
               <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-               value={brandoption.find(option => option.value === updated_data.brand) || null}
+                value={brandoption.find(option => option.value === updated_data.brand) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1480,7 +1554,7 @@ const VehicleInventory = () => {
 
               <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                 value={modeloption.find(option => option.value === updated_data.modal) || null}
+                value={modeloption.find(option => option.value === updated_data.modal) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1638,7 +1712,7 @@ const VehicleInventory = () => {
               </CFormLabel>
               <CInputGroup>
                 <CFormInput type="text" size="sm"
-                value={updated_data.hsn}
+                  value={updated_data.hsn}
                   onChange={(e) =>
                     setupdated_data((prev) => ({
                       ...prev,
@@ -1655,7 +1729,7 @@ const VehicleInventory = () => {
 
 
                 <CFormInput type="text" size="sm"
-                value={updated_data.partnum}
+                  value={updated_data.partnum}
                   onChange={(e) =>
                     setupdated_data((prev) => ({
                       ...prev,
@@ -1833,7 +1907,7 @@ const VehicleInventory = () => {
                   { label: "Engine Number", value: updated_data.enginenumber },
                   { label: "Chassis Number", value: updated_data.chassisnumber },
                   { label: "HSN Number", value: updated_data.hsn },
-                   { label: "Part Number", value: updated_data.partnum },
+                  { label: "Part Number", value: updated_data.partnum },
                   { label: "Insurance", value: `${updated_data.insurancenumber} | ${updated_data.insuranceenddate}` },
                   { label: "Fitness Certificate", value: `${updated_data.fitness} | ${updated_data.fitnessdate}` },
                   { label: "Pollution Certificate", value: `${updated_data.puc} | ${updated_data.pucdate}` },
