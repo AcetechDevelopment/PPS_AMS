@@ -20,13 +20,7 @@ const Settings = () => {
     const [isview, setisview] = useState(false)
     const [updated_menus, setupdated_menus] = useState([])
 
-    // const initNodes = (nodes = []) =>
-    //     nodes.map((n) => ({
-    //         ...n,
-    //         isChecked: !!n.isChecked,
-    //         indeterminate: !!n.indeterminate,
-    //         children: n.children ? initNodes(n.children) : undefined,
-    //     }));
+   
 
 
 
@@ -34,7 +28,7 @@ const Settings = () => {
     const fetchmenus = async () => {
         console.log("fetch")
         try {
-            const response = await fetch(`${BASE}permission/lists`, {
+            const response = await fetch(`${BASE}permission/lists/${selectedrole}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -128,10 +122,10 @@ const Settings = () => {
         const updated_menus = collectupdatedmenus(allmenus)
         setupdated_menus(updated_menus)
         console.log(updated_menus)
-  const payload = {
-            permissions: updated_menus,       
-            role_id: selectedrole,               
-          
+        const payload = {
+            permissions: updated_menus,
+            role_id: selectedrole,
+
         };
         console.log(payload)
         try {
@@ -162,9 +156,20 @@ const Settings = () => {
 
     }
 
-    function collectupdatedmenus(allmenus,result=[]) {
-        allmenus.forEach((menu) => {
-            if (menu.isView || menu.isEdit || menu.isDelete || menu.isPrint) {
+    function collectupdatedmenus(allmenus, result = []) {
+        allmenus.forEach((heading) => (heading.children?.map((menu) => menu.children ? (menu.children.forEach((submenu) => {
+            if (submenu.isView || submenu.isEdit || submenu.isDelete || submenu.isPrint) {
+                result.push({
+                    main_menu_ids: submenu.id,
+                    isView: !!submenu.isView,
+                    isEdit: !!submenu.isEdit,
+                    isDelete: !!submenu.isDelete,
+                    isPrint: !!submenu.isPrint
+                })
+
+            }
+        }))
+            : ((menu.isView || menu.isEdit || menu.isDelete || menu.isPrint) &&
                 result.push({
                     main_menu_ids: menu.id,
                     isView: !!menu.isView,
@@ -172,21 +177,16 @@ const Settings = () => {
                     isDelete: !!menu.isDelete,
                     isPrint: !!menu.isPrint
                 })
+            )
 
-            }
-            if(menu.children)
-            {
-                collectupdatedmenus(menu.children,result)
-            }
-
-        })
+        )
+        ))
         return result
     }
 
     const updateview = (all_menus, targetId, checked, key) => {
         return all_menus.map((menu) => {
             if (menu.id === targetId) {
-
                 return { ...menu, [key]: checked }
             }
             if (menu.children) {
@@ -314,8 +314,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?.isView}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isView") }}
+                                                        checked={sub?sub.isView:menu.isView}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isView") }}
                                                     />
                                                 </td>
 
@@ -323,8 +323,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?.isEdit}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isEdit") }}
+                                                        checked={sub?sub.isEdit:menu.isEdit}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isEdit") }}
                                                     />
                                                 </td>
 
@@ -332,8 +332,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?.isDelete}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isDelete") }}
+                                                        checked={sub?sub.isDelete:menu.isDelete}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isDelete") }}
                                                     />
                                                 </td>
 
@@ -341,8 +341,8 @@ const Settings = () => {
                                                     <input
                                                         type="checkbox"
                                                         style={{ transform: "scale(1.3)" }}
-                                                        checked={sub?.isPrint}
-                                                        onChange={(e) => { handlePermissionChange(e, sub?.id, "isPrint") }}
+                                                        checked={sub?sub.isPrint:menu.isPrint}
+                                                        onChange={(e) => { handlePermissionChange(e, sub?sub.id:menu.id, "isPrint") }}
                                                     />
                                                 </td>
                                                 {/* Sub Menu (may be empty if no children) */}
