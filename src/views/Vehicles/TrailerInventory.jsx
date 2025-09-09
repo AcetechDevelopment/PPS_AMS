@@ -1,16 +1,16 @@
-import React, { useEffect, useState, createRef, useMemo  } from 'react'
+import React, { useEffect, useState, createRef, useMemo } from 'react'
 import {
   CButton,
   CModal,
-  CModalBody, 
-  CModalHeader, 
-  CModalTitle,  
-  CTable, 
-  CCard, 
+  CModalBody,
+  CModalHeader,
+  CModalTitle,
+  CTable,
+  CCard,
   CCardHeader,
   CModalFooter,
-  CCardBody, 
-  CButtonGroup, 
+  CCardBody,
+  CButtonGroup,
   CTableHead,
   CFormInput,
   CInputGroup,
@@ -27,12 +27,14 @@ import { isNumberKey, base_url, today } from '../service';
 
 
 const TrailerInventory = () => {
-    const customStyles = {
+
+  const BASE = import.meta.env.VITE_BASE_URL;
+  const customStyles = {
     control: (base) => ({
       ...base,
-      minHeight: '30px', 
+      minHeight: '30px',
       height: '30px',
-      fontSize: '0.8rem', 
+      fontSize: '0.8rem',
     }),
     dropdownIndicator: (base) => ({
       ...base,
@@ -58,16 +60,16 @@ const TrailerInventory = () => {
 
   const [search, setsearch] = useState('');
 
-const [categoryoption, setcategoryoption] = useState([]);
-const [categoryid, setcategoryid] = useState('');
-const apiUrl = import.meta.env.VITE_API_URL;
+  const [categoryoption, setcategoryoption] = useState([]);
+  const [categoryid, setcategoryid] = useState('');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
 
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
   const [location, setlocation] = useState('');
   const [loc_id, setlocationid] = useState('');
-  const [bill_no, setbill_no] = useState('');
+  // const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
   const [material, setmaterial] = useState(1);
   const [date_time, setdate_time] = useState(today);
@@ -75,75 +77,271 @@ const apiUrl = import.meta.env.VITE_API_URL;
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
+  const [typelist, settypelist] = useState([])
+  const [modeloption, setmodeloption] = useState([]);
+
+  const intial_data = {
+    vno: '',
+    type: '',
+    category: '',
+    brand: '',
+    modal: '',
+    purchasedate: today,
+    warrentyyear: '',
+    amc: '',
+    amcdate: today,
+    tyrecnt: '',
+    stepnycnt: '',
+    fuel: '1',
+    enginenumber: '',
+    chassisnumber: '',
+    hsn: '',
+    partnum: "",
+    insurancenumber: '',
+    insuranceenddate: today,
+    fitness: '',
+    fitnessdate: today,
+    puc: '',
+    pucdate: today,
+    greentax: '',
+    greendate: today,
+    file: null,
+  };
+
+  // new vehicle
+  const [save_data, setsave_data] = useState(intial_data);
+  // update vehicle 
+  const [updated_data, setupdated_data] = useState(intial_data);
+
+  const submitvichile = async () => {
+    const data = save_data;
+    if (
+      !data.vno ||
+      !data.type ||
+      !data.enginenumber ||
+      !data.hsn
+    ) {
+      toast.error('All fields are required!');
+      return;
+    }
+
+    const verify = vehicleNum(data.vno);
+    if (!verify.isValid) {
+      toast.error('Vehicle Number Invalid!');
+      return;
+    }
+    const hsnCheck = validateHSN(data.hsn);
+    if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
 
-const getcategorylist = async () =>
-{
-  setcategoryoption([]);
-   try{
-       const response = await fetch(
-      `${apiUrl}options/category`,
-      {
-        method: 'GET',
+    const monthCheck = ValidMonth(data.warrentyyear);
+    if (!monthCheck.isValid) return toast.error('Months Invalid!');
+
+    const tyreCheck = ValidSingleDigit(data.tyrecnt);
+    if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
+
+    const stepnyCheck = ValidSingleDigit(data.stepnycnt);
+    if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
+
+    const formData = new FormData();
+
+    Object.entries(data).forEach(([key, value]) => {
+
+      let finalValue = value;
+      if (value instanceof Date) {
+        finalValue = value.toISOString().split('T')[0];
+      }
+
+
+      if (key === 'file' && value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value?.toString() || '');
+      }
+    });
+
+    try {
+      const response = await fetch(`${BASE}vehicle/create`, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success('New Vehicle created!');
+        fetchData({ pageSize, pageIndex, sortBy, search });
+        setShow(false);
+
+        setsave_data({
+          vno: '',
+          type: '',
+          category: '',
+          brand: '',
+          modal: '',
+          purchasedate: today,
+          warrentyyear: '',
+          amc: '',
+          amcdate: today,
+          tyrecnt: '',
+          stepnycnt: '',
+          fuel: '1',
+          enginenumber: '',
+          chassisnumber: '',
+          hsn: '',
+          partnum: "",
+          insurancenumber: '',
+          insuranceenddate: today,
+          fitness: '',
+          fitnessdate: today,
+          puc: '',
+          pucdate: today,
+          greentax: '',
+          greendate: today,
+          file: null,
+        });
+
+
+      } else {
+        const error = await response.json();
+        const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
+        toast.error(`Error: ${errorMessage}`);
       }
-    );
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Failed to connect to the server. Please try again later.');
     }
-    const result = await response.json();
-    const datas = result.data.map(item => ({
-      value: item.id,
-      label: item.category
-    }));
-    setcategoryoption(datas);
-   }
-   catch(err) {
 
-   }
-};
-const [brandoption, setbrandoption] = useState([]);
-const [brandid, setbrandid] = useState('');
-
-const getbrandlist = async () =>
-{
-  setbrandoption([]);
-   try{
-       const response = await fetch(
-      `${apiUrl}options/brand`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
+  };
+  const getlistoptions = async () => {
+    try {
+      const response = await fetch(
+        `${BASE}options/type`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-    );
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      const result = await response.json();
+      console.log(result)
+
+      const datas = result?.Type?.map(item => ({
+        value: item.id,
+        label: item.type
+      }));
+      settypelist(datas);
     }
-    const result = await response.json();
-    const datas = result.data.map(item => ({
-      value: item.id,
-      label: item.brand
-    }));
-    setbrandoption(datas);
-   }
-   catch(err) {
+    catch (err) {
 
-   }
-}
+    }
 
-useEffect(() => {
-  getcategorylist();
-  getbrandlist();
-},[]);
+  }
 
-  const addnet = () =>{
-    setnet_wt(gross_wt-tare_wt);
+  useEffect(() => {
+    getlistoptions()
+  }, [])
+
+  const getcategorylist = async () => {
+    setcategoryoption([]);
+    try {
+      const response = await fetch(
+        `${BASE}options/category`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+      const result = await response.json();
+      const datas = result.data.map(item => ({
+        value: item.id,
+        label: item.category
+      }));
+      setcategoryoption(datas);
+    }
+    catch (err) {
+
+    }
+  };
+  const [brandoption, setbrandoption] = useState([]);
+  const [brandid, setbrandid] = useState('');
+
+  const getbrandlist = async () => {
+    setbrandoption([]);
+    try {
+      const response = await fetch(
+        `${apiUrl}options/brand`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+      const result = await response.json();
+      const datas = result.data.map(item => ({
+        value: item.id,
+        label: item.brand
+      }));
+      setbrandoption(datas);
+    }
+    catch (err) {
+
+    }
+  }
+
+  useEffect(() => {
+    getcategorylist();
+    getbrandlist();
+  }, []);
+
+  const getmodellist = async (brandid) => {
+    setmodeloption([]);
+    try {
+      const response = await fetch(
+        `${BASE}options/model/${brandid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+      const result = await response.json();
+      const datas = result?.data?.map(item => ({
+        value: item.id,
+        label: item.model
+      }));
+      setmodeloption(datas);
+    }
+    catch (err) {
+
+    }
+  }
+
+  const addnet = () => {
+    setnet_wt(gross_wt - tare_wt);
   }
 
 
@@ -170,7 +368,7 @@ useEffect(() => {
       material
     };
 
-  
+
     try {
       const response = await fetch(`${apiUrl}vehicle/list`, {
         method: 'POST',
@@ -180,7 +378,7 @@ useEffect(() => {
         },
         body: JSON.stringify(payload),
       });
-  
+
       if (response.ok) {
         const result = await response.json();
         alert('Negative Waste Added!');
@@ -202,11 +400,11 @@ useEffect(() => {
       alert('Failed to connect to the server. Please try again later.');
     }
   };
-  
+
 
   const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
     setLoading(true);
-    const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id'; 
+    const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
 
     const orderBy = `${sortColumn} ${sortOrder}`;
@@ -215,7 +413,7 @@ useEffect(() => {
     const pageindex = pageIndex * pageSizee;
 
     // const pageindex = pageIndex*15;
-  
+
     try {
       const response = await fetch(
         `${apiUrl}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
@@ -227,16 +425,16 @@ useEffect(() => {
           },
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-      
+
       const result = await response.json();
-      setData(result.data);   
-      const tot = Math.round(result.total*1/15)  
+      setData(result.data);
+      const tot = Math.round(result.total * 1 / 15)
       setPageCount(tot);
-      
+
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
@@ -244,7 +442,7 @@ useEffect(() => {
       setLoading(false);
     }
   };
-  
+
 
   const delete_user = async (userId) => {
     try {
@@ -256,7 +454,7 @@ useEffect(() => {
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel',
       });
-  
+
       if (result.isConfirmed) {
         const response = await fetch(`${base_url}delete_user/${userId}`, {
           method: 'DELETE',
@@ -265,14 +463,14 @@ useEffect(() => {
             'Authorization': `Bearer ${authToken}`,
           },
         });
-  
+
         if (response.ok) {
           ReactSwal.fire({
             title: 'Deleted!',
             text: 'User deleted successfully!',
             icon: 'success',
           });
-          
+
           fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
         } else {
           const error = await response.json();
@@ -292,7 +490,7 @@ useEffect(() => {
       });
     }
   };
-  
+
   const edit_user = async (userId) => {
     if (!authToken) {
       ReactSwal.fire({
@@ -302,7 +500,7 @@ useEffect(() => {
       });
       return;
     }
-  
+
     try {
       const response = await fetch(`${base_url}update_user/${userId}`, {
         method: 'GET',
@@ -311,7 +509,7 @@ useEffect(() => {
           'Authorization': `Bearer ${authToken}`,
         },
       });
-  
+
       if (response.ok) {
         const data = await response.json();
         const ddata = data.data;
@@ -345,23 +543,23 @@ useEffect(() => {
       alert('All fields are required!');
       return;
     }
-  
+
     if (password !== confirmPassword) {
       alert('Passwords do not match!');
       return;
     }
-  
-      const payload = {
-        id,
-        name,
-        username,
-        email,
-        password,
-        group_id,
-        mobile
-      };
 
-  
+    const payload = {
+      id,
+      name,
+      username,
+      email,
+      password,
+      group_id,
+      mobile
+    };
+
+
     try {
       const response = await fetch(`${base_url}api/update_user`, {
         method: 'PUT',
@@ -371,16 +569,16 @@ useEffect(() => {
         },
         body: JSON.stringify(payload),
       });
-  
+
       if (response.ok) {
         const result = await response.json();
         alert('User created successfully!');
-        fetchData({ pageSize, pageIndex, sortBy,  search, todate, location });
+        fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
         setupdateShow(false);
         setName('');
         setUsername('');
         setEmail('');
-        setMobile('');3
+        setMobile(''); 3
         setPassword('');
         setConfirmPassword('');
         setgroup_id('');
@@ -393,8 +591,8 @@ useEffect(() => {
       alert('Failed to connect to the server. Please try again later.');
     }
   };
-  
-  
+
+
   const columns = useMemo(
     () => [
       { Header: 'SL', accessor: 'id', disableSortBy: true, },
@@ -447,11 +645,11 @@ useEffect(() => {
 
 
   useEffect(() => {
-    fetchData({ pageSize, pageIndex, sortBy,  search, todate, location });
-  }, [pageSize, pageIndex, sortBy,  search, todate, location]); 
+    fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
+  }, [pageSize, pageIndex, sortBy, search, todate, location]);
 
 
-   
+
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -475,90 +673,90 @@ useEffect(() => {
     { value: 'kdg', label: 'KODUNGAIYUR' },
     { value: '4', label: 'SOWCARPET' },
   ];
-  
+
 
   return (
     <>
       <CCard className="mb-4">
         <CCardHeader className='bg-secondary text-light'>
-         Trailer Inventory
+          Trailer Inventory
         </CCardHeader>
         <CCardBody>
-                
-              <input
-                  type="search"
-                  onChange={(e) => setsearch(e.target.value)}
-                  className="form-control form-control-sm m-1 float-end w-auto"
-                  placeholder='Search'
-                />
 
-                <CButtonGroup role="group" aria-label="Basic example">
-                <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-                 <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Excel </CButton>
-                 <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> PDF </CButton>
-                 <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Print </CButton>
-                 </CButtonGroup>
+          <input
+            type="search"
+            onChange={(e) => setsearch(e.target.value)}
+            className="form-control form-control-sm m-1 float-end w-auto"
+            placeholder='Search'
+          />
+
+          <CButtonGroup role="group" aria-label="Basic example">
+            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Excel </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> PDF </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Print </CButton>
+          </CButtonGroup>
 
 
-                <CTable striped bordered hover size="sm"  variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-                  <CTableHead color="secondary">
-                    {headerGroups.map((headerGroup) => (
-                      <tr {...headerGroup.getHeaderGroupProps()}>
-                        {headerGroup.headers.map((column) => (
-                          <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                            {column.render('Header')}
-                            <span>
-                              {column.isSorted
-                                ? column.isSortedDesc
-                                  ? ' 🔽'
-                                  : ' 🔼'
-                                : ''}
-                            </span>
-                          </th>
-                        ))}
-                      </tr>
+          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+            <CTableHead color="secondary">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                      {column.render('Header')}
+                      <span>
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? ' 🔽'
+                            : ' 🔼'
+                          : ''}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </CTableHead>
+            <tbody {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map((cell) => (
+                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                     ))}
-                  </CTableHead>
-                  <tbody {...getTableBodyProps()}>
-                    {page.map((row) => {
-                      prepareRow(row);
-                      return (
-                        <tr {...row.getRowProps()}>
-                          {row.cells.map((cell) => (
-                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </CTable>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </CTable>
 
-                <div>
-                  <span>
-                    Page{' '}
-                    <strong>
-                      {pageIndex + 1} of {pageOptions.length}
-                    </strong>{' '}
-                  </span>
-                  <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                    {'<<'}
-                  </button>
-                  <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                    {'<'}
-                  </button>
-                  <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                    {'>'}
-                  </button>
-                  <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                    {'>>'}
-                  </button>
-                </div>
+          <div>
+            <span>
+              Page{' '}
+              <strong>
+                {pageIndex + 1} of {pageOptions.length}
+              </strong>{' '}
+            </span>
+            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<<'}
+            </button>
+            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<'}
+            </button>
+            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>'}
+            </button>
+            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>>'}
+            </button>
+          </div>
         </CCardBody>
       </CCard>
 
 
 
-{/* create */}
+      {/* create */}
       <CModal
         alignment="center"
         scrollable
@@ -566,7 +764,7 @@ useEffect(() => {
         size="xl"
         onClose={() => handleClose()}
         aria-labelledby="NewProcessing"
-        >
+      >
         <CModalHeader className='bg-secondary'>
           <CModalTitle id="NewProcessing">New Trailer</CModalTitle>
         </CModalHeader>
@@ -574,114 +772,180 @@ useEffect(() => {
 
           <CRow>
 
-          <CCol md={6}>
+            <CCol md={6}>
 
-
-            <CFormLabel className="col-form-label">
-              Trailer Number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) => setbill_no(e.target.value)}
-              placeholder="Trailer Number" className='mb-2' />
 
               <CFormLabel className="col-form-label">
-              Type
+                Trailer Number
               </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) => setbill_no(e.target.value)}
-              placeholder="Type" className='mb-2' />
+              <CFormInput type="text" size="sm"
+                onChange={(e) => setbill_no(e.target.value)}
+                placeholder="Trailer Number" className='mb-2' />
 
               <CFormLabel className="col-form-label">
-               Category
+                Type
               </CFormLabel>
-                <Select options={categoryoption}
-                 isMulti={false} placeholder="Select Category"
-                 size="sm"
-                  className='mb-2 small-select' 
-                   classNamePrefix="custom-select"
+              <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
+                classNamePrefix="custom-select"
+                onChange={(selectedOption) => {
+                  setsave_data((prev) => ({
+                    ...prev,
+                    type: selectedOption ? selectedOption.value : '',
+                  }));
+                }}
+              />
+
+              {/* <CFormLabel className="col-form-label">
+                Type
+              </CFormLabel>
+              <CFormInput type="text" size="sm"
+                onChange={(e) => setbill_no(e.target.value)}
+                placeholder="Type" className='mb-2' /> */}
+
+              {/* <CFormLabel className="col-form-label">
+                Category
+              </CFormLabel>
+              <Select options={categoryoption}
+                isMulti={false} placeholder="Select Category"
+                size="sm"
+                className='mb-2 small-select'
+                classNamePrefix="custom-select"
                 // styles={customStyles}
                 onChange={(e) => setcategoryid(e?.value)}
-                />
+              /> */}
+
 
               <CFormLabel className="col-form-label">
-              Brand
+                Brand
               </CFormLabel>
               <Select options={brandoption}
-               isMulti={false}
-                placeholder="Select Brand" 
-                size="sm" className='mb-2 small-select' 
-                  classNamePrefix="custom-select"
-                        // styles={customStyles}
-                        onChange={(e) => setbrandid(e?.value)}
-                        />
+                isMulti={false}
+                placeholder="Select Brand"
+                size="sm"
+                className='mb-2 small-select'
+                classNamePrefix="custom-select"
+                // value={save_data.brand}
+                onChange={(selectedOption) => {
+                  setsave_data((prev) => ({
+                    ...prev,
+                    brand: selectedOption ? selectedOption.value : '',
+                  }));
+                  if (selectedOption) {
+                    getmodellist(selectedOption.value);
+                  }
+                }}
+              />
+
+              {/* <CFormLabel className="col-form-label">
+                Brand
+              </CFormLabel>
+              <Select options={brandoption}
+                isMulti={false}
+                placeholder="Select Brand"
+                size="sm" className='mb-2 small-select'
+                classNamePrefix="custom-select"
+                // styles={customStyles}
+                onChange={(e) => setbrandid(e?.value)}
+              /> */}
+
+              {/* <CFormLabel className="col-form-label">
+                Model
+              </CFormLabel>
+              <CFormInput type="text" size="sm"
+                onChange={(e) => setbill_no(e.target.value)}
+                placeholder="Model" className='mb-2' /> */}
+
 
               <CFormLabel className="col-form-label">
-               Model
+                Category
               </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) => setbill_no(e.target.value)}
-              placeholder="Model" className='mb-2' />
-             
-             <CFormLabel className="col-form-label">
-               HSN Number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) => setbill_no(e.target.value)}
-              placeholder="HSN Number" className='mb-2' />
-             
+              <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
+                classNamePrefix="custom-select"
+                onChange={(selectedOption) => {
+                  setsave_data((prev) => ({
+                    ...prev,
+                    category: selectedOption ? selectedOption.value : '',
+                  }));
+                  if (selectedOption) {
+                    getbrandlist(selectedOption.value);
+                  }
+                }}
+              />
 
-               </CCol>
+              <CFormLabel className="col-form-label">
+                Model
+              </CFormLabel>
+
+              <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
+                classNamePrefix="custom-select"
+                onChange={(selectedOption) => {
+                  setsave_data((prev) => ({
+                    ...prev,
+                    modal: selectedOption ? selectedOption.value : '',
+                  }));
+                }}
+              />
+
+              <CFormLabel className="col-form-label">
+                HSN Number
+              </CFormLabel>
+              <CFormInput type="text" size="sm"
+                onChange={(e) => setbill_no(e.target.value)}
+                placeholder="HSN Number" className='mb-2' />
+
+
+            </CCol>
 
             <CCol md={6}>
 
-               <CFormLabel className="col-form-label">
-              Purchase Date
+              <CFormLabel className="col-form-label">
+                Purchase Date
               </CFormLabel>
-              <CFormInput type="date" value={date_time} size="sm" 
-              onChange={(e) => setdate_time(e.target.value)}
-               className='mb-2' />
+              <CFormInput type="date" value={date_time} size="sm"
+                onChange={(e) => setdate_time(e.target.value)}
+                className='mb-2' />
 
               <CFormLabel className="col-form-label">
-               Years of warranty
+                Years of warranty
               </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              onChange={(e) => setbill_no(e.target.value)}
-              placeholder="Years of warranty" className='mb-2' />
-
-
-
-               <CFormLabel className="col-form-label">
-                AMC 
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
+              <CFormInput type="text" size="sm"
                 onChange={(e) => setbill_no(e.target.value)}
-                placeholder="AMC Number" />
+                placeholder="Years of warranty" className='mb-2' />
 
-                <CFormInput type="date" value={date_time} size="sm" 
-                onChange={(e) => setdate_time(e.target.value)}
+
+
+              <CFormLabel className="col-form-label">
+                AMC
+              </CFormLabel>
+
+              <CInputGroup className="mb-2">
+                <CFormInput type="text" size="sm"
+                  onChange={(e) => setbill_no(e.target.value)}
+                  placeholder="AMC Number" />
+
+                <CFormInput type="date" value={date_time} size="sm"
+                  onChange={(e) => setdate_time(e.target.value)}
                 />
               </CInputGroup>
 
 
-               <CFormLabel className="col-form-label">
-               Tyre count / Stepney Count
+              <CFormLabel className="col-form-label">
+                Tyre count / Stepney Count
               </CFormLabel>
               <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                onChange={(e) => setbill_no(e.target.value)}
-                placeholder="Tyre count" />
+                <CFormInput type="text" size="sm"
+                  onChange={(e) => setbill_no(e.target.value)}
+                  placeholder="Tyre count" />
 
-                <CFormInput type="text" size="sm" 
-                onChange={(e) => setdate_time(e.target.value)}
-                placeholder="Stepney Count" />
+                <CFormInput type="text" size="sm"
+                  onChange={(e) => setdate_time(e.target.value)}
+                  placeholder="Stepney Count" />
               </CInputGroup>
 
-             <div className="mb-3">
-              <label htmlFor="formFileSm" className="form-label">Image</label>
-              <input className="form-control form-control-sm" id="formFileSm" type="file" />
-            </div>
+              <div className="mb-3">
+                <label htmlFor="formFileSm" className="form-label">Image</label>
+                <input className="form-control form-control-sm" id="formFileSm" type="file" />
+              </div>
 
 
 
@@ -690,7 +954,7 @@ useEffect(() => {
           </CRow>
         </CModalBody>
 
-         <CModalFooter>
+        <CModalFooter>
           <CButton color="primary">Add</CButton>
         </CModalFooter>
       </CModal>

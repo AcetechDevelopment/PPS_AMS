@@ -1,25 +1,40 @@
-import React from "react";
+import React, { useContext } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ToastContainer } from 'react-toastify';
 import { toast } from "react-toastify"
 import 'react-toastify/dist/ReactToastify.css';
 
 
+
 const Profile = () => {
 
-
+    const BASE = import.meta.env.VITE_BASE_URL;
+    const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
     const [userinfo, setuserinfo] = useState({
-        name: "Dhoni",
-        email: "dhoni@gmail.com",
-        password: "12345",
-        confirmpassword: "12345"
+        name: "",
+        email: "",
+        mobile: ""
+        // password: "12345",
+        // confirmpassword: "12345"
     });
-    useEffect(()=>{fetch("url")
-        .then((res)=>res.json())
-        .then((data)=>setuserinfo(data))
-    },[])
+
+    useEffect(() => {
+        fetch(`${BASE}auth/view_user`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            setuserinfo(data.data);
+            setsavedData(data.data)
+        })
+    }, [])
+    console.log(userinfo)
     const [savedData, setsavedData] = useState({ ...userinfo });
     const [isEditingInfo, setIsEditingInfo] = useState(false);
     const [isEditingSecurity, setIsEditingSecurity] = useState(false);
@@ -35,8 +50,9 @@ const Profile = () => {
         e.preventDefault();
         setsavedData((prev) => ({
             ...prev,
-            name: userinfo.name,
+            name: "Nazia",
             email: userinfo.email,
+            mobile: userinfo.mobile
         }));
         setIsEditingInfo(false);
     };
@@ -103,8 +119,8 @@ const Profile = () => {
                                         />
                                     ) : (
                                         <input
-                                            type="email"
-                                            name="email"
+                                            type="text"
+                                            name="name"
                                             style={{ border: "none" }}
                                             value={savedData.name}
                                             readOnly

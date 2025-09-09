@@ -29,8 +29,6 @@ import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
 import { vehicleNum, validateHSN, ValidMonth, ValidSingleDigit } from '../../utils/validators';
-
-const BASE = import.meta.env.VITE_BASE_URL;
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { toast } from 'react-toastify';
@@ -38,18 +36,16 @@ import { Sharedcontext } from '../../components/Context';
 
 
 const VehicleInventory = () => {
+
+  const BASE = import.meta.env.VITE_BASE_URL;
   const apiUrl = import.meta.env.VITE_API_URL;
   const ReactSwal = withReactContent(Swal);
-
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pageCount, setPageCount] = useState(0);
   const [search, setsearch] = useState('');
   const [categoryoption, setcategoryoption] = useState([]);
   const [categoryid, setcategoryid] = useState('');
-
-
-
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
   const [location, setlocation] = useState('');
@@ -62,11 +58,12 @@ const VehicleInventory = () => {
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
+  const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
   const [action_details, setactiondetails] = useState({})
-  const { role_selected } = useContext(Sharedcontext)
-  console.log(role_selected)
+  const { roleId } = useContext(Sharedcontext)
+
   const intial_data = {
     vno: '',
     type: '',
@@ -202,10 +199,40 @@ const VehicleInventory = () => {
     }
 
   };
-
+  useEffect(() => { getlistoptions() }, [])
   useEffect(() => { getcategorylist() }, [save_data.type])
 
   useEffect(() => { console.log(save_data) }, [save_data])
+
+  const getlistoptions = async () => {
+    try {
+      const response = await fetch(
+        `${BASE}options/type`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+      const result = await response.json();
+      console.log(result)
+
+      const datas = result?.Type?.map(item => ({
+        value: item.id,
+        label: item.type
+      }));
+      settypelist(datas);
+    }
+    catch (err) {
+
+    }
+
+  }
 
   const getcategorylist = async () => {
     setcategoryoption([]);
@@ -226,9 +253,9 @@ const VehicleInventory = () => {
       const result = await response.json();
       console.log(result)
 
-      const datas = result?.map(item => ({
-        value: item.value,
-        label: item.label
+      const datas = result?.data?.map(item => ({
+        value: item.id,
+        label: item.category
       }));
       setcategoryoption(datas);
     }
@@ -261,10 +288,10 @@ const VehicleInventory = () => {
       }
       const result = await response.json();
       console.log(result)
-      const datas = result.map(item => ({
-        value: item.value,
-        label: item.label
-      }));
+      const datas = result?.data?.map((item) => ({
+        value: item.brand_id,
+        label: item.brand
+      }))
       setbrandoption(datas);
     }
     catch (err) {
@@ -273,80 +300,79 @@ const VehicleInventory = () => {
   }
 
 
-  const [ebrandoption, setebrandoption] = useState([]);
-  const [ebrandid, setebrandid] = useState('');
-  const egetbrandlist = async (catid) => {
-    setebrandoption([]);
-    try {
-      const response = await fetch(
-        `${apiUrl}options/brand/${catid}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.brand_id,
-        label: item.brand
-      }));
-      setebrandoption(datas);
-    }
-    catch (err) {
+  // const [ebrandoption, setebrandoption] = useState([]);
+  // const [ebrandid, setebrandid] = useState('');
+  // const egetbrandlist = async (catid) => {
+  //   setebrandoption([]);
+  //   try {
+  //     const response = await fetch(
+  //       `${apiUrl}options/brand/${catid}`,
+  //       {
+  //         method: 'GET',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Authorization': `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error(`Error: ${response.status} ${response.statusText}`);
+  //     }
+  //     const result = await response.json();
+  //     const datas = result.data.map(item => ({
+  //       value: item.brand_id,
+  //       label: item.brand
+  //     }));
+  //     setebrandoption(datas);
+  //   }
+  //   catch (err) {
 
-    }
-  }
-
-
-
-  const [emodeloption, setemodeloption] = useState([]);
-  const [emodelid, setemodelid] = useState('');
-
-  const egetmodellist = async (brandid) => {
-    setemodeloption([]);
-    try {
-      const response = await fetch(
-        `${apiUrl}options/model/${brandid}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.id,
-        label: item.model
-      }));
-      setemodeloption(datas);
-    }
-    catch (err) {
-
-    }
-  }
+  //   }
+  // }
 
 
-  const typelist = [
-    {
-      "value": 1,
-      'label': "Mover"
-    },
-    {
-      "value": 2,
-      'label': "Puller"
-    }
-  ];
+
+  // const [emodeloption, setemodeloption] = useState([]);
+  // const [emodelid, setemodelid] = useState('');
+
+  // const egetmodellist = async (brandid) => {
+  //   setemodeloption([]);
+  //   try {
+  //     const response = await fetch(
+  //       `${apiUrl}options/model/${brandid}`,
+  //       {
+  //         method: 'GET',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Authorization': `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error(`Error: ${response.status} ${response.statusText}`);
+  //     }
+  //     const result = await response.json();
+  //     const datas = result.data.map(item => ({
+  //       value: item.id,
+  //       label: item.model
+  //     }));
+  //     setemodeloption(datas);
+  //   }
+  //   catch (err) {
+
+  //   }
+  // }
+
+
+  // {
+  //   "value": 1,
+  //   'label': "Mover"
+  // },
+  // {
+  //   "value": 2,
+  //   'label': "Puller"
+  // }
+
 
 
   const [modeloption, setmodeloption] = useState([]);
@@ -369,9 +395,9 @@ const VehicleInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      const datas = result.map(item => ({
-        value: item.value,
-        label: item.label
+      const datas = result?.data?.map(item => ({
+        value: item.id,
+        label: item.model
       }));
       setmodeloption(datas);
     }
@@ -515,7 +541,7 @@ const VehicleInventory = () => {
         id: 'actions',
         Cell: ({ row }) => {
           const id = row.original.id;
-         if(!action_details)return null
+          if (!action_details) return null
           return (
             <div className="">
               {/* <FaEye size={15} className={`ms-2 me-2 pointer ${action_details?.isView?"text-info":"text-secondary opacity-50"}`} onClick={() => {
@@ -525,7 +551,7 @@ const VehicleInventory = () => {
                    viewvehicle(id)
                 }
                }} /> */}
-              
+
               {action_details?.isView && (
                 <FaEye
                   size={15}
@@ -533,7 +559,7 @@ const VehicleInventory = () => {
                   onClick={() => viewvehicle(id)}
                 />
               )}
-              {action_details?.isView && (
+              {action_details?.isEdit && (
                 <FaEdit
                   size={15}
                   className="ms-2 me-2 pointer text-info"
@@ -541,14 +567,14 @@ const VehicleInventory = () => {
                 />
               )}
 
-              {action_details?.isView && (
+              {action_details?.isDelete && (
                 <FaTrash
                   size={15}
                   className="ms-2 me-2 pointer text-info"
                   onClick={() => deletevehicle(id)}
                 />
               )}
-{/* 
+              {/* 
               <FaEdit size={15} className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
 
               <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} /> */}
@@ -929,7 +955,7 @@ const VehicleInventory = () => {
   const fetchActionDetails = async () => {
     console.log("fetch")
     try {
-      const response = await fetch(`${BASE}permission/lists/${role_selected}`, {
+      const response = await fetch(`${BASE}permission/lists/${roleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -940,7 +966,14 @@ const VehicleInventory = () => {
       if (response.ok) {
         console.log("fetching")
         const data = await response.json();
-        const veh_invent = data[1].children[0].children[0]
+        let veh_invent = null;
+        if (Array.isArray(data)
+          &&
+          data[1]?.children?.[0]?.children?.[0] &&
+          data[1].children[0].children[0].name === "Vehicle Inventory") {
+          veh_invent = data[1].children[0].children[0]
+        }
+
         console.log(veh_invent)
         console.log(veh_invent?.isView)
         setactiondetails(veh_invent)
@@ -963,8 +996,8 @@ const VehicleInventory = () => {
       });
     }
   }
-  useEffect(() => { fetchActionDetails() }, [role_selected])
-  // useEffect(()=>{console.log(action_details?.isView)},[action_details])
+  useEffect(() => { fetchActionDetails() }, [roleId])
+  useEffect(() => { console.log(roleId) }, [roleId])
   return (
     <>
       <CCard className="mb-4">
