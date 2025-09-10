@@ -56,12 +56,36 @@ import avatar6 from 'src/assets/images/avatars/6.jpg'
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
+import { useEffect } from 'react';
 
 const Dashboard = () => {
    const [data, setData] = useState([]);
    const [pageCount, setPageCount] = useState(0);
+   
+   
+   const getTotalNumbers=async()=>{
+     try {
+      const response = await fetch(`${BASE}options/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      if(response.ok){
+      const data=await response.json()
+      console.log(data)
+      settotalNumbers(data)
+      }
+   }
+  catch(err)
+  {
 
-
+  }
+}
+   useEffect(()=>{
+    getTotalNumbers()
+   },[])
   const progressExample = [
     { title: 'Insurance', value: '29', percent: 2, color: 'success' },
     { title: 'FC', value: '24', percent: 20, color: 'info' },

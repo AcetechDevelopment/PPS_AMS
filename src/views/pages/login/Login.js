@@ -8,6 +8,7 @@ const Login = () => {
   const [mobile, setmobile] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+  const[data,setdata]=useState(null)
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const { roleId, setroleId } = useContext(Sharedcontext)
@@ -51,8 +52,8 @@ const Login = () => {
       if (response.ok) {
         const result = await response.json();
        
-        setroleId(result.user.role_id)
-        console.log(roleId)
+     
+       
         sessionStorage.setItem("authToken", JSON.stringify(result.access_token));
         sessionStorage.setItem("Name", JSON.stringify(result.user.name));
          result.access_token ? window.location.href = "/dashboard" : '';
@@ -67,11 +68,13 @@ const Login = () => {
     }
   };
  useEffect(()=>{
-  if(roleId)
+  if(data)
   {
-     sessionStorage.setItem("RoleId", JSON.stringify(roleId));
+    //  sessionStorage.setItem("RoleId", JSON.stringify(roleId));
+    setroleId()
+   setroleId(result.user.role_id)
   }
- },[roleId])
+ },[data])
 
   return (
     <section className="vh-90 mt-5">

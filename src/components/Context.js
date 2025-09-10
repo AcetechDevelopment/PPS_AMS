@@ -28,7 +28,8 @@ const isNumberKey = (e) => {
 const Context = ({ children }) => {
   // const[role_selected,setroleSelected] =useState (0)
       const[roleId,setroleId]=useState(()=>{
-        return JSON.parse(sessionStorage.getItem("RoleId"))||null
+        return JSON.parse(sessionStorage.getItem("RoleId"))||0
+        // return 0
       })
   return (
     <Sharedcontext.Provider value={{ isNumberKey,roleId,setroleId}}>{children}</Sharedcontext.Provider>

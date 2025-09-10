@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef ,useState} from 'react'
 import PropTypes from 'prop-types'
 
 import {
@@ -18,7 +18,34 @@ import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
 const WidgetsDropdown = (props) => {
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
+  const[totalNumbers,settotalNumbers]=useState({})
+  
+  const BASE = import.meta.env.VITE_BASE_URL;
+    const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
+  const getTotalNumbers=async()=>{
+     try {
+      const response = await fetch(`${BASE}options/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      if(response.ok){
+      const data=await response.json()
+      console.log(data)
+      settotalNumbers(data)
+      }
+   }
+  catch(err)
+  {
+    console.log(err.message)
+  }
+}
+useEffect(()=>{{
+  console.log("effect run")
+  getTotalNumbers()}},[])
   useEffect(() => {
     document.documentElement.addEventListener('ColorSchemeChange', () => {
       if (widgetChartRef1.current) {
@@ -42,13 +69,13 @@ const WidgetsDropdown = (props) => {
       <CCol sm={2} xl={2} xxl={3}>
         <CWidgetStatsA
           color="primary"
-          value={
+          
+          title="Total Vehicles"
+           value={
             <>
-             20
+             {totalNumbers.Vehicle}
             </>
           }
-          title="Total Vehicle"
-         
           chart={
             <CChartLine
               ref={widgetChartRef1}
@@ -119,12 +146,13 @@ const WidgetsDropdown = (props) => {
       <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="info"
+            title="Total Trailers"
           value={
             <>
-             30
-            </>
+            {totalNumbers.Trailer}
+             </>
           }
-          title="Total Trailers"
+        
           
           chart={
             <CChartLine
@@ -193,12 +221,13 @@ const WidgetsDropdown = (props) => {
       <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="warning"
+            title="Total Spares"
           value={
             <>
-              40
+              {totalNumbers.Spare}
             </>
           }
-          title="Total Spare"
+        
          
           chart={
             <CChartLine

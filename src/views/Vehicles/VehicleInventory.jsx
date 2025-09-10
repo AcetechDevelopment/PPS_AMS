@@ -264,8 +264,6 @@ const VehicleInventory = () => {
     }
   }
 
-
-
   const [brandoption, setbrandoption] = useState([]);
   const [brandid, setbrandid] = useState('');
 
@@ -298,82 +296,6 @@ const VehicleInventory = () => {
 
     }
   }
-
-
-  // const [ebrandoption, setebrandoption] = useState([]);
-  // const [ebrandid, setebrandid] = useState('');
-  // const egetbrandlist = async (catid) => {
-  //   setebrandoption([]);
-  //   try {
-  //     const response = await fetch(
-  //       `${apiUrl}options/brand/${catid}`,
-  //       {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Authorization': `Bearer ${authToken}`,
-  //         },
-  //       }
-  //     );
-  //     if (!response.ok) {
-  //       throw new Error(`Error: ${response.status} ${response.statusText}`);
-  //     }
-  //     const result = await response.json();
-  //     const datas = result.data.map(item => ({
-  //       value: item.brand_id,
-  //       label: item.brand
-  //     }));
-  //     setebrandoption(datas);
-  //   }
-  //   catch (err) {
-
-  //   }
-  // }
-
-
-
-  // const [emodeloption, setemodeloption] = useState([]);
-  // const [emodelid, setemodelid] = useState('');
-
-  // const egetmodellist = async (brandid) => {
-  //   setemodeloption([]);
-  //   try {
-  //     const response = await fetch(
-  //       `${apiUrl}options/model/${brandid}`,
-  //       {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Authorization': `Bearer ${authToken}`,
-  //         },
-  //       }
-  //     );
-  //     if (!response.ok) {
-  //       throw new Error(`Error: ${response.status} ${response.statusText}`);
-  //     }
-  //     const result = await response.json();
-  //     const datas = result.data.map(item => ({
-  //       value: item.id,
-  //       label: item.model
-  //     }));
-  //     setemodeloption(datas);
-  //   }
-  //   catch (err) {
-
-  //   }
-  // }
-
-
-  // {
-  //   "value": 1,
-  //   'label': "Mover"
-  // },
-  // {
-  //   "value": 2,
-  //   'label': "Puller"
-  // }
-
-
 
   const [modeloption, setmodeloption] = useState([]);
   const [modelid, setmodelid] = useState('');
@@ -410,15 +332,6 @@ const VehicleInventory = () => {
     getcategorylist();
   }, []);
 
-  const addnet = () => {
-    setnet_wt(gross_wt - tare_wt);
-  }
-
-
-  useEffect(() => {
-    addnet();
-  }, [gross_wt, tare_wt, addnet]);
-
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
@@ -432,7 +345,7 @@ const VehicleInventory = () => {
     const pageSizee = 15;
     const pageindex = pageIndex * pageSizee;
 
-    // const pageindex = pageIndex*15;
+    //  const pageindex = pageIndex*15;
 
     try {
       const response = await fetch(
@@ -632,25 +545,6 @@ const VehicleInventory = () => {
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-
-
-
-  const options = [
-    { value: '1', label: 'CHETPET' },
-    { value: 'pdggw', label: 'PERUNGUDI' },
-    { value: 'kdg', label: 'KODUNGAIYUR' },
-    { value: '4', label: 'SOWCARPET' },
-  ];
-
-
-  const searchoptions = [
-    { value: '0', label: 'All Location' },
-    { value: '1', label: 'CHETPET' },
-    { value: 'pdggw', label: 'PERUNGUDI' },
-    { value: 'kdg', label: 'KODUNGAIYUR' },
-    { value: '4', label: 'SOWCARPET' },
-  ];
-
 
 
   const [updateshow, setupdateShow] = useState(false);
@@ -856,12 +750,7 @@ const VehicleInventory = () => {
 
         console.log("success")
       } else {
-        const error = await response.json();
-        // ReactSwal.fire({
-        //   title: 'Error',
-        //   text: error.message || 'Unable to reach user data',
-        //   icon: 'error',
-        // });
+        
       }
     } catch (err) {
       console.error('Error:', err);
@@ -998,6 +887,13 @@ const VehicleInventory = () => {
   }
   useEffect(() => { fetchActionDetails() }, [roleId])
   useEffect(() => { console.log(roleId) }, [roleId])
+
+  const fuelOptions = [
+    { value: "1", label: "Diesel" },
+    { value: "2", label: "Petrol" },
+    { value: "3", label: "Gas" },
+    { value: "4", label: "Battery" },
+  ];
   return (
     <>
       <CCard className="mb-4">
@@ -1102,12 +998,8 @@ const VehicleInventory = () => {
           <CModalTitle id="NewProcessing">New Vehicle</CModalTitle>
         </CModalHeader>
         <CModalBody>
-
           <CRow>
-
             <CCol md={6}>
-
-
               <CFormLabel className="col-form-label">
                 Vehicle Number
               </CFormLabel>
@@ -1184,7 +1076,10 @@ const VehicleInventory = () => {
                 Model
               </CFormLabel>
 
-              <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
+              <Select options={modeloption} 
+              isMulti={false}
+               placeholder="Select Model"
+                size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
@@ -1294,19 +1189,16 @@ const VehicleInventory = () => {
               <CFormLabel className="col-form-label">
                 Fuel Type
               </CFormLabel>
-              <select placeholder="Select Brand" size="sm" className='form-control form-control-sm mb-2'
-                onChange={(e) =>
-                  setsave_data((prev) => ({
-                    ...prev,
-                    fuel: e.target.value,
-                  }))
-                }
-              >
-                <option value="1">Diesel</option>
-                <option value="2">Petrol</option>
-                <option value="3">Gas</option>
-                <option value="4">Battery</option>
-              </select>
+              <Select options={fuelOptions}
+              isMulti={false}
+               placeholder="Select fuel"
+               
+                className="mb-2 small-select"
+                classNamePrefix="custom-select"
+                onChange={(selectedOption) => {
+                  setsave_data((prev)=>({...prev,fuel:selectedOption ? selectedOption.value : "",}))
+                }}
+              />
 
               <CFormLabel className="col-form-label">
                 Engine Number

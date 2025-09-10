@@ -93,7 +93,7 @@ const Settings = () => {
     }
     const handleselectrole = (selectedOption) => {
         setselectedrole(selectedOption?.value)
-        setroleSelected(selectedOption?.value)
+     
         setisselectrole(true)
     }
 
@@ -242,6 +242,7 @@ const Settings = () => {
                     <CFormLabel className='fw-bold'>Select Role</CFormLabel>
                     <Select options={roleoptions}
                         className="w-25 mb-3"
+                           classNamePrefix="custom-select"
                         value={roleoptions.find((item) => item.value === selectedrole)}
                         // onChange={(selectedOption) => (setselectedrole(selectedOption?.value))}
                         onChange={(selectedoption) => handleselectrole(selectedoption)}
