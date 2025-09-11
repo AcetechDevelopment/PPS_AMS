@@ -89,6 +89,7 @@ const VehicleInventory = () => {
     pucdate: today,
     greentax: '',
     greendate: today,
+    image: "",
     file: null,
   };
 
@@ -184,6 +185,7 @@ const VehicleInventory = () => {
           pucdate: today,
           greentax: '',
           greendate: today,
+          image: "",
           file: null,
         });
 
@@ -364,7 +366,10 @@ const VehicleInventory = () => {
       }
 
       const result = await response.json();
+      console.log(result.data)
+
       setData(result.data);
+
       const tot = Math.round(result.total * 1 / 15)
       setPageCount(tot);
 
@@ -375,7 +380,6 @@ const VehicleInventory = () => {
       setLoading(false);
     }
   };
-
 
 
 
@@ -540,7 +544,7 @@ const VehicleInventory = () => {
     fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
   }, [pageSize, pageIndex, sortBy, search, todate, location]);
 
-
+  useEffect(() => { console.log(save_data.vno) }, [])
 
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
@@ -750,7 +754,7 @@ const VehicleInventory = () => {
 
         console.log("success")
       } else {
-        
+
       }
     } catch (err) {
       console.error('Error:', err);
@@ -894,6 +898,10 @@ const VehicleInventory = () => {
     { value: "3", label: "Gas" },
     { value: "4", label: "Battery" },
   ];
+  setTimeout(()=>{
+     console.log("Image URL →", `${file_base_url}uploads/${updated_data.image}`);
+  },1000)
+ 
   return (
     <>
       <CCard className="mb-4">
@@ -1076,9 +1084,9 @@ const VehicleInventory = () => {
                 Model
               </CFormLabel>
 
-              <Select options={modeloption} 
-              isMulti={false}
-               placeholder="Select Model"
+              <Select options={modeloption}
+                isMulti={false}
+                placeholder="Select Model"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
@@ -1190,13 +1198,13 @@ const VehicleInventory = () => {
                 Fuel Type
               </CFormLabel>
               <Select options={fuelOptions}
-              isMulti={false}
-               placeholder="Select fuel"
-               
+                isMulti={false}
+                placeholder="Select fuel"
+
                 className="mb-2 small-select"
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
-                  setsave_data((prev)=>({...prev,fuel:selectedOption ? selectedOption.value : "",}))
+                  setsave_data((prev) => ({ ...prev, fuel: selectedOption ? selectedOption.value : "", }))
                 }}
               />
 
@@ -1389,7 +1397,8 @@ const VehicleInventory = () => {
         aria-labelledby="NewProcessing"
       >
         <CModalHeader className='bg-secondary'>
-          {updated_data.image ? <CImage rounded src={`${file_base_url}uploads/${updated_data.image}`} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
+          {updated_data.image ? <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''} 
+           <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
         </CModalHeader>
         <CModalBody>
 
@@ -1402,14 +1411,14 @@ const VehicleInventory = () => {
               </CFormLabel>
               <CFormInput
                 type="text"
-                size="sm"
+                size="lg"
                 placeholder="Vehicle Number"
                 className="mb-2 vehiclenumber"
                 value={updated_data.vno}
                 onChange={(e) => {
                   setupdated_data((prev) => ({
                     ...prev,
-                    vno: e.target.value.toUpperCase(),
+                    spareName: e.target.value.toUpperCase(),
                   }));
                 }}
                 onKeyUp={(e) => {
@@ -1804,7 +1813,8 @@ const VehicleInventory = () => {
             {updated_data.image ? (
               <CImage
                 rounded
-                src={`${file_base_url}uploads/${updated_data.image}`}
+                src={updated_data.image}
+                  // src="/table.png"
                 width={50}
                 height={50}
                 className="me-2"
@@ -1846,24 +1856,26 @@ const VehicleInventory = () => {
                   </CTableRow>
                 ))}
 
-                {updated_data.image && (
+                {/* {updated_data.image && (
                   <CTableRow>
                     <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
                     <CTableDataCell>
                       <CImage
                         rounded
-                        src={`${file_base_url}uploads/${updated_data.image}`}
+                        src={`${file_base_url}/uploads/${updated_data.image}`}
+                        // src="/table.png"
                         width={200}
+                       
                       />
                     </CTableDataCell>
                   </CTableRow>
-                )}
+                )} */}
               </CTableBody>
             </CTable>
           </CModalBody>
 
           <CModalFooter>
-            <CButton color="secondary" onClick={() => setVisible(false)}>
+            <CButton color="secondary" onClick={() => setview(false)}>
               Close
             </CButton>
           </CModalFooter>
