@@ -301,7 +301,11 @@ const Dashboard = () => {
       activity: 'Last week',
     },
   ]
+  
 
+  const handleclick=(value)=>{
+     console.log(value)
+  }
   return (
     <>
 
@@ -412,6 +416,7 @@ const Dashboard = () => {
                     key={value}
                     className="mx-0"
                     active={value === 'FC'}
+                    onClick={()=>handleclick(value)}
                   >
                     {value}
                   </CButton>

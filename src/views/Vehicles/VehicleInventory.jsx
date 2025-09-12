@@ -383,62 +383,7 @@ const VehicleInventory = () => {
 
 
 
-  const handleUpdate = async () => {
-    if (!name || !username || !email || !password || !confirmPassword || (group_id === null || group_id === undefined || group_id === '') || !mobile) {
-      alert('All fields are required!');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-
-    const payload = {
-      id,
-      name,
-      username,
-      email,
-      password,
-      group_id,
-      mobile
-    };
-
-
-    try {
-      const response = await fetch(`${base_url}api/update_user`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert('User created successfully!');
-        fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
-        setupdateShow(false);
-        setName('');
-        setUsername('');
-        setEmail('');
-        setMobile(''); 3
-        setPassword('');
-        setConfirmPassword('');
-        setgroup_id('');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.message || 'Unable to register user'}`);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      alert('Failed to connect to the server. Please try again later.');
-    }
-  };
-
-  //completely hide the icon
-  //   
+  
 
   const columns = useMemo(
     () => [

@@ -50,12 +50,12 @@ const Login = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
-       
-     
-       
+        const result = await response.json(); 
+        console.log(result)
         sessionStorage.setItem("authToken", JSON.stringify(result.access_token));
         sessionStorage.setItem("Name", JSON.stringify(result.user.name));
+         const encodedRoleId = btoa(JSON.stringify(result.user.role_id));
+         sessionStorage.setItem("RoleId", encodedRoleId); 
          result.access_token ? window.location.href = "/dashboard" : '';
 
       } else {
@@ -71,7 +71,7 @@ const Login = () => {
   if(data)
   {
     //  sessionStorage.setItem("RoleId", JSON.stringify(roleId));
-    setroleId()
+   
    setroleId(result.user.role_id)
   }
  },[data])

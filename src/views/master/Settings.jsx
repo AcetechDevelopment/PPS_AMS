@@ -68,7 +68,7 @@ const Settings = () => {
             })
             if (response.ok) {
                 const result = await response.json();
-                //  console.log(result.roles)
+                 console.log(result.roles)
                 const datas = result?.map(item => ({
                     value: item.role_id,
                     label: item.name
