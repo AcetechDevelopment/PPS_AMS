@@ -1,228 +1,59 @@
-import React from 'react'
+// SidebarNavLoader.js
+import React, { useEffect, useState } from 'react'
 import CIcon from '@coreui/icons-react'
 import {
-  cilLibrary,
   cilGarage,
-  cilRecycle,
-  cilLoopCircular,
   cilTruck,
   cilGrid,
-  cilTrash,
   cilCog,
   cilLayers,
-  cilCart,
-  cilRoom,
-  cilHouse,
-  cibBuffer,
-  cibMega,
-  cibC,
-  cilCarAlt,
   cilPeople,
   cilTablet,
   cilFolderOpen,
-  cibTodoist,cilUser,
+  cilHouse,
+  cibTodoist,
 } from '@coreui/icons'
-import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
+import { AppSidebarNav } from './AppSidebarNav'
 
-const _nav = [
-  {
-    component: CNavItem,
-    name: 'Dashboard',
-    to: '/dashboard',
-    icon: <CIcon icon={cilGrid} customClassName="nav-icon" />,
-  },
+// Map icon names (from Laravel JSON) to CoreUI icons
+const iconMap = {
+  cilGarage,
+  cilTruck,
+  cilGrid,
+  cilCog,
+  cilLayers,
+  cilPeople,
+  cilTablet,
+  cilFolderOpen,
+  cilHouse,
+  cibTodoist,
+}
 
-  {
-    component: CNavTitle,
-    name: 'Vehicles operation',
-  },
-  {
-    component: CNavGroup,
-    name: 'Vehicle',
-    to: '#',
-    icon: <CIcon icon={cilTruck} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Vehicle Inventory',
-        to: '/vehicle_inventory',
-      },
-      {
-        component: CNavItem,
-        name: 'Trailer Inventory',
-        to: '/trailerinventory',
-      }, 
-      {
-        component: CNavItem,
-        name: 'Spares Inventory',
-        to: '/spareinventory',
-      },  
-      {
-        component: CNavItem,
-        name: 'Vehicle Trailer Assign',
-        to: '/trailerassign',
-      }, 
-      {
-        component: CNavItem,
-        name: 'Vehicle Spare Assign',
-        to: '/spareasign',
-      },
-      {
-        component: CNavItem,
-        name: 'Tyreassign',
-        to: '/tyreassign',
-      },
-     
-    ]
-  },
+const SidebarNavLoader = () => {
+  const [items, setItems] = useState([])
 
-  {
-    component: CNavGroup,
-    name: 'Service',
-    to: '#',
-    icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
-    items: [
-          {
-            component: CNavItem,
-            name: 'jobcard',
-            to: '/jobcard',
-          },
-          {
-            component: CNavItem,
-            name: 'Vehicle Service',
-            to: '/vehicleservice',
-          },
-          {
-            component: CNavItem,
-            name: 'Vehicle Condemnation',
-            to: '/vehiclecondemn',
-          },
-          {
-            component: CNavItem,
-            name: 'Spare Service',
-            to: '/spareservice',
-          },
-          {
-            component: CNavItem,
-            name: 'Spare Condemnation',
-            to: '/sparecondemn',
-          },
-          {
-            component: CNavItem,
-            name: 'Trailer Service',
-            to: '/trailerservice',
-          },
-          {
-            component: CNavItem,
-            name: 'Trailer Condemnation',
-            to: '/trailercondemn',
-          },
-         
-    ]
-  },
+  useEffect(() => {
+    fetch('https://ams.thepremierprecision.com/api/auth/menu') // 👈 API route
+      .then((res) => res.json())
+      .then((data) => {
+        const processed = data.map(processItem)
+        setItems(processed)
+      })
+      .catch((err) => console.error('Menu load failed:', err))
+  }, [])
 
-  {
-    component: CNavTitle,
-    name: 'Tools',
-  },
-  {
-    component: CNavGroup,
-    name: 'Tools',
-    to: '#',
-    icon: <CIcon icon={cilCog} customClassName="nav-icon" />,
-    items: [
-            {
-              component: CNavItem,
-              name: 'Tools Inventory',
-              to: '/toolinventory',
-            },
-            {
-              component: CNavItem,
-              name: 'Tool Box',
-              to: '/toolsbox',
-            }
-          ]
-    },
+  // Replace string with real <CIcon />
+  function processItem(item) {
+    if (item.icon && iconMap[item.icon]) {
+      item.icon = <CIcon icon={iconMap[item.icon]} customClassName="nav-icon" />
+    }
+    if (item.items) {
+      item.items = item.items.map(processItem)
+    }
+    return item
+  }
 
-    {
-      component: CNavTitle,
-      name: 'Transactions',
-    },
-    {
-      component: CNavGroup,
-      name: 'Transactions',
-      to: '#',
-      icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
-      items: [
-          {
-            component: CNavItem,
-            name: 'Inward',
-            to: '/inward',
-          },
-          {
-            component: CNavItem,
-            name: 'Dispatch',
-            to: '/processin',
-          },
-         ]
-    },
-  
+  return <AppSidebarNav items={items} />
+}
 
-
-  {
-    component: CNavTitle,
-    name: 'Master',
-  },
-
-    {
-    component: CNavItem,
-    name: 'General Master',
-    to: '/generalmaster',
-    icon: <CIcon icon={cibTodoist} customClassName="nav-icon" />,
-  },
-  
-   {
-    component: CNavItem,
-    name: 'User Master',
-    to: '/usermaster',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Tool Rooms',
-    to: '/toolrooms',
-    icon: <CIcon icon={cilTablet} customClassName="nav-icon" />,
-  },
-  
-  {
-    component: CNavItem,
-    name: 'Spare Rooms',
-    to: '/sparerooms',
-    icon: <CIcon icon={cilHouse} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Workshops',
-    to: '/workshop',
-    icon: <CIcon icon={cilGarage} customClassName="nav-icon" />,
-  },
-  // {
-  //   component: CNavItem,
-  //   name: 'Brand',
-  //   to: '/processing',
-  //   icon: <CIcon icon={cibBuffer} customClassName="nav-icon" />,
-  // },
-
-  // {
-  //   component: CNavItem,
-  //   name: 'Model',
-  //   to: '/processing',
-  //   icon: <CIcon icon={cibMega} customClassName="nav-icon" />,
-  // },
-
-
-
-
-]
-
-export default _nav
+export default SidebarNavLoader
