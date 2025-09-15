@@ -337,57 +337,64 @@ const VehicleInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+   const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
+
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
-
     const orderBy = `${sortColumn} ${sortOrder}`;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
-
-    //  const pageindex = pageIndex*15;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
     try {
-      const response = await fetch(
-        `${BASE}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
+      const url = `${BASE}vehicle/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&order_by=${encodeURIComponent(orderBy)}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log(result.data)
+      const items = Array.isArray(result.data) ? result.data : [];
+      let pageItems = [];
+      if (items.length <= limit && pageIndex > 0) {
+        pageItems = items;
+      } else {
+        pageItems = items.slice(start, start + limit);
+      }
 
-      setData(result.data);
-
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+      setData(pageItems);
+      const total = Number(result.total) || items.length || 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      setPageCount(totalPages);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
+      setPageCount(1);
     } finally {
       setLoading(false);
     }
   };
 
 
-
   
 
   const columns = useMemo(
     () => [
-      { Header: 'SL', accessor: 'id', disableSortBy: true, },
+     {
+        Header: 'SL',
+        id: 'sl',            
+        disableSortBy: true,
+        Cell: ({ row }) => row.index + 1,
+      },
       { Header: 'Vehicle Number', accessor: 'vehicle_number' },
       { Header: 'Category', accessor: 'category' },
       { Header: 'Brand', accessor: 'brandname', className: 'center' },
@@ -424,7 +431,7 @@ const VehicleInventory = () => {
               {action_details?.isEdit && (
                 <FaEdit
                   size={15}
-                  className="ms-2 me-2 pointer text-info"
+                  className="ms-2 me-2 pointer text-primary"
                   onClick={() => editvehicle(id)}
                 />
               )}
@@ -432,7 +439,7 @@ const VehicleInventory = () => {
               {action_details?.isDelete && (
                 <FaTrash
                   size={15}
-                  className="ms-2 me-2 pointer text-info"
+                  className="ms-2 me-2 pointer text-danger"
                   onClick={() => deletevehicle(id)}
                 />
               )}
@@ -472,7 +479,7 @@ const VehicleInventory = () => {
     {
       columns,
       data,
-      initialState: { pageIndex: 0 },
+      initialState: { pageIndex: 0, pageSize: 15 },
       manualPagination: true,
       pageCount,
       manualSortBy: true,
@@ -849,92 +856,95 @@ const VehicleInventory = () => {
  
   return (
     <>
-      <CCard className="mb-4">
-        <CCardHeader className='bg-secondary text-light'>
-          Vehicle Inventory
-        </CCardHeader>
-
-        <CCardBody>
-          <input
-            type="search"
-            onChange={(e) => setsearch(e.target.value)}
-            className="form-control form-control-sm m-1 float-end w-auto"
-            placeholder='Search'
-          />
-
-          <CButtonGroup role="group" aria-label="Basic example">
-            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-
-                handleExport();
-              }}>
-              Excel </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow} disabled={!action_details?.isPrint}> Print </CButton>
-          </CButtonGroup>
-
-
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-            <CTableHead color="secondary">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </CTableHead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-
-                      <td {...cell.getCellProps()}>
-                        {cell.render('Cell')}
-                      </td>
-
-
+       <CCard className="mb-4">
+              <CCardHeader className='bg-secondary text-light'>
+                Vehicle Inventory
+              </CCardHeader>
+      
+              <CCardBody>
+                <input
+                  type="search"
+                  onChange={(e) => setsearch(e.target.value)}
+                  className="form-control form-control-sm m-1 float-end w-auto"
+                  placeholder='Search'
+                />
+      
+                <CButtonGroup role="group" aria-label="Basic example">
+                  <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+                  <CButton className="btn btn-sm btn-secondary w-auto"
+                    onClick={() => {
+      
+                      handleExport();
+                    }}>
+                    Excel </CButton>
+                  <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
+                  <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow} disabled={!action_details?.isPrint}> Print </CButton>
+                </CButtonGroup>
+      
+      
+                <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                  <CTableHead color="secondary">
+                    {headerGroups.map((headerGroup) => (
+                      <tr {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map((column) => (
+                          <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                            {column.render('Header')}
+                            <span>
+                              {column.isSorted
+                                ? column.isSortedDesc
+                                  ? ' 🔽'
+                                  : ' 🔼'
+                                : ''}
+                            </span>
+                          </th>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </CTable>
-
-          <div>
-            <span>
-              Page{' '}
-              <strong>
-                {pageIndex + 1} of {pageOptions.length}
-              </strong>{' '}
-            </span>
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<<'}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<'}
-            </button>
-            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>'}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>>'}
-            </button>
-          </div>
-        </CCardBody>
-      </CCard>
+                  </CTableHead>
+                  <tbody {...getTableBodyProps()}>
+                    {page.map((row) => {
+                      prepareRow(row);
+                      const serial = pageIndex * pageSize + row.index + 1;
+                      return (
+                        <tr {...row.getRowProps()}>
+                          {row.cells.map((cell) => (
+      
+                            <td
+                             {...cell.getCellProps()}>
+                              {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                            </td>
+      
+      
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  
+                </CTable>
+      
+                <div>
+                  <span>
+                    Page{' '}
+                    <strong>
+                      {pageIndex + 1} of {pageCount}
+                    </strong>{' '}
+                  </span>
+                  <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'<<'}
+                  </button>
+                  <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'<'}
+                  </button>
+                  <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'>'}
+                  </button>
+                  <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'>>'}
+                  </button>
+                </div>
+              </CCardBody>
+            </CCard>
 
 
 

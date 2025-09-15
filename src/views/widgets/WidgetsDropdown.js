@@ -1,4 +1,4 @@
-import React, { useEffect, useRef ,useState} from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 
 import {
@@ -15,37 +15,10 @@ import { CChartBar, CChartLine } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
 
-const WidgetsDropdown = (props) => {
+const WidgetsDropdown = ({ item }) => {
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
-  const[totalNumbers,settotalNumbers]=useState({})
-  
-  const BASE = import.meta.env.VITE_BASE_URL;
-    const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
-  const getTotalNumbers=async()=>{
-     try {
-      const response = await fetch(`${BASE}options/dashboard`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-      if(response.ok){
-      const data=await response.json()
-      console.log(data)
-      settotalNumbers(data)
-      }
-   }
-  catch(err)
-  {
-    console.log(err.message)
-  }
-}
-useEffect(()=>{{
-  console.log("effect run")
-  getTotalNumbers()}},[])
   useEffect(() => {
     document.documentElement.addEventListener('ColorSchemeChange', () => {
       if (widgetChartRef1.current) {
@@ -65,15 +38,15 @@ useEffect(()=>{{
   }, [widgetChartRef1, widgetChartRef2])
 
   return (
-    <CRow className={props.className} xs={{ gutter: 6 }}>
-      <CCol sm={2} xl={2} xxl={3}>
+    <CRow className="mb-4" xs={{ gutter: 6}}  md={{ gutter: 8 }}>
+      <CCol sm={6} xl={4} xxl={3}   className="mb-3">
         <CWidgetStatsA
           color="primary"
-          
+
           title="Total Vehicles"
-           value={
+          value={
             <>
-             {totalNumbers.Vehicle}
+              {item.Vehicle ? item.Vehicle : 0}
             </>
           }
           chart={
@@ -142,18 +115,18 @@ useEffect(()=>{{
         />
       </CCol>
 
-      
-      <CCol sm={6} xl={4} xxl={3}>
+
+      <CCol sm={6} xl={4} xxl={3}  className="mb-3 mb-sm-0">
         <CWidgetStatsA
           color="info"
-            title="Total Trailers"
+          title="Total Trailers"
           value={
             <>
-            {totalNumbers.Trailer}
-             </>
+              {item.Trailer ? item.Trailer : 0}
+            </>
           }
-        
-          
+
+
           chart={
             <CChartLine
               ref={widgetChartRef2}
@@ -218,17 +191,17 @@ useEffect(()=>{{
           }
         />
       </CCol>
-      <CCol sm={6} xl={4} xxl={3}>
+      <CCol sm={6} xl={4} xxl={3}  className="mb-3 mb-sm-0">
         <CWidgetStatsA
           color="warning"
-            title="Total Spares"
+          title="Total Spares"
           value={
             <>
-              {totalNumbers.Spare}
+              {item.Spare ? item.Spare : 0}
             </>
           }
-        
-         
+
+
           chart={
             <CChartLine
               className="mt-3"
@@ -276,16 +249,16 @@ useEffect(()=>{{
           }
         />
       </CCol>
-      <CCol sm={6} xl={4} xxl={3}>
+      <CCol sm={6} xl={4} xxl={3} >
         <CWidgetStatsA
           color="danger"
           value={
             <>
-             56
+              56
             </>
           }
           title="Total Tools"
-         
+
           chart={
             <CChartBar
               className="mt-3 mx-3"

@@ -61,10 +61,15 @@ import { useEffect } from 'react';
 const Dashboard = () => {
    const [data, setData] = useState([]);
    const [pageCount, setPageCount] = useState(0);
+    const[totalNumbers,settotalNumbers]=useState({})
+    const[selectedValue,setselectedValue]=useState("")
+    const[selectedMonth,setselectedMonth]=useState("")
+    const BASE = import.meta.env.VITE_BASE_URL;
+    const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
    
-   
-   const getTotalNumbers=async()=>{
+    const getTotalNumbers=async()=>{
      try {
+      console.log("try")
       const response = await fetch(`${BASE}options/dashboard`, {
         method: 'GET',
         headers: {
@@ -74,27 +79,32 @@ const Dashboard = () => {
       });
       if(response.ok){
       const data=await response.json()
+      console.log("response")
       console.log(data)
       settotalNumbers(data)
       }
+      
    }
   catch(err)
   {
-
+    console.log(err.message)
   }
 }
-   useEffect(()=>{
-    getTotalNumbers()
-   },[])
+useEffect(()=>{{
+  console.log("effect run")
+  getTotalNumbers()
+}},[])
+  
+  
   const progressExample = [
-    { title: 'Insurance', value: '29', percent: 2, color: 'success' },
-    { title: 'FC', value: '24', percent: 20, color: 'info' },
-    { title: 'PUC', value: '78', percent: 60, color: 'warning' },
-    { title: 'Green', value: '22', percent: 80, color: 'danger' },
-    { title: 'Driver', value: '12', percent: 40.15, color: 'primary' },
-    { title: 'Fuel', value: '4', percent: 40.15, color: 'primary' },
+    { title: 'Insurance', value: '29', percent: 0, color: 'success' },
+    { title: 'FC', value: '24', percent: 0, color: 'info' },
+    { title: 'PUC', value: '78', percent: 0, color: 'warning' },
+    { title: 'Green', value: '22', percent: 0, color: 'danger' },
+    { title: 'Driver', value: '12', percent:0, color: 'primary' },
+    { title: 'Fuel', value: '4', percent: 0, color: 'primary' },
   ]
-
+//  const progress_calculated=progressExample.map((prev)=>({...prev,percent:prev.value/50*100}))
   const progressExample1 = [
       { title: 'Tools', value: '29',  color: 'success' },
       { title: 'Spare', value: '24',color: 'info' },
@@ -145,14 +155,20 @@ const Dashboard = () => {
   usePagination
 );
 
+ const initial_vehDetails={
+    vehicle_number:"",
+    category:"",
+    expiry_date:""
 
+  }
+  const[vehicleDetails,setvehicleDetails]=useState(initial_vehDetails)
 
    const columns = useMemo(
       () => [
         { Header: 'SL', accessor: 'id', disableSortBy: true, },
         { Header: 'Vehicle Number', accessor: 'vehicle_number' },
-        { Header: 'Category', accessor: 'type' },
-        { Header: 'Expiry Date', accessor: 'engine_number' },
+        { Header: 'Category', accessor: 'category' },
+        { Header: 'Expiry Date', accessor: 'expiry_date' },
       ],
       []
     );
@@ -301,15 +317,21 @@ const Dashboard = () => {
       activity: 'Last week',
     },
   ]
-  
-
-  const handleclick=(value)=>{
+ const handleclick=(value)=>{
+  setselectedValue(value)
+  fetchdata(value)
+ } 
+const handlemonth=(value)=>{
+ setselectedMonth(value)
+ }
+  const fetchdata=(value)=>{
      console.log(value)
+
   }
   return (
     <>
 
-  <WidgetsDropdown className="mb-4" />
+  {totalNumbers&&<WidgetsDropdown className="mb-4" item={totalNumbers}  />}
 
  <CRow>
  <CCol sm={4}>
@@ -329,7 +351,8 @@ const Dashboard = () => {
                     color="outline-secondary"
                     key={value}
                     className="mx-0"
-                    active={value === 'Month'}
+                    active={selectedMonth===value}
+                    onClick={()=>handlemonth(value)}
                   >
                     {value}
                   </CButton>
@@ -415,7 +438,7 @@ const Dashboard = () => {
                     color="outline-secondary"
                     key={value}
                     className="mx-0"
-                    active={value === 'FC'}
+                    active={selectedValue === value}
                     onClick={()=>handleclick(value)}
                   >
                     {value}

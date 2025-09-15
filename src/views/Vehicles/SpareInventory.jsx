@@ -311,21 +311,23 @@ const SpareInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+  const fetchData = async ({ pageSize=15, pageIndex=0, sortBy=[], search="", todate, location }) => {
     setLoading(true);
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
 
     const orderBy = `${sortColumn} ${sortOrder}`;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
+    // const pageSizee = 15;
+    // const pageindex = pageIndex * pageSizee;
 
     //  const pageindex = pageIndex*15;
 
     try {
       const response = await fetch(
-        `${BASE}spare/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
+        `${BASE}spare/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&order_by=${encodeURIComponent(orderBy)}`,
         {
           method: 'GET',
           headers: {
@@ -341,13 +343,23 @@ const SpareInventory = () => {
 
       const result = await response.json();
       console.log(result.data)
-      setData(result.data);
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+
+      const items = Array.isArray(result.data) ? result.data : [];
+       let pageItems = [];
+
+       if (items.length <= limit &&pageIndex  > 0) {
+        pageItems = items;
+      } else {
+        pageItems = items.slice(start, start + limit);
+      }
+
+      setData(pageItems);
+      
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
+       setPageCount(1);
     } finally {
       setLoading(false);
     }
@@ -420,19 +432,19 @@ const SpareInventory = () => {
               <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} /> */}
               <FaEye
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isView ? "text-dark" : "text-muted"}`}
+                className={`ms-2 me-2 pointer ${action_details?.isView ? "text-info" : "text-muted"}`}
                 onClick={() => action_details?.isView && viewspare(id)}
               />
 
               <FaEdit
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isEdit ? "text-dark" : "text-muted"}`}
+                className={`ms-2 me-2 pointer ${action_details?.isEdit ? "text-primary" : "text-muted"}`}
                 onClick={() => action_details?.isEdit && editspare(id)}
               />
 
               <FaTrash
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isDelete ? "text-dark" : "text-muted"}`}
+                className={`ms-2 me-2 pointer ${action_details?.isDelete ? "text-danger" : "text-muted"}`}
                 onClick={() => action_details?.isDelete && deletespare(id)}
               />
 
@@ -882,13 +894,14 @@ const SpareInventory = () => {
             <tbody {...getTableBodyProps()}>
               {page.map((row) => {
                 prepareRow(row);
+                const serial = pageIndex * pageSize + row.index + 1;
                 return (
                   <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => (
 
                       <td {...cell.getCellProps()}>
-                        {cell.render('Cell')}
-                      </td>
+                         {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                        </td>
 
 
                     ))}
@@ -1198,10 +1211,10 @@ const SpareInventory = () => {
         onClose={() => handleEClose()}
         aria-labelledby="NewProcessing"
       >
-        {/* <CModalHeader className='bg-secondary'>
+        <CModalHeader className='bg-secondary'>
           {updated_data.image ?
            <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
-        </CModalHeader> */}
+        </CModalHeader>
         <CModalBody>
           <CRow>
             <CCol md={6}>
@@ -1462,7 +1475,7 @@ const SpareInventory = () => {
           aria-labelledby="NewProcessing"
         >
           <CModalHeader className="bg-secondary">
-            {/* {updated_data.image ? (
+            {updated_data.image ? (
               <CImage
                 rounded
                 src={updated_data.image}
@@ -1472,7 +1485,7 @@ const SpareInventory = () => {
               />
             ) : (
               ""
-            )} */}
+            )}
             <CModalTitle id="ViewVehicle">{updated_data.spareName}</CModalTitle>
           </CModalHeader>
 

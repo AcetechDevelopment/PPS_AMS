@@ -274,9 +274,11 @@ const Trailerservice = () => {
             <CTableHead color="secondary">
               {headerGroups.map((headerGroup) => (
 
-                <tr {...headerGroup.getHeaderGroupProps()}>
+                <tr key= {headerGroup.id}
+                {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
-                    <th{...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <th key={column.id}
+                    {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       {column.render('Header')}
                       <span>
                         {column.isSorted
@@ -294,10 +296,11 @@ const Trailerservice = () => {
               {rows.map((row, rowIndex) => {
                 prepareRow(row);
                 return (
-                  <tr {...row.getRowProps()}>
+                  <tr key={row.id}
+                   {...row.getRowProps()}>
                     {row.cells.map((cell) => (
 
-                      <td {...cell.getCellProps()} style={{ textAlign: "center" }}>
+                      <td key={cell.column.id} {...cell.getCellProps()} style={{ textAlign: "center" }}>
 
                         {cell.render("Cell")}
                       </td>
