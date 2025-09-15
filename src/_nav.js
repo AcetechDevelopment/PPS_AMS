@@ -19,8 +19,9 @@ import {
   cilCarAlt,
   cilPeople,
   cilTablet,
+  cilSettings,
   cilFolderOpen,
-  cibTodoist,cilUser,
+  cibTodoist, cilUser,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -51,20 +52,20 @@ const _nav = [
         component: CNavItem,
         name: 'Trailer Inventory',
         to: '/trailerinventory',
-      }, 
+      },
       {
         component: CNavItem,
         name: 'Spares Inventory',
         to: '/spareinventory',
-      },  
+      },
       {
         component: CNavItem,
         name: 'Vehicle Trailer Assign',
         to: '/trailerassign',
-      }, 
+      },
       {
         component: CNavItem,
-        name: 'Vehicle Spare Assign',
+        name: ' Spare Assign',
         to: '/spareasign',
       },
       {
@@ -72,7 +73,7 @@ const _nav = [
         name: 'Tyreassign',
         to: '/tyreassign',
       },
-     
+
     ]
   },
 
@@ -82,42 +83,42 @@ const _nav = [
     to: '#',
     icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
     items: [
-          {
-            component: CNavItem,
-            name: 'jobcard',
-            to: '/jobcard',
-          },
-          {
-            component: CNavItem,
-            name: 'Vehicle Service',
-            to: '/vehicleservice',
-          },
-          {
-            component: CNavItem,
-            name: 'Vehicle Condemnation',
-            to: '/vehiclecondemn',
-          },
-          {
-            component: CNavItem,
-            name: 'Spare Service',
-            to: '/spareservice',
-          },
-          {
-            component: CNavItem,
-            name: 'Spare Condemnation',
-            to: '/sparecondemn',
-          },
-          {
-            component: CNavItem,
-            name: 'Trailer Service',
-            to: '/trailerservice',
-          },
-          {
-            component: CNavItem,
-            name: 'Trailer Condemnation',
-            to: '/trailercondemn',
-          },
-         
+      {
+        component: CNavItem,
+        name: 'jobcard',
+        to: '/jobcard',
+      },
+      {
+        component: CNavItem,
+        name: 'Vehicle Service',
+        to: '/vehicleservice',
+      },
+      {
+        component: CNavItem,
+        name: 'Vehicle Condemnation',
+        to: '/vehiclecondemn',
+      },
+      {
+        component: CNavItem,
+        name: 'Spare Service',
+        to: '/spareservice',
+      },
+      {
+        component: CNavItem,
+        name: 'Spare Condemnation',
+        to: '/sparecondemn',
+      },
+      {
+        component: CNavItem,
+        name: 'Trailer Service',
+        to: '/trailerservice',
+      },
+      {
+        component: CNavItem,
+        name: 'Trailer Condemnation',
+        to: '/trailercondemn',
+      },
+
     ]
   },
 
@@ -131,42 +132,42 @@ const _nav = [
     to: '#',
     icon: <CIcon icon={cilCog} customClassName="nav-icon" />,
     items: [
-            {
-              component: CNavItem,
-              name: 'Tools Inventory',
-              to: '/toolinventory',
-            },
-            {
-              component: CNavItem,
-              name: 'Tool Box',
-              to: '/toolsbox',
-            }
-          ]
-    },
+      {
+        component: CNavItem,
+        name: 'Tools Inventory',
+        to: '/toolinventory',
+      },
+      {
+        component: CNavItem,
+        name: 'Tool Box',
+        to: '/toolsbox',
+      }
+    ]
+  },
 
-    {
-      component: CNavTitle,
-      name: 'Transactions',
-    },
-    {
-      component: CNavGroup,
-      name: 'Transactions',
-      to: '#',
-      icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
-      items: [
-          {
-            component: CNavItem,
-            name: 'Inward',
-            to: '/inward',
-          },
-          {
-            component: CNavItem,
-            name: 'Dispatch',
-            to: '/processin',
-          },
-         ]
-    },
-  
+  {
+    component: CNavTitle,
+    name: 'Transactions',
+  },
+  {
+    component: CNavGroup,
+    name: 'Transactions',
+    to: '#',
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Inward',
+        to: '/inward',
+      },
+      {
+        component: CNavItem,
+        name: 'Dispatch',
+        to: '/processin',
+      },
+    ]
+  },
+
 
 
   {
@@ -174,14 +175,14 @@ const _nav = [
     name: 'Master',
   },
 
-    {
+  {
     component: CNavItem,
     name: 'General Master',
     to: '/generalmaster',
     icon: <CIcon icon={cibTodoist} customClassName="nav-icon" />,
   },
-  
-   {
+
+  {
     component: CNavItem,
     name: 'User Master',
     to: '/usermaster',
@@ -193,7 +194,7 @@ const _nav = [
     to: '/toolrooms',
     icon: <CIcon icon={cilTablet} customClassName="nav-icon" />,
   },
-  
+
   {
     component: CNavItem,
     name: 'Spare Rooms',
@@ -205,6 +206,12 @@ const _nav = [
     name: 'Workshops',
     to: '/workshop',
     icon: <CIcon icon={cilGarage} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Settings',
+    to: '/settings',
+    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
   // {
   //   component: CNavItem,
