@@ -930,9 +930,9 @@ const Tyreassign = () => {
                                 return (
                                     <tr {...row.getRowProps()}>
                                         {row.cells.map((cell) => (
-                                            <div>
+                                           
                                                 <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                            </div>
+                                      
 
                                         ))}
                                     </tr>

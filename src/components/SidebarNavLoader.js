@@ -14,7 +14,6 @@ import {
   cilFolderOpen,
   cilHouse,
   cibTodoist,
-  cilSettings,
 } from '@coreui/icons'
 
 // Map string names from backend to icons
@@ -29,7 +28,6 @@ const iconMap = {
   cilFolderOpen,
   cilHouse,
   cibTodoist,
-  cilSettings,
 }
 
 // Map string names to CoreUI components
