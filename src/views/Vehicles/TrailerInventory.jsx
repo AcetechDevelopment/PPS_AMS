@@ -296,7 +296,7 @@ const TrailerInventory = () => {
       const datas = result?.data?.map(item => ({
         value: item.id,
         label: item.model,
-        key: item.id 
+        key: item.id
       }));
       setmodeloption(datas);
     }
@@ -312,21 +312,22 @@ const TrailerInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = "" }) => {
     setLoading(true);
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
 
     const orderBy = `${sortColumn} ${sortOrder}`;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
     //  const pageindex = pageIndex*15;
 
     try {
       const response = await fetch(
-        `${BASE}spare/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
+        `${BASE}trailer/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&
+        order_by=${encodeURIComponent(orderBy)}`,
         {
           method: 'GET',
           headers: {
@@ -342,30 +343,33 @@ const TrailerInventory = () => {
 
       const result = await response.json();
       console.log(result.data)
-      setData(result.data);
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+      const items = Array.isArray(result.data) ? result.data : [];
+      let pageItems = [];
+
+      if (items.length <= limit && pageIndex > 0) {
+        pageItems = items;
+      }
+      else {
+        pageItems = items.slice(start, start + limit);
+      }
+      setData(pageItems);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
-    } finally {
+      setPageCount(1);
+    }
+
+    finally {
       setLoading(false);
     }
   };
 
 
-
-
-
-
-  //completely hide the icon
-  //   
-  //getting value from api and displaying in table
   const columns = useMemo(
     () => [
       { Header: 'SL', accessor: 'id', disableSortBy: true },
-      { Header: 'Spare Name', accessor: 'spare_name' },
+      { Header: 'Trailer Name', accessor: 'spare_name' },
       { Header: 'Type', accessor: 'type' },
       { Header: 'Category', accessor: 'category', className: 'center' },
       { Header: 'Brand', accessor: 'brandname' },
@@ -865,10 +869,10 @@ const TrailerInventory = () => {
             <CTableHead color="secondary">
               {headerGroups.map((headerGroup) => (
                 <tr key={headerGroup.id}
-                 {...headerGroup.getHeaderGroupProps()}>
+                  {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
                     <th key={column.id}
-                     {...column.getHeaderProps(column.getSortByToggleProps())}>
+                      {...column.getHeaderProps(column.getSortByToggleProps())}>
                       {column.render('Header')}
                       <span>
                         {column.isSorted
@@ -886,12 +890,12 @@ const TrailerInventory = () => {
               {page.map((row) => {
                 prepareRow(row);
                 return (
-                  <tr key={row.id} 
-                  {...row.getRowProps()}>
+                  <tr key={row.id}
+                    {...row.getRowProps()}>
                     {row.cells.map((cell) => (
 
-                      <td  key={cell.column.id} 
-                       {...cell.getCellProps()}>
+                      <td key={cell.column.id}
+                        {...cell.getCellProps()}>
                         {cell.render('Cell')}
                       </td>
 
@@ -1205,8 +1209,8 @@ const TrailerInventory = () => {
       >
         <CModalHeader className='bg-secondary'>
           {updated_data.image ?
-           <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}
-             <CModalTitle id="NewProcessing"> {updated_data.image}</CModalTitle>
+            <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}
+          <CModalTitle id="NewProcessing"> {updated_data.image}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CRow>

@@ -58,17 +58,17 @@ const SpareInventory = () => {
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
-  const [typelist, settypelist] = useState([])
+  // const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
   const [action_details, setactiondetails] = useState({})
   const { roleId } = useContext(Sharedcontext)
 
   const intial_data = {
-    id: "",
+     id: null,
     spareName: '',
     type: '',
-    category: '',
+    // category: '',
     brandName: '',
     model: '',
     purchasedate: today,
@@ -89,15 +89,15 @@ const SpareInventory = () => {
     const data = save_data;
     if (
       !data.spareName ||
-      !data.type ||
-      !data.category ||
+      // !data.type ||
+      // !data.category ||
       !data.hsn
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    const verify = vehicleNum(data.vno);
+    const verify = vehicleNum(data.spareName);
     if (!verify.isValid) {
       toast.error('Vehicle Number Invalid!');
       return;
@@ -148,10 +148,10 @@ const SpareInventory = () => {
         setShow(false);
 
         setsave_data({
-          id: '',
+          id: null,
           spareName: '',
           type: '',
-          category: '',
+          // category: '',
           brandName: '',
           model: '',
           purchasedate: today,
@@ -175,40 +175,39 @@ const SpareInventory = () => {
     }
 
   };
-  useEffect(() => { getlistoptions() }, [])
-  useEffect(() => { getcategorylist() }, [save_data.type])
+  useEffect(() => { getbrandlist(9) }, [])
 
   useEffect(() => { console.log(save_data) }, [save_data])
 
-  const getlistoptions = async () => {
-    try {
-      const response = await fetch(
-        `${BASE}options/type`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      console.log(result)
+  // const getlistoptions = async () => {
+  //   try {
+  //     const response = await fetch(
+  //       `${BASE}options/type`,
+  //       {
+  //         method: 'GET',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Authorization': `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error(`Error: ${response.status} ${response.statusText}`);
+  //     }
+  //     const result = await response.json();
+  //     console.log(result)
 
-      const datas = result?.Type?.map(item => ({
-        value: item.id,
-        label: item.type
-      }));
-      settypelist(datas);
-    }
-    catch (err) {
+  //     const datas = result?.Type?.map(item => ({
+  //       value: item.id,
+  //       label: item.type
+  //     }));
+  //     settypelist(datas);
+  //   }
+  //   catch (err) {
 
-    }
+  //   }
 
-  }
+  // }
 
   const getcategorylist = async () => {
     setcategoryoption([]);
@@ -248,7 +247,7 @@ const SpareInventory = () => {
 
     try {
       const response = await fetch(
-        `${apiUrl}options/brand/${catid}`,
+        `${apiUrl}options/brand/9`,
         {
           method: 'GET',
           headers: {
@@ -311,7 +310,7 @@ const SpareInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize=15, pageIndex=0, sortBy=[], search="", todate, location }) => {
+  const fetchData = async ({ pageSize=15, pageIndex=0, sortBy=[], search=""}) => {
     setLoading(true);
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
@@ -365,20 +364,12 @@ const SpareInventory = () => {
     }
   };
 
-
-
-
-
-
-  //completely hide the icon
-  //   
-  //getting value from api and displaying in table
   const columns = useMemo(
     () => [
       { Header: 'SL', accessor: 'id', disableSortBy: true },
       { Header: 'Spare Name', accessor: 'spare_name' },
       { Header: 'Type', accessor: 'type' },
-      { Header: 'Category', accessor: 'category', className: 'center' },
+      // { Header: 'Category', accessor: 'category', className: 'center' },
       { Header: 'Brand', accessor: 'brandname' },
       { Header: 'Model', accessor: 'modelname' },
       { Header: 'HSN Number', accessor: 'hsn' },
@@ -531,7 +522,7 @@ const SpareInventory = () => {
         const data = await response.json();
         const res = data.data;
         setupdated_data({
-          id: res.id,
+          id: null,
           spareName: res.spare_name,
           type: res.type_id,
           category: res.cat_id,
@@ -603,7 +594,7 @@ const SpareInventory = () => {
     formData.append("id", data.id || "");
     formData.append("spare_name", data.spareName || "");
     formData.append("type_id", data.type || "");
-    formData.append("cat_id", data.category || "");
+    // formData.append("cat_id", data.category || "");
     formData.append("brand_id", data.brandName || "");
     formData.append("model_id", data.model || "");
     formData.append("purchase_date", data.purchasedate || "");
@@ -680,10 +671,10 @@ const SpareInventory = () => {
         const data = await response.json();
         const res = data.data;
         setupdated_data({
-          id: res.id,
+          id: null,
           spareName: res.spare_name,
           type: res.type_id,
-          category: res.cat_id,
+          // category: res.cat_id,
           brandName: res.brand_id,
           model: res.model_id,
           purchasedate: res.purchase_date,
@@ -838,11 +829,10 @@ const SpareInventory = () => {
   useEffect(() => { fetchActionDetails() }, [roleId])
   useEffect(() => { console.log(roleId) }, [roleId])
 
-  const fuelOptions = [
-    { value: "1", label: "Diesel" },
-    { value: "2", label: "Petrol" },
-    { value: "3", label: "Gas" },
-    { value: "4", label: "Battery" },
+  const typelist = [
+    { value: 0, label: "Spare" },
+    { value: 1, label: "Tyre" },
+   
   ];
   return (
     <>
@@ -950,7 +940,8 @@ const SpareInventory = () => {
         </CModalHeader>
         <CModalBody>
           <CRow>
-            <CCol md={6}>
+  <CCol>
+            
               <CFormLabel className="col-form-label">
                 Spare Name
               </CFormLabel>
@@ -978,31 +969,32 @@ const SpareInventory = () => {
               </CFormLabel>
               <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.type}
+                value={typelist.find((option)=>option.value===save_data.type)}
+                defaultValue={typelist.find((option)=>option.value===0)}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    type: selectedOption ? selectedOption.type : '',
+                    type: selectedOption ? selectedOption.value : '',
                   }));
                 }}
               />
 
-              <CFormLabel className="col-form-label">
+              {/* <CFormLabel className="col-form-label">
                 Category
               </CFormLabel>
               <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.category}
+                // value={save_data.category}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    category: selectedOption ? selectedOption.category : '',
+                    category: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    getbrandlist(selectedOption.category);
+                    getbrandlist(selectedOption.value);
                   }
                 }}
-              />
+              /> */}
 
               <CFormLabel className="col-form-label">
                 Brand
@@ -1013,14 +1005,14 @@ const SpareInventory = () => {
                 size="sm"
                 className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.brandName}
+                 value={brandoption.find((option)=>(option.value===save_data.brandName))}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    brandName: selectedOption ? selectedOption.brandName : '',
+                    brandName: selectedOption ? selectedOption.value: '',
                   }));
                   if (selectedOption) {
-                    getmodellist(selectedOption.brandName);
+                    getmodellist(selectedOption.value);
                   }
                 }}
               />
@@ -1032,13 +1024,13 @@ const SpareInventory = () => {
               <Select options={modeloption}
                 isMulti={false}
                 placeholder="Select Model"
-                value={save_data.model}
+                value={modeloption.find((option)=>(option.value===save_data.model)||null)}
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    model: selectedOption ? selectedOption.model : '',
+                    model: selectedOption ? selectedOption.value : '',
                   }));
                 }}
               />
@@ -1074,7 +1066,29 @@ const SpareInventory = () => {
                 placeholder="Month of warranty" className='mb-2' />
 
 
-
+                <CFormLabel className="col-form-label">
+                              AMC
+                            </CFormLabel>
+              
+                            <CInputGroup className="mb-2">
+                              <CFormInput type="text" size="sm"
+                                onChange={(e) =>
+                                  setsave_data((prev) => ({
+                                    ...prev,
+                                    amc: e.target.value,
+                                  }))
+                                }
+                                placeholder="AMC File Number" />
+              
+                              <CFormInput type="date" value={save_data.amcdate} size="sm"
+                                onChange={(e) =>
+                                  setsave_data((prev) => ({
+                                    ...prev,
+                                    amcdate: e.target.value,
+                                  }))
+                                }
+                              />
+                            </CInputGroup>
 
               {/* <CFormLabel className="col-form-label">
                 Tyre count / Stepney Count
@@ -1503,7 +1517,6 @@ const SpareInventory = () => {
                   { label: "Purchase Date", value: updated_data.purchasedate },
                   { label: "Years of Warranty", value: updated_data.warranty },
                   { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
-
                   { label: "Part Number", value: updated_data.partnum },
 
                 ].map((item, idx) => (
