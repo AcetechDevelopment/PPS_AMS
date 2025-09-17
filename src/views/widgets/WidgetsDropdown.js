@@ -19,6 +19,9 @@ const WidgetsDropdown = (props) => {
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
   const[totalNumbers,settotalNumbers]=useState({})
+
+  console.log(props);
+  
   
   const BASE = import.meta.env.VITE_BASE_URL;
     const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';

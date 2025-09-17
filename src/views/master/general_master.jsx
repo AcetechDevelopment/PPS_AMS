@@ -25,7 +25,7 @@ import { isNumberKey, base_url, today } from '../service';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = import.meta.env.VITE_BASE_URL;
 
 const Generalmaster = () => {
 
@@ -519,7 +519,7 @@ const handleEClose = () => setupdateShow(false);
           type:type_name
         };
       try {
-        const response = await fetch(`${base_url}type/create`, {
+        const response = await fetch(`${apiUrl}type/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -756,7 +756,7 @@ const handleEClose = () => setupdateShow(false);
           category:cat_name
         };
       try {
-        const response = await fetch(`${base_url}category/create`, {
+        const response = await fetch(`${apiUrl}category/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -992,7 +992,7 @@ const handleEClose = () => setupdateShow(false);
           brand:brand_name
         };
       try {
-        const response = await fetch(`${base_url}brand/create`, {
+        const response = await fetch(`${apiUrl}brand/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

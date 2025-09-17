@@ -19,12 +19,7 @@ import {
   CFormLabel,
   CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import { saveAs } from "file-saver";
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
-import { CIcon } from '@coreui/icons-react';
-import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
@@ -33,15 +28,24 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { toast } from 'react-toastify';
 import { Sharedcontext } from '../../components/Context';
+import { exportToExcel } from '../export/excel';
+import { exportToPDF } from '../export/pdf';
+import { exportToPrint } from '../export/print';
 
 
 const SpareInventory = () => {
 
   const BASE = import.meta.env.VITE_BASE_URL;
   const apiUrl = import.meta.env.VITE_API_URL;
+
   const ReactSwal = withReactContent(Swal);
   const [data, setData] = useState([]);
+  
   const [loading, setLoading] = useState(false);
+  const [Excelloading, setExcelLoading] = useState(false);
+  const [Pdfloading, setPdfLoading] = useState(false);
+  const [Printloading, setPrintLoading] = useState(false);
+
   const [pageCount, setPageCount] = useState(0);
   const [search, setsearch] = useState('');
   const [categoryoption, setcategoryoption] = useState([]);
@@ -58,18 +62,15 @@ const SpareInventory = () => {
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
-  const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
   const [action_details, setactiondetails] = useState({})
   const { roleId } = useContext(Sharedcontext)
 
   const intial_data = {
-    id: "",
     spareName: '',
     type: '',
-    category: '',
-    brandName: '',
+    brand: '',
     model: '',
     purchasedate: today,
     warranty: '',
@@ -77,43 +78,28 @@ const SpareInventory = () => {
     amcdate: today,
     hsn: '',
     partnum: "",
-    // file: null,
+    file: null,
   };
 
-  // new vehicle
-  const [save_data, setsave_data] = useState(intial_data);
-  // update vehicle 
+  const [save_data, setsave_data] = useState(intial_data); 
   const [updated_data, setupdated_data] = useState(intial_data);
 
   const submitvichile = async () => {
     const data = save_data;
     if (
       !data.spareName ||
-      !data.type ||
-      !data.category ||
       !data.hsn
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    const verify = vehicleNum(data.vno);
-    if (!verify.isValid) {
-      toast.error('Vehicle Number Invalid!');
-      return;
-    }
     const hsnCheck = validateHSN(data.hsn);
     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
 
     const monthCheck = ValidMonth(data.warranty);
     if (!monthCheck.isValid) return toast.error('Months Invalid!');
-
-    // const tyreCheck = ValidSingleDigit(data.tyrecnt);
-    // if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
-
-    // const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-    // if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
 
     const formData = new FormData();
 
@@ -143,16 +129,13 @@ const SpareInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success('New Vehicle created!');
+        toast.success('New Spare created!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
 
         setsave_data({
-          id: '',
           spareName: '',
           type: '',
-          category: '',
-          brandName: '',
           model: '',
           purchasedate: today,
           warranty: '',
@@ -160,7 +143,7 @@ const SpareInventory = () => {
           amcdate: today,
           hsn: '',
           partnum: "",
-
+          file: null,
         });
 
 
@@ -175,40 +158,8 @@ const SpareInventory = () => {
     }
 
   };
-  useEffect(() => { getlistoptions() }, [])
-  useEffect(() => { getcategorylist() }, [save_data.type])
+  useEffect(() => { getbrandlist(9) }, [])
 
-  useEffect(() => { console.log(save_data) }, [save_data])
-
-  const getlistoptions = async () => {
-    try {
-      const response = await fetch(
-        `${BASE}options/type`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      console.log(result)
-
-      const datas = result?.Type?.map(item => ({
-        value: item.id,
-        label: item.type
-      }));
-      settypelist(datas);
-    }
-    catch (err) {
-
-    }
-
-  }
 
   const getcategorylist = async () => {
     setcategoryoption([]);
@@ -227,7 +178,6 @@ const SpareInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      console.log(result)
 
       const datas = result?.data?.map(item => ({
         value: item.id,
@@ -248,7 +198,7 @@ const SpareInventory = () => {
 
     try {
       const response = await fetch(
-        `${apiUrl}options/brand/${catid}`,
+        `${apiUrl}options/brand/9`,
         {
           method: 'GET',
           headers: {
@@ -261,7 +211,6 @@ const SpareInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      console.log(result)
       const datas = result?.data?.map((item) => ({
         value: item.brand_id,
         label: item.brand
@@ -311,71 +260,75 @@ const SpareInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+ const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
+
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
-
     const orderBy = `${sortColumn} ${sortOrder}`;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
-
-    //  const pageindex = pageIndex*15;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
     try {
-      const response = await fetch(
-        `${BASE}spare/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
+      const url = `${BASE}spare/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&order_by=${encodeURIComponent(orderBy)}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log(result.data)
-      setData(result.data);
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+      const items = Array.isArray(result.data) ? result.data : [];
+      let pageItems = [];
+      if (items.length <= limit && pageIndex > 0) {
+        pageItems = items;
+      } else {
+        pageItems = items.slice(start, start + limit);
+      }
+
+      setData(pageItems);
+      const total = Number(result.total) || items.length || 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      setPageCount(totalPages);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
+      setPageCount(1);
     } finally {
       setLoading(false);
     }
   };
 
-
-
-
-
-
-  //completely hide the icon
-  //   
-  //getting value from api and displaying in table
   const columns = useMemo(
     () => [
-      { Header: 'SL', accessor: 'id', disableSortBy: true },
+      {
+        Header: 'SL',
+        id: 'sl',            
+        disableSortBy: true,
+        Cell: ({ row }) => row.index + 1,
+      },
       { Header: 'Spare Name', accessor: 'spare_name' },
-      { Header: 'Type', accessor: 'type' },
-      { Header: 'Category', accessor: 'category', className: 'center' },
+      {
+        Header: 'Type',
+        accessor: 'type',
+        Cell: ({ value }) => (value === 0 ? 'Spare' : 'Tyre')
+      },
       { Header: 'Brand', accessor: 'brandname' },
       { Header: 'Model', accessor: 'modelname' },
       { Header: 'HSN Number', accessor: 'hsn' },
       { Header: 'Purchase Date', accessor: 'purchase_date' },
-      { Header: 'Years of Warranty', accessor: 'years_warrenty' },
+      { Header: 'Months of Warranty', accessor: 'years_warrenty' },
       { Header: 'AMC', accessor: 'amc' },
       { Header: 'AMC Date', accessor: 'amc_date' },
       { Header: 'Part Number', accessor: 'part_num' },
-      // { Header: 'Image', accessor: 'image' },
       {
         Header: () => <FaBars />,
         id: 'actions',
@@ -384,59 +337,21 @@ const SpareInventory = () => {
           if (!action_details) return null
           return (
             <div className="">
-              {/* <FaEye size={15} className={`ms-2 me-2 pointer ${action_details?.isView?"text-info":"text-secondary opacity-50"}`} onClick={() => {
-                if(action_details?.isView)
-                {
-                  console.log("working")
-                   viewvehicle(id)
-                }
-               }} /> */}
-
-              {/* {action_details?.isView && (
-                <FaEye
-                  size={15}
-                  className="ms-2 me-2 pointer text-info"
-                  onClick={() => viewspare(id)}
-                />
-              )}
-              {action_details?.isEdit && (
-                <FaEdit
-                  size={15}
-                  className="ms-2 me-2 pointer text-info"
-                  onClick={() => editspare(id)}
-                />
-              )}
-
-              {action_details?.isDelete && (
-                <FaTrash
-                  size={15}
-                  className="ms-2 me-2 pointer text-info"
-                  onClick={() => deletespare(id)}
-                />
-              )} */}
-              {/* 
-              <FaEdit size={15} className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
-
-              <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} /> */}
               <FaEye
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isView ? "text-dark" : "text-muted"}`}
+                className={`ms-2 me-2 pointer ${action_details?.isView ? "text-info" : "text-muted"}`}
                 onClick={() => action_details?.isView && viewspare(id)}
               />
-
               <FaEdit
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isEdit ? "text-dark" : "text-muted"}`}
+                className={`ms-2 me-2 pointer ${action_details?.isEdit ? "text-primary" : "text-muted"}`}
                 onClick={() => action_details?.isEdit && editspare(id)}
               />
-
               <FaTrash
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isDelete ? "text-dark" : "text-muted"}`}
+                className={`ms-2 me-2 pointer ${action_details?.isDelete ? "text-danger" : "text-muted"}`}
                 onClick={() => action_details?.isDelete && deletespare(id)}
               />
-
-
             </div>
           );
         },
@@ -445,9 +360,6 @@ const SpareInventory = () => {
     ],
     [action_details]
   );
-
-
-
 
   const {
     getTableProps,
@@ -496,7 +408,6 @@ const SpareInventory = () => {
   const handleEClose = () => setupdateShow(false);
 
   const editspare = async (id) => {
-    console.log("edit btn")
     if (!authToken) {
       ReactSwal.fire({
         title: 'Error',
@@ -531,7 +442,7 @@ const SpareInventory = () => {
           amcdate: res.amc_date,
           hsn: res.hsn,
           partnum: res.part_num,
-          // image: res.image,
+          image:res.image,
 
         });
         getbrandlist(res.cat_id);
@@ -560,38 +471,24 @@ const SpareInventory = () => {
   const updatespare = async () => {
     const data = updated_data;
     if (
-
       !data.type ||
-
       !data.hsn
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    // const verify = vehicleNum(data.vno);
-    // if (!verify.isValid) {
-    //   toast.error('Vehicle Number Invalid!');
-    //   return;
-    // }
     const hsnCheck = validateHSN(data.hsn);
     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
 
-    // const monthCheck = ValidMonth(data.warrentyyear);
-    // if (!monthCheck.isValid) return toast.error('Months Invalid!');
-
-    // const tyreCheck = ValidSingleDigit(data.tyrecnt);
-    // if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
-
-    // const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-    // if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
+    const monthCheck = ValidMonth(data.warranty);
+    if (!monthCheck.isValid) return toast.error('Months Invalid!');
 
     const formData = new FormData();
     formData.append("id", data.id || "");
     formData.append("spare_name", data.spareName || "");
     formData.append("type_id", data.type || "");
-    formData.append("cat_id", data.category || "");
     formData.append("brand_id", data.brandName || "");
     formData.append("model_id", data.model || "");
     formData.append("purchase_date", data.purchasedate || "");
@@ -606,23 +503,6 @@ const SpareInventory = () => {
     } else {
       formData.append("image", data.image || "");
     }
-
-    console.log("🔍 Spare update payload:", [...formData.entries()]);
-    // Object.entries(data).forEach(([key, value]) => {
-
-    //   let finalValue = value;
-    //   if (value instanceof Date) {
-    //     finalValue = value.toISOString().split('T')[0];
-    //   }
-
-
-    //   if (key === 'file' && value instanceof File) {
-    //     formData.append(key, value);
-    //   } else {
-    //     formData.append(key, value?.toString() || '');
-    //   }
-    // });
-    // console.log(formData)
     try {
       const response = await fetch(`${BASE}spare/update`, {
         method: 'POST',
@@ -635,7 +515,6 @@ const SpareInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(result)
         toast.success('Vehicle Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
@@ -668,10 +547,9 @@ const SpareInventory = () => {
         const data = await response.json();
         const res = data.data;
         setupdated_data({
-          id: res.id,
+          id: null,
           spareName: res.spare_name,
           type: res.type_id,
-          category: res.cat_id,
           brandName: res.brand_id,
           model: res.model_id,
           purchasedate: res.purchase_date,
@@ -680,23 +558,20 @@ const SpareInventory = () => {
           amcdate: res.amc_date,
           hsn: res.hsn,
           partnum: res.part_num,
-          // image: res.image,
-
+          image:res.image,
         });
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
-
-        console.log("success")
       } else {
 
       }
     } catch (err) {
       console.error('Error:', err);
-      // ReactSwal.fire({
-      //   title: 'Error',
-      //   text: 'Failed to connect to the server. Please try again later.',
-      //   icon: 'error',
-      // });
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
     }
 
   }
@@ -751,36 +626,9 @@ const SpareInventory = () => {
       });
     }
   };
-  const data3 = [
-    { id: 1, name: "Car", quantity: 5 },
-    { id: 2, name: "Spare", quantity: 12 },
-    { id: 3, name: "Trailer", quantity: 2 },
-  ];
-  const handleExport = () => {
-    alert("preparing excel")
-    const worksheet = XLSX.utils.json_to_sheet(data3);
-
-    // Create a new workbook and append the sheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-
-    // Export workbook to binary array
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-
-    // Save as file
-    const file = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(file, "data3.xlsx");
-  }
-
-  const generatePDF = () => {
-    const doc = new jsPDF();
-
-    doc.text(data3);
-    doc.save("vehicleinventory.pdf");
-  };
+ 
 
   const fetchActionDetails = async () => {
-    console.log("fetch")
     try {
       const response = await fetch(`${BASE}permission/lists/${roleId}`, {
         method: 'GET',
@@ -791,7 +639,6 @@ const SpareInventory = () => {
       });
 
       if (response.ok) {
-        console.log("fetching")
         const data = await response.json();
         let veh_invent = null;
         if (Array.isArray(data)
@@ -800,9 +647,6 @@ const SpareInventory = () => {
           data[1].children[0].children[0].name === "Vehicle Inventory") {
           veh_invent = data[1].children[0].children[0]
         }
-
-        console.log(veh_invent)
-        console.log(veh_invent?.isView)
         setactiondetails(veh_invent)
 
 
@@ -824,102 +668,192 @@ const SpareInventory = () => {
     }
   }
   useEffect(() => { fetchActionDetails() }, [roleId])
-  useEffect(() => { console.log(roleId) }, [roleId])
 
-  const fuelOptions = [
-    { value: "1", label: "Diesel" },
-    { value: "2", label: "Petrol" },
-    { value: "3", label: "Gas" },
-    { value: "4", label: "Battery" },
+  const typelist = [
+    { value: 0, label: "Spare" },
+    { value: 1, label: "Tyre" },
+   
   ];
+
+
+
+const fetchVehicleData = async (authToken) => {
+  const response = await fetch(`${BASE}spare/list?start=0&limit=1000`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch data");
+
+  const result = await response.json();
+  const allData = Array.isArray(result.data) ? result.data : [];
+
+  if (allData.length === 0) {
+    alert("No data found for export");
+    return [];
+  }
+
+  return allData.map((row, index) => ({
+    "SL No": index + 1,
+    "Spare Name": row.spare_name,
+    "Type": row.type_id == 0? "Spare": "Tyre",
+    "Brand":  row.brandname,
+    "Model":  row.modelname,
+    "HSN": row.hsn,
+    "Part No": row.part_num,
+    "Purchase date": row.purchase_date,
+    "Months of Warranty": row.years_warrenty,
+    "AMC Number": row.amc,
+    "AMC Date": row.amc_date,
+    "Status": row.status === 1 ? "Inactive" : "Active",
+  }));
+};
+
+const handleExportExcel = async () => {
+  try {
+    setExcelLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToExcel(data, "Spare_Inventory");
+  } catch (error) {
+    console.error("Excel Export Error:", error);
+    alert("Failed to export Excel");
+  } finally {
+    setExcelLoading(false);
+  }
+};
+
+const handleExportPDF = async () => {
+  try {
+    setPdfLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPDF(data, "Spare_Inventory");
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    alert("Failed to export PDF");
+  } finally {
+    setPdfLoading(false);
+  }
+};
+
+const handlePrint = async () => {
+  try {
+    setPrintLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPrint(data, "Spare_Inventory");
+  } catch (error) {
+    console.error("Print Error:", error);
+    alert("Failed to print report");
+  } finally {
+    setPrintLoading(false);
+  }
+};
+
+
+
+
   return (
     <>
-      <CCard className="mb-4">
-        <CCardHeader className='bg-secondary text-light'>
-          Spares Inventory
-        </CCardHeader>
-
-        <CCardBody>
-          <input
-            type="search"
-            onChange={(e) => setsearch(e.target.value)}
-            className="form-control form-control-sm m-1 float-end w-auto"
-            placeholder='Search'
-          />
-
-          <CButtonGroup role="group" aria-label="Basic example">
-            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-
-                handleExport();
-              }}>
-              Excel </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow} disabled={!action_details?.isPrint}> Print </CButton>
-          </CButtonGroup>
-
-
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-            <CTableHead color="secondary">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </CTableHead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-
-                      <td {...cell.getCellProps()}>
-                        {cell.render('Cell')}
-                      </td>
-
-
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </CTable>
-
-          <div>
-            <span>
-              Page{' '}
-              <strong>
-                {pageIndex + 1} of {pageOptions.length}
-              </strong>{' '}
-            </span>
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<<'}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<'}
-            </button>
-            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>'}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>>'}
-            </button>
-          </div>
-        </CCardBody>
-      </CCard>
+                    <CCard className="mb-4">
+                          <CCardHeader className='bg-secondary text-light'>
+                            Spare Inventory
+                          </CCardHeader>
+                  
+                          <CCardBody>
+                            <input
+                              type="search"
+                              onChange={(e) => setsearch(e.target.value)}
+                              className="form-control form-control-sm m-1 float-end w-auto"
+                              placeholder='Search'
+                            />
+                  
+                            <CButtonGroup role="group" aria-label="Basic example">
+                              <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+                              <CButton className="btn btn-sm btn-secondary w-auto"
+                                onClick={() => {Excelloading
+                                      handleExportExcel();
+                                    }} disabled={Excelloading} >
+                                      { Excelloading ? "Exporting..." : "Excel" } 
+                                  </CButton>
+            
+                              <CButton className="btn btn-sm btn-secondary w-auto" 
+                              onClick={() => {Pdfloading
+                                      handleExportPDF();
+                                    }} disabled={Pdfloading} >
+                                      { Pdfloading ? "Exporting..." : "PDF" }   
+                              </CButton>
+            
+                              <CButton className="btn btn-sm btn-secondary w-auto"
+                                  onClick={() => {Printloading
+                                      handlePrint();
+                                    }} disabled={Printloading} >
+                                      { Printloading ? "Printing..." : "Print" } 
+                                  </CButton>
+            
+                            </CButtonGroup>
+                            <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                              <CTableHead color="secondary">
+                                {headerGroups.map((headerGroup) => (
+                                  <tr {...headerGroup.getHeaderGroupProps()}>
+                                    {headerGroup.headers.map((column) => (
+                                      <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                                        {column.render('Header')}
+                                        <span>
+                                          {column.isSorted
+                                            ? column.isSortedDesc
+                                              ? ' 🔽'
+                                              : ' 🔼'
+                                            : ''}
+                                        </span>
+                                      </th>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </CTableHead>
+                              <tbody {...getTableBodyProps()}>
+                                {page.map((row) => {
+                                  prepareRow(row);
+                                  const serial = pageIndex * pageSize + row.index + 1;
+                                  return (
+                                    <tr {...row.getRowProps()}>
+                                      {row.cells.map((cell) => (
+                  
+                                        <td {...cell.getCellProps()}>
+                                          {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                                        </td>
+                  
+                  
+                                      ))}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                              
+                            </CTable>
+                  
+                            <div>
+                              <span>
+                                Page{' '}
+                                <strong>
+                                  {pageIndex + 1} of {pageCount}
+                                </strong>{' '}
+                              </span>
+                              <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                                {'<<'}
+                              </button>
+                              <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                                {'<'}
+                              </button>
+                              <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                                {'>'}
+                              </button>
+                              <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                                {'>>'}
+                              </button>
+                            </div>
+                          </CCardBody>
+                        </CCard>
 
 
 
@@ -937,7 +871,8 @@ const SpareInventory = () => {
         </CModalHeader>
         <CModalBody>
           <CRow>
-            <CCol md={6}>
+            <CCol>
+            
               <CFormLabel className="col-form-label">
                 Spare Name
               </CFormLabel>
@@ -952,12 +887,6 @@ const SpareInventory = () => {
                     spareName: e.target.value.toUpperCase(),
                   }));
                 }}
-              // onKeyUp={(e) => {
-              //   const result = vehicleNum(e.target.value);
-              //   if (e.target.value.length > 9 && !result.isValid) {
-              //     toast.error('Vehicle Number Invalid!');
-              //   }
-              // }}
               />
 
               <CFormLabel className="col-form-label">
@@ -965,29 +894,13 @@ const SpareInventory = () => {
               </CFormLabel>
               <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.type}
+                value={typelist.find((option)=>option.value===save_data.type)}
+                defaultValue={typelist.find((option)=>option.value===0)}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    type: selectedOption ? selectedOption.type : '',
+                    type: selectedOption ? selectedOption.value : '',
                   }));
-                }}
-              />
-
-              <CFormLabel className="col-form-label">
-                Category
-              </CFormLabel>
-              <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                value={save_data.category}
-                onChange={(selectedOption) => {
-                  setsave_data((prev) => ({
-                    ...prev,
-                    category: selectedOption ? selectedOption.category : '',
-                  }));
-                  if (selectedOption) {
-                    getbrandlist(selectedOption.category);
-                  }
                 }}
               />
 
@@ -1000,14 +913,13 @@ const SpareInventory = () => {
                 size="sm"
                 className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.brandName}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    brandName: selectedOption ? selectedOption.brandName : '',
+                    brand: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    getmodellist(selectedOption.brandName);
+                    getmodellist(selectedOption.value);
                   }
                 }}
               />
@@ -1016,24 +928,29 @@ const SpareInventory = () => {
                 Model
               </CFormLabel>
 
-              <Select options={modeloption}
-                isMulti={false}
-                placeholder="Select Model"
-                value={save_data.model}
+              <Select options={modeloption} 
+              isMulti={false}
+               placeholder="Select Model"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    model: selectedOption ? selectedOption.model : '',
+                    model: selectedOption ? selectedOption.value : '',
                   }));
                 }}
               />
 
+              
+            </CCol>
+
+            <CCol md={6}>
+
+
               <CFormLabel className="col-form-label">
                 Purchase Date
               </CFormLabel>
-              <CFormInput type="date" value={save_data.purchaseDate} size="sm"
+              <CFormInput type="date" value={save_data.purchasedate} size="sm"
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1052,57 +969,38 @@ const SpareInventory = () => {
                     warranty: e.target.value,
                   }))
                 }
-                // onKeyUp={(e) => {
-                //   const result = ValidMonth(e.target.value);
-                //   if (e.target.value.length > 1 && !result.isValid) {
-                //     toast.error('Month Invalid!');
-                //   }
-                // }}
+                onKeyUp={(e) => {
+                  const result = ValidMonth(e.target.value);
+                  if (e.target.value.length > 1 && !result.isValid) {
+                    toast.error('Month Invalid!');
+                  }
+                }}
                 placeholder="Month of warranty" className='mb-2' />
 
 
-
-
-              {/* <CFormLabel className="col-form-label">
-                Tyre count / Stepney Count
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm"
-                  onChange={(e) =>
-                    setsave_data((prev) => ({
-                      ...prev,
-                      tyrecnt: e.target.value,
-                    }))
-                  }
-                  onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
-                    if (e.target.value.length > 0 && !result.isValid) {
-                      toast.error('Tyre Count Invalid!');
-                    }
-                  }}
-                  placeholder="Tyre count" />
-
-                <CFormInput type="text" size="sm"
-                  onChange={(e) =>
-                    setsave_data((prev) => ({
-                      ...prev,
-                      stepnycnt: e.target.value,
-                    }))
-                  }
-                  onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
-                    if (e.target.value.length > 0 && !result.isValid) {
-                      toast.error('Tyre Count Invalid!');
-                    }
-                  }}
-                  placeholder="Stepney Count" />
-              </CInputGroup> */}
-
-            </CCol>
-
-            <CCol md={6}>
-
-
+                <CFormLabel className="col-form-label">
+                              AMC
+                            </CFormLabel>
+              
+                            <CInputGroup className="mb-2">
+                              <CFormInput type="text" size="sm"
+                                onChange={(e) =>
+                                  setsave_data((prev) => ({
+                                    ...prev,
+                                    amc: e.target.value,
+                                  }))
+                                }
+                                placeholder="AMC File Number" />
+              
+                              <CFormInput type="date" value={save_data.amcdate} size="sm"
+                                onChange={(e) =>
+                                  setsave_data((prev) => ({
+                                    ...prev,
+                                    amcdate: e.target.value,
+                                  }))
+                                }
+                              />
+                            </CInputGroup>
 
               <CFormLabel className="col-form-label">
                 HSN Number/  Part Number
@@ -1131,39 +1029,9 @@ const SpareInventory = () => {
                   }
                   placeholder="Part Number" className='mb-2' />
               </CInputGroup>
-
-              {/* <CFormLabel className="col-form-label">
-                Insurance
-              </CFormLabel>
-
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" value={save_data.insurancenumber}
-                  onChange={(e) =>
-                    setsave_data((prev) => ({
-                      ...prev,
-                      insurancenumber: e.target.value,
-                    }))
-                  }
-                  placeholder="Insurance Number" />
-                <CFormInput type="date" value={save_data.insuranceenddate} size="sm"
-                  onChange={(e) =>
-                    setsave_data((prev) => ({
-                      ...prev,
-                      insuranceenddate: e.target.value,
-                    }))
-                  }
-                />
-              </CInputGroup>
-
-
- */}
-
-
-
-
-
-
-              {/* <div className="mb-3">
+            </CCol>
+            <CCol md={12}>
+              <div className="mb-3">
                 <label htmlFor="formFileSm" className="form-label">Image</label>
                 <input className="form-control form-control-sm" id="formFileSm" type="file"
                   onChange={(e) =>
@@ -1174,7 +1042,7 @@ const SpareInventory = () => {
                   }
 
                 />
-              </div> */}
+              </div>
             </CCol>
 
           </CRow>
@@ -1198,13 +1066,13 @@ const SpareInventory = () => {
         onClose={() => handleEClose()}
         aria-labelledby="NewProcessing"
       >
-        {/* <CModalHeader className='bg-secondary'>
+        <CModalHeader className='bg-secondary'>
           {updated_data.image ?
-           <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
-        </CModalHeader> */}
+           <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.spareName}</CModalTitle>
+        </CModalHeader>
         <CModalBody>
           <CRow>
-            <CCol md={6}>
+            <CCol md={12}>
               <CFormLabel className="col-form-label">
                 SpareName
               </CFormLabel>
@@ -1221,13 +1089,6 @@ const SpareInventory = () => {
                     spareName: e.target.value.toUpperCase(),
                   }));
                 }}
-              // onKeyUp={(e) => {
-              //   const result = vehicleNum(e.target.value);
-              //   if (e.target.value.length > 9 && !result.isValid) {
-              //     toast.error('Vehicle Number Invalid!');
-              // //   }
-              // }}
-              // readOnly
               />
 
 
@@ -1244,25 +1105,6 @@ const SpareInventory = () => {
                     ...prev,
                     type: selectedOption ? selectedOption.value : '',
                   }));
-                }}
-              />
-
-              <CFormLabel className="col-form-label">
-                Category
-              </CFormLabel>
-              <Select options={categoryoption} isMulti={false}
-                placeholder="Select Category"
-                size="sm" className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                value={categoryoption.find(option => option.value === updated_data.category) || null}
-                onChange={(selectedOption) => {
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    category: selectedOption ? selectedOption.value : '',
-                  }));
-                  if (selectedOption) {
-                    getbrandlist(selectedOption.value);
-                  }
                 }}
               />
 
@@ -1359,42 +1201,7 @@ const SpareInventory = () => {
               </CInputGroup>
 
 
-              {/* <CFormLabel className="col-form-label">
-                Tyre count / Stepney Count
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm"
-                  value={updated_data.tyrecnt}
-                  onChange={(e) =>
-                    setupdated_data((prev) => ({
-                      ...prev,
-                      tyrecnt: e.target.value,
-                    }))
-                  }
-                  onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
-                    if (e.target.value.length > 0 && !result.isValid) {
-                      toast.error('Tyre Count Invalid!');
-                    }
-                  }}
-                  placeholder="Tyre count" />
-
-                <CFormInput type="text" size="sm"
-                  value={updated_data.stepnycnt}
-                  onChange={(e) =>
-                    setupdated_data((prev) => ({
-                      ...prev,
-                      stepnycnt: e.target.value,
-                    }))
-                  }
-                  onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
-                    if (e.target.value.length > 0 && !result.isValid) {
-                      toast.error('Tyre Count Invalid!');
-                    }
-                  }}
-                  placeholder="Stepney Count" />
-              </CInputGroup> */}
+            
 
 
               <CFormLabel className="col-form-label">
@@ -1430,8 +1237,7 @@ const SpareInventory = () => {
                   placeholder="Part Number" className='mb-2' />
               </CInputGroup>
 
-
-              {/* <div className="mb-3">
+              <div className="mb-3">
                 <label htmlFor="formFileSm" className="form-label">Image</label>
                 <input className="form-control form-control-sm" id="formFileSm" type="file"
                   onChange={(e) =>
@@ -1441,7 +1247,8 @@ const SpareInventory = () => {
                     }))
                   }
                 />
-              </div> */}
+              </div>
+            
             </CCol>
           </CRow>
         </CModalBody>
@@ -1461,36 +1268,33 @@ const SpareInventory = () => {
           onClose={() => handleviewclose()}
           aria-labelledby="NewProcessing"
         >
-          <CModalHeader className="bg-secondary">
-            {/* {updated_data.image ? (
-              <CImage
-                rounded
-                src={updated_data.image}
-                width={50}
-                height={50}
-                className="me-2"
-              />
-            ) : (
-              ""
-            )} */}
-            <CModalTitle id="ViewVehicle">{updated_data.spareName}</CModalTitle>
-          </CModalHeader>
+           <CModalHeader className="bg-secondary">
+                      {updated_data.image ? (
+                        <CImage
+                          rounded
+                          src={`${updated_data.image}`}
+                          width={50}
+                          height={50}
+                          className="me-2"
+                        />
+                      ) : (
+                        ""
+                      )}
+                      <CModalTitle id="ViewVehicle">{updated_data.spareName}</CModalTitle>
+                    </CModalHeader>
 
           <CModalBody>
             <CTable bordered hover>
               <CTableBody>
                 {[
-                  { label: "SL", value: updated_data.id },
                   { label: "Spare Name", value: updated_data.spareName },
                   { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
-                  { label: "Category", value: categoryoption.find((c) => c.value === updated_data.category)?.label },
                   { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brandName)?.label },
                   { label: "Model", value: modeloption.find((m) => m.value === updated_data.model)?.label },
                   { label: "HSN Number", value: updated_data.hsn },
                   { label: "Purchase Date", value: updated_data.purchasedate },
                   { label: "Years of Warranty", value: updated_data.warranty },
                   { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
-
                   { label: "Part Number", value: updated_data.partnum },
 
                 ].map((item, idx) => (
@@ -1501,19 +1305,6 @@ const SpareInventory = () => {
                     <CTableDataCell>{item.value || "-"}</CTableDataCell>
                   </CTableRow>
                 ))}
-
-                {/* {updated_data.image && (
-                  <CTableRow>
-                    <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
-                    <CTableDataCell>
-                      <CImage
-                        rounded
-                        src={updated_data.image}
-                        width={200}
-                      />
-                    </CTableDataCell>
-                  </CTableRow>
-                )} */}
               </CTableBody>
             </CTable>
           </CModalBody>

@@ -19,9 +19,6 @@ import {
   CFormLabel,
   CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import { saveAs } from "file-saver";
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
 import { CIcon } from '@coreui/icons-react';
 import { cilTrash, cilPencil } from '@coreui/icons';
@@ -33,6 +30,10 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { toast } from 'react-toastify';
 import { Sharedcontext } from '../../components/Context';
+import { exportToExcel } from '../export/excel';
+import { exportToPDF } from '../export/pdf';
+import { exportToPrint } from '../export/print';
+
 
 
 const VehicleInventory = () => {
@@ -41,7 +42,13 @@ const VehicleInventory = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
   const ReactSwal = withReactContent(Swal);
   const [data, setData] = useState([]);
+
   const [loading, setLoading] = useState(false);
+  const [Excelloading, setExcelLoading] = useState(false);
+  const [Pdfloading, setPdfLoading] = useState(false);
+  const [Printloading, setPrintLoading] = useState(false);
+
+
   const [pageCount, setPageCount] = useState(0);
   const [search, setsearch] = useState('');
   const [categoryoption, setcategoryoption] = useState([]);
@@ -63,6 +70,7 @@ const VehicleInventory = () => {
   const [view, setview] = useState(false)
   const [action_details, setactiondetails] = useState({})
   const { roleId } = useContext(Sharedcontext)
+  
 
   const intial_data = {
     vno: '',
@@ -337,57 +345,64 @@ const VehicleInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+   const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
+
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
-
     const orderBy = `${sortColumn} ${sortOrder}`;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
-
-    //  const pageindex = pageIndex*15;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
     try {
-      const response = await fetch(
-        `${BASE}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
+      const url = `${BASE}vehicle/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&order_by=${encodeURIComponent(orderBy)}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log(result.data)
+      const items = Array.isArray(result.data) ? result.data : [];
+      let pageItems = [];
+      if (items.length <= limit && pageIndex > 0) {
+        pageItems = items;
+      } else {
+        pageItems = items.slice(start, start + limit);
+      }
 
-      setData(result.data);
-
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+      setData(pageItems);
+      const total = Number(result.total) || items.length || 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      setPageCount(totalPages);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
+      setPageCount(1);
     } finally {
       setLoading(false);
     }
   };
 
 
-
   
 
   const columns = useMemo(
     () => [
-      { Header: 'SL', accessor: 'id', disableSortBy: true, },
+     {
+        Header: 'SL',
+        id: 'sl',            
+        disableSortBy: true,
+        Cell: ({ row }) => row.index + 1,
+      },
       { Header: 'Vehicle Number', accessor: 'vehicle_number' },
       { Header: 'Category', accessor: 'category' },
       { Header: 'Brand', accessor: 'brandname', className: 'center' },
@@ -406,14 +421,6 @@ const VehicleInventory = () => {
           if (!action_details) return null
           return (
             <div className="">
-              {/* <FaEye size={15} className={`ms-2 me-2 pointer ${action_details?.isView?"text-info":"text-secondary opacity-50"}`} onClick={() => {
-                if(action_details?.isView)
-                {
-                  console.log("working")
-                   viewvehicle(id)
-                }
-               }} /> */}
-
               {action_details?.isView && (
                 <FaEye
                   size={15}
@@ -436,11 +443,6 @@ const VehicleInventory = () => {
                   onClick={() => deletevehicle(id)}
                 />
               )}
-              {/* 
-              <FaEdit size={15} className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
-
-              <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} /> */}
-
             </div>
           );
         },
@@ -472,7 +474,7 @@ const VehicleInventory = () => {
     {
       columns,
       data,
-      initialState: { pageIndex: 0 },
+      initialState: { pageIndex: 0, pageSize: 15 },
       manualPagination: true,
       pageCount,
       manualSortBy: true,
@@ -500,7 +502,6 @@ const VehicleInventory = () => {
   const handleEClose = () => setupdateShow(false);
 
   const editvehicle = async (id) => {
-    console.log("edit btn")
     if (!authToken) {
       ReactSwal.fire({
         title: 'Error',
@@ -703,11 +704,11 @@ const VehicleInventory = () => {
       }
     } catch (err) {
       console.error('Error:', err);
-      // ReactSwal.fire({
-      //   title: 'Error',
-      //   text: 'Failed to connect to the server. Please try again later.',
-      //   icon: 'error',
-      // });
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
     }
 
   }
@@ -762,33 +763,102 @@ const VehicleInventory = () => {
       });
     }
   };
-  const data3 = [
-    { id: 1, name: "Car", quantity: 5 },
-    { id: 2, name: "Spare", quantity: 12 },
-    { id: 3, name: "Trailer", quantity: 2 },
-  ];
-  const handleExport = () => {
-    alert("preparing excel")
-    const worksheet = XLSX.utils.json_to_sheet(data3);
 
-    // Create a new workbook and append the sheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+const fetchVehicleData = async (authToken) => {
+  const response = await fetch(`${BASE}vehicle/list?start=0&limit=1000`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
 
-    // Export workbook to binary array
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  if (!response.ok) throw new Error("Failed to fetch data");
 
-    // Save as file
-    const file = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(file, "data3.xlsx");
+  const result = await response.json();
+  const allData = Array.isArray(result.data) ? result.data : [];
+
+  if (allData.length === 0) {
+    alert("No data found for export");
+    return [];
   }
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
+  return allData.map((row, index) => ({
+    "SL No": index + 1,
+    "Vehicle No": row.vehicle_number,
+    "Category": row.category,
+    "Brand": row.brandname,
+    "Model": row.modelname,
+    "Engine number": row.engine_num,
+    "Chassis number": row.chassis_num,
+    "HSN": row.hsn,
+    "Part No": row.part_num,
+    "Purchase date": row.purchase_date,
+    "Months of Warranty": row.year_warranty,
+    "Warranty Expire Date": row.exp_warranty,
+    "AMC Number": row.amc,
+    "AMC Date": row.amc_date,
+    "Wheels count": row.tyre_count,
+    "Stepney Count": row.step_count,
+    "Fuel Type":
+      row?.fuel_type == 1
+        ? "Diesel"
+        : row?.fuel_type == 2
+        ? "Petrol"
+        : row?.fuel_type == 3
+        ? "Gas"
+        : "Battery",
+    "Insurance": row.insurance,
+    "Insurance Date": row.ins_date,
+    "Fitness Certificate": row.fc,
+    "Fitness Certificate Date": row.fc_date,
+    "Pollution Certificate": row.pc,
+    "Pollution Certificate Date": row.pc_date,
+    "Green Tax": row.green_tax,
+    "Green Tax Date": row.gtax_date,
+    "Status": row.status === 1 ? "Inactive" : "Active",
+  }));
+};
 
-    doc.text(data3);
-    doc.save("vehicleinventory.pdf");
-  };
+
+const handleExportExcel = async () => {
+  try {
+    setExcelLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToExcel(data, "Vehicle_Inventory");
+  } catch (error) {
+    console.error("Excel Export Error:", error);
+    alert("Failed to export Excel");
+  } finally {
+    setExcelLoading(false);
+  }
+};
+
+const handleExportPDF = async () => {
+  try {
+    setPdfLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPDF(data, "Vehicle_Inventory");
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    alert("Failed to export PDF");
+  } finally {
+    setPdfLoading(false);
+  }
+};
+
+const handlePrint = async () => {
+  try {
+    setPrintLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPrint(data, "Vehicle_Inventory");
+  } catch (error) {
+    console.error("Print Error:", error);
+    alert("Failed to print report");
+  } finally {
+    setPrintLoading(false);
+  }
+};
+
 
   const fetchActionDetails = async () => {
     console.log("fetch")
@@ -835,7 +905,6 @@ const VehicleInventory = () => {
     }
   }
   useEffect(() => { fetchActionDetails() }, [roleId])
-  useEffect(() => { console.log(roleId) }, [roleId])
 
   const fuelOptions = [
     { value: "1", label: "Diesel" },
@@ -849,92 +918,105 @@ const VehicleInventory = () => {
  
   return (
     <>
-      <CCard className="mb-4">
-        <CCardHeader className='bg-secondary text-light'>
-          Vehicle Inventory
-        </CCardHeader>
+       <CCard className="mb-4">
+              <CCardHeader className='bg-secondary text-light'>
+                Vehicle Inventory
+              </CCardHeader>
+      
+              <CCardBody>
+                <input
+                  type="search"
+                  onChange={(e) => setsearch(e.target.value)}
+                  className="form-control form-control-sm m-1 float-end w-auto"
+                  placeholder='Search'
+                />
+      
+                <CButtonGroup role="group" aria-label="Basic example">
+                  <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+                  <CButton className="btn btn-sm btn-secondary w-auto"
+                    onClick={() => {Excelloading
+                          handleExportExcel();
+                        }} disabled={Excelloading} >
+                          { Excelloading ? "Exporting..." : "Excel" } 
+                       </CButton>
 
-        <CCardBody>
-          <input
-            type="search"
-            onChange={(e) => setsearch(e.target.value)}
-            className="form-control form-control-sm m-1 float-end w-auto"
-            placeholder='Search'
-          />
+                  <CButton className="btn btn-sm btn-secondary w-auto" 
+                  onClick={() => {Pdfloading
+                          handleExportPDF();
+                        }} disabled={Pdfloading} >
+                          { Pdfloading ? "Exporting..." : "PDF" }   
+                  </CButton>
 
-          <CButtonGroup role="group" aria-label="Basic example">
-            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
+                  <CButton className="btn btn-sm btn-secondary w-auto"
+                      onClick={() => {Printloading
+                          handlePrint();
+                        }} disabled={Printloading} >
+                          { Printloading ? "Printing..." : "Print" } 
+                       </CButton>
 
-                handleExport();
-              }}>
-              Excel </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow} disabled={!action_details?.isPrint}> Print </CButton>
-          </CButtonGroup>
-
-
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-            <CTableHead color="secondary">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </CTableHead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-
-                      <td {...cell.getCellProps()}>
-                        {cell.render('Cell')}
-                      </td>
-
-
+                </CButtonGroup>
+                <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                  <CTableHead color="secondary">
+                    {headerGroups.map((headerGroup) => (
+                      <tr {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map((column) => (
+                          <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                            {column.render('Header')}
+                            <span>
+                              {column.isSorted
+                                ? column.isSortedDesc
+                                  ? ' 🔽'
+                                  : ' 🔼'
+                                : ''}
+                            </span>
+                          </th>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </CTable>
-
-          <div>
-            <span>
-              Page{' '}
-              <strong>
-                {pageIndex + 1} of {pageOptions.length}
-              </strong>{' '}
-            </span>
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<<'}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<'}
-            </button>
-            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>'}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>>'}
-            </button>
-          </div>
-        </CCardBody>
-      </CCard>
+                  </CTableHead>
+                  <tbody {...getTableBodyProps()}>
+                    {page.map((row) => {
+                      prepareRow(row);
+                      const serial = pageIndex * pageSize + row.index + 1;
+                      return (
+                        <tr {...row.getRowProps()}>
+                          {row.cells.map((cell) => (
+      
+                            <td {...cell.getCellProps()}>
+                              {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                            </td>
+      
+      
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  
+                </CTable>
+      
+                <div>
+                  <span>
+                    Page{' '}
+                    <strong>
+                      {pageIndex + 1} of {pageCount}
+                    </strong>{' '}
+                  </span>
+                  <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'<<'}
+                  </button>
+                  <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'<'}
+                  </button>
+                  <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'>'}
+                  </button>
+                  <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'>>'}
+                  </button>
+                </div>
+              </CCardBody>
+            </CCard>
 
 
 

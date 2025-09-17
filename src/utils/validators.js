@@ -41,3 +41,14 @@ export const ValidSingleDigit = (value) => {
     error: regex.test(trimmed) ? '' : 'Invalid month. Enter a value between 1 and 12.',
   };
 };
+
+export const ValiddoubleleDigit = (value) => {
+  const trimmed = String(value).trim();
+  const regex = /^(?:[1-9]|[1-4][0-9]|50)$/; 
+
+  return {
+    isValid: regex.test(trimmed),
+    value: trimmed,
+    error: regex.test(trimmed) ? '' : 'Invalid month. Enter a value between 1 and 50.',
+  };
+};
