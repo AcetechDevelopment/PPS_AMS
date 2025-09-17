@@ -56,7 +56,7 @@ const Login = () => {
         sessionStorage.setItem("Name", JSON.stringify(result.user.name));
          const encodedRoleId = btoa(JSON.stringify(result.user.role_id));
          sessionStorage.setItem("RoleId", encodedRoleId); 
-         result.access_token ? window.location.href = "/dashboard" : '';
+        result.access_token ? window.location.href = "/dashboard" : '';
 
       } else {
         const error = await response.json();

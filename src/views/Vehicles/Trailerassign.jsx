@@ -427,7 +427,7 @@ useEffect(() => {
   
     try {
       const response = await fetch(
-        `${apiUrl}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
+        `${BASE}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
         {
           method: 'GET',
           headers: {

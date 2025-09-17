@@ -20,6 +20,7 @@ import {
   CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
+import { useLocation } from "react-router-dom";
 import { CIcon } from '@coreui/icons-react';
 import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
@@ -33,6 +34,7 @@ import { Sharedcontext } from '../../components/Context';
 import { exportToExcel } from '../export/excel';
 import { exportToPDF } from '../export/pdf';
 import { exportToPrint } from '../export/print';
+import { useParams } from 'react-router-dom';
 
 
 
@@ -55,7 +57,6 @@ const VehicleInventory = () => {
   const [categoryid, setcategoryid] = useState('');
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
-  const [location, setlocation] = useState('');
   const [loc_id, setlocationid] = useState('');
   const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
@@ -68,9 +69,10 @@ const VehicleInventory = () => {
   const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
-  const [action_details, setactiondetails] = useState({})
-  const { roleId } = useContext(Sharedcontext)
-
+  // const [action_details, setactiondetails] = useState({})
+  const { roleId ,fetchActionDetails,action_details} = useContext(Sharedcontext)
+  const location = useLocation(); // 👈 gives full URL path
+ 
 
   const intial_data = {
     vno: '',
@@ -164,6 +166,7 @@ const VehicleInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log(result)
         toast.success('New Vehicle created!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
@@ -984,51 +987,78 @@ const VehicleInventory = () => {
   };
 
 
-  const fetchActionDetails = async () => {
-    console.log("fetch")
-    try {
-      const response = await fetch(`${BASE}permission/lists/${roleId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
+  // const fetchActionDetails = async (pageName) => {
+  //   console.log("fetch")
+  //   try {
+  //     const response = await fetch(`${BASE}permission/lists/${roleId}`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${authToken}`,
+  //       },
+  //     });
 
-      if (response.ok) {
-        console.log("fetching")
-        const data = await response.json();
-        let veh_invent = null;
-        if (Array.isArray(data)
-          &&
-          data[1]?.children?.[0]?.children?.[0] &&
-          data[1].children[0].children[0].name === "Vehicle Inventory") {
-          veh_invent = data[1].children[0].children[0]
-        }
+  //     if (response.ok) {
+  //       console.log("fetching")
+  //       console.log(response)
+  //       const data = await response.json();
+  //       let founditem=null
+  //       const findrecursively = (nodes) => {
+  //        for(let node of nodes){
+  //         if ( node.to && node.to.replace("/", "") === pageName) // compare with path
+  //         {
+  //           return node
+  //         }
+  //         if(node.children)
+  //         {
+  //           const child=findrecursively(node.children)
+  //           if(child)
+  //           {
+  //             return child
+  //           }
+  //         }
+  //        }
+  //        return null
+  //       }
+  //        founditem = findrecursively(data)
+  //       console.log(founditem)
+  //       console.log(founditem?.isView)
+  //       setactiondetails(founditem)
 
-        console.log(veh_invent)
-        console.log(veh_invent?.isView)
-        setactiondetails(veh_invent)
+  //       // if (Array.isArray(data)
+  //       //   &&
+  //       //   data[1]?.children?.[0]?.children?.[0] &&
+  //       //   data[1].children[0].children[0].name === "Vehicle Inventory") {
+  //       //   veh_invent = data[1].children[0].children[0]
+  //       // }
 
 
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  }
-  useEffect(() => { fetchActionDetails() }, [roleId])
+
+
+  //     } else {
+  //       const error = await response.json();
+  //       ReactSwal.fire({
+  //         title: 'Error',
+  //         text: error.message || 'Unable to reach user data',
+  //         icon: 'error',
+  //       });
+  //     }
+  //   } catch (err) {
+  //     console.error('Error:', err);
+  //     ReactSwal.fire({
+  //       title: 'Error',
+  //       text: 'Failed to connect to the server. Please try again later.',
+  //       icon: 'error',
+  //     });
+  //   }
+  // }
+  //  / remove leading "/" → "vehicle_inventory"
+  useEffect(() => {
+    const pageName = location.pathname.replace("/", "");
+    fetchActionDetails(pageName);
+   }, [roleId,location])
+
+
   useEffect(() => { console.log(roleId) }, [roleId])
 
   const fuelOptions = [
@@ -2012,20 +2042,6 @@ const VehicleInventory = () => {
                   </CTableRow>
                 ))}
 
-                {/* {updated_data.image && (
-                  <CTableRow>
-                    <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
-                    <CTableDataCell>
-                      <CImage
-                        rounded
-                        src={`${file_base_url}/uploads/${updated_data.image}`}
-                        // src="/table.png"
-                        width={200}
-                       
-                      />
-                    </CTableDataCell>
-                  </CTableRow>
-                )} */}
               </CTableBody>
             </CTable>
           </CModalBody>

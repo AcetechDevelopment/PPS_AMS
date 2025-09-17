@@ -310,17 +310,10 @@ const User = () => {
     }
   };
 
-  const roleMap = {
-    0: "Super Admin",
-    1: "Admin",
-    2: "Manager",
-    3: "Team Lead",
-    4: "Engineer",
-    5: "User Admin",
-    6: "User",
-  };
+
   console.log(role_id)
   console.log(roleoptions)
+
   const columns = useMemo(
     () => [
       {
@@ -332,10 +325,20 @@ const User = () => {
       { Header: 'Mobile', accessor: 'mobile' },
       {
         Header: 'Role', accessor: 'role_id',
-        Cell: ({ value }) =>{
-         const option= roleoptions.find((item)=>(item.value===value))
-         return option?option.label:"unknown"
-        } 
+        Cell: ({ value }) => {
+          // Defensive check
+          // if (!roleoptions || roleoptions.length === 0) {
+          //   return "Loading...";
+          // }
+          console.log("Cell value:", value);
+          const option = roleoptions?.find((item) => {
+
+            return item.value === value
+
+          })
+          console.log(option)
+          return option ? option.label : ""
+        }
       },
       {
         Header: 'Action',
@@ -347,7 +350,7 @@ const User = () => {
         ),
       },
     ],
-    []
+    [roleoptions]
   );
 
   const {
@@ -383,10 +386,10 @@ const User = () => {
 
 
   useEffect(() => {
-    fetchData({ pageSize, pageIndex, sortBy, search });getrolelist()
+    fetchData({ pageSize, pageIndex, sortBy, search });
   }, [pageSize, pageIndex, sortBy, search]);
 
-
+  useEffect(() => { getrolelist() }, [])
 
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
@@ -395,7 +398,7 @@ const User = () => {
 
   const [updateshow, setupdateShow] = useState(false);
   const handleEClose = () => setupdateShow(false);
- console.log(selectedrole)
+  console.log(selectedrole)
 
   return (
     <>
@@ -413,39 +416,41 @@ const User = () => {
           />
 
           <button className="mb-1 btn btn-sm btn-info w-auto" onClick={handleShow}> Add </button>
-
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()}>
-            <thead>
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+          {roleoptions ? (
+            <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()}>
+              <thead>
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                        {column.render('Header')}
+                        <span>
+                          {column.isSorted
+                            ? column.isSortedDesc
+                              ? ' 🔽'
+                              : ' 🔼'
+                            : ''}
+                        </span>
+                      </th>
                     ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </CTable>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {page.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr {...row.getRowProps()}>
+                      {row.cells.map((cell) => (
+                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </CTable>
+          ) : (<p>"Loading roles"</p>)}
+
 
           <div>
             <span>
@@ -610,13 +615,13 @@ const User = () => {
               <option value="6">User</option>
             </Form.Select>
              */}
-             {/* <Select/> */}
-             
-            <Select options={roleoptions} 
-            value={roleoptions.find((option) => option.value === role_id)}
-            onChange={(selectedOption) => {
-              setrole_id(selectedOption.value)
-            }} />
+            {/* <Select/> */}
+
+            <Select options={roleoptions}
+              value={roleoptions.find((option) => option.value === role_id)}
+              onChange={(selectedOption) => {
+                setrole_id(selectedOption.value)
+              }} />
           </Form>
 
         </Modal.Body>

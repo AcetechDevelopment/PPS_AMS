@@ -19,20 +19,22 @@ import {
   CFormLabel,
   CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import { saveAs } from "file-saver";
+
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
 import { CIcon } from '@coreui/icons-react';
 import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
-import { vehicleNum, validateHSN, ValidMonth, ValidSingleDigit } from '../../utils/validators';
+import { vehicleNum, validateHSN, ValidMonth, ValidSingleDigit, ValiddoubleleDigit } from '../../utils/validators';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { toast } from 'react-toastify';
 import { Sharedcontext } from '../../components/Context';
+import { exportToExcel } from '../export/excel';
+import { exportToPDF } from '../export/pdf';
+import { exportToPrint } from '../export/print';
+import { useLocation } from "react-router-dom";
 
 
 const TrailerInventory = () => {
@@ -41,14 +43,20 @@ const TrailerInventory = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
   const ReactSwal = withReactContent(Swal);
   const [data, setData] = useState([]);
+
   const [loading, setLoading] = useState(false);
+  const [Excelloading, setExcelLoading] = useState(false);
+  const [Pdfloading, setPdfLoading] = useState(false);
+  const [Printloading, setPrintLoading] = useState(false);
+
+
   const [pageCount, setPageCount] = useState(0);
   const [search, setsearch] = useState('');
   const [categoryoption, setcategoryoption] = useState([]);
   const [categoryid, setcategoryid] = useState('');
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
-  const [location, setlocation] = useState('');
+
   const [loc_id, setlocationid] = useState('');
   const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
@@ -63,57 +71,54 @@ const TrailerInventory = () => {
   const [view, setview] = useState(false)
   const [action_details, setactiondetails] = useState({})
   const { roleId } = useContext(Sharedcontext)
+  const location = useLocation(); // 👈 gives full URL path
+
 
   const intial_data = {
-    id: "",
-    spareName: '',
-    type: '',
-    category: '',
-    brandName: '',
-    model: '',
+    trailer_number: '',
+    brand: '',
+    modal: '',
     purchasedate: today,
-    warranty: '',
+    warrentyyear: '',
     amc: '',
     amcdate: today,
+    tyrecnt: '',
+    stepnycnt: '',
     hsn: '',
-    partnum: "",
-    // file: null,
+    partnum: '',
+    insurancenumber: '',
+    insuranceenddate: today,
+    file: null,
+    image:""
   };
 
-  // new vehicle
+
   const [save_data, setsave_data] = useState(intial_data);
-  // update vehicle 
   const [updated_data, setupdated_data] = useState(intial_data);
 
   const submitvichile = async () => {
     const data = save_data;
     if (
-      !data.spareName ||
-      !data.type ||
-      !data.category ||
+      !data.vno ||
       !data.hsn
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    const verify = vehicleNum(data.vno);
-    if (!verify.isValid) {
-      toast.error('Vehicle Number Invalid!');
-      return;
-    }
+
     const hsnCheck = validateHSN(data.hsn);
     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
 
-    const monthCheck = ValidMonth(data.warranty);
+    const monthCheck = ValidMonth(data.warrentyyear);
     if (!monthCheck.isValid) return toast.error('Months Invalid!');
 
-    // const tyreCheck = ValidSingleDigit(data.tyrecnt);
-    // if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
+    const tyreCheck = ValiddoubleleDigit(data.tyrecnt);
+    if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
 
-    // const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-    // if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
+    const stepnyCheck = ValiddoubleleDigit(data.stepnycnt);
+    if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
 
     const formData = new FormData();
 
@@ -133,7 +138,7 @@ const TrailerInventory = () => {
     });
 
     try {
-      const response = await fetch(`${BASE}spare/create`, {
+      const response = await fetch(`${BASE}trailer/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -143,24 +148,26 @@ const TrailerInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success('New Vehicle created!');
+        toast.success('New Trailer created!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
 
         setsave_data({
-          id: '',
-          spareName: '',
-          type: '',
-          category: '',
-          brandName: '',
-          model: '',
+          vno: '',
+          brand: '',
+          modal: '',
           purchasedate: today,
-          warranty: '',
+          warrentyyear: '',
           amc: '',
           amcdate: today,
+          tyrecnt: '',
+          stepnycnt: '',
           hsn: '',
           partnum: "",
-
+          insurancenumber: '',
+          insuranceenddate: today,
+          image:"",
+          file: null,
         });
 
 
@@ -175,7 +182,7 @@ const TrailerInventory = () => {
     }
 
   };
-  useEffect(() => { getlistoptions() }, [])
+  useEffect(() => { getbrandlist() }, [])
   useEffect(() => { getcategorylist() }, [save_data.type])
 
   useEffect(() => { console.log(save_data) }, [save_data])
@@ -243,12 +250,12 @@ const TrailerInventory = () => {
   const [brandoption, setbrandoption] = useState([]);
   const [brandid, setbrandid] = useState('');
 
-  const getbrandlist = async (catid) => {
+  const getbrandlist = async () => {
     setbrandoption([]);
 
     try {
       const response = await fetch(
-        `${apiUrl}options/brand/${catid}`,
+        `${apiUrl}options/brand/26`,
         {
           method: 'GET',
           headers: {
@@ -261,7 +268,6 @@ const TrailerInventory = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      console.log(result)
       const datas = result?.data?.map((item) => ({
         value: item.brand_id,
         label: item.brand
@@ -295,8 +301,7 @@ const TrailerInventory = () => {
       const result = await response.json();
       const datas = result?.data?.map(item => ({
         value: item.id,
-        label: item.model,
-        key: item.id
+        label: item.model
       }));
       setmodeloption(datas);
     }
@@ -311,56 +316,49 @@ const TrailerInventory = () => {
 
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
-
-  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = "" }) => {
+  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
+
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
-
     const orderBy = `${sortColumn} ${sortOrder}`;
 
     const limit = pageSize;
     const start = pageIndex * limit;
 
-    //  const pageindex = pageIndex*15;
-
     try {
-      const response = await fetch(
-        `${BASE}trailer/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&
-        order_by=${encodeURIComponent(orderBy)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
+      const url = `${BASE}trailer/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&order_by=${encodeURIComponent(orderBy)}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log(result.data)
       const items = Array.isArray(result.data) ? result.data : [];
       let pageItems = [];
-
       if (items.length <= limit && pageIndex > 0) {
         pageItems = items;
-      }
-      else {
+      } else {
         pageItems = items.slice(start, start + limit);
       }
+
       setData(pageItems);
+      const total = Number(result.total) || items.length || 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      setPageCount(totalPages);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
       setPageCount(1);
-    }
-
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -368,19 +366,19 @@ const TrailerInventory = () => {
 
   const columns = useMemo(
     () => [
-      { Header: 'SL', accessor: 'id', disableSortBy: true },
-      { Header: 'Trailer Name', accessor: 'spare_name' },
-      { Header: 'Type', accessor: 'type' },
-      { Header: 'Category', accessor: 'category', className: 'center' },
-      { Header: 'Brand', accessor: 'brandname' },
+      {
+        Header: 'SL',
+        id: 'sl',
+        disableSortBy: true,
+        Cell: ({ row }) => row.index + 1,
+      },
+      { Header: 'Trailer Number', accessor: 'trailer_number' },
+      { Header: 'Brand', accessor: 'brandname', className: 'center' },
       { Header: 'Model', accessor: 'modelname' },
-      { Header: 'HSN Number', accessor: 'hsn' },
-      { Header: 'Purchase Date', accessor: 'purchase_date' },
-      { Header: 'Years of Warranty', accessor: 'years_warrenty' },
-      { Header: 'AMC', accessor: 'amc' },
-      { Header: 'AMC Date', accessor: 'amc_date' },
-      { Header: 'Part Number', accessor: 'part_num' },
-      // { Header: 'Image', accessor: 'image' },
+      { Header: 'Wheels count', accessor: 'tyre_count' },
+      { Header: 'HSN', accessor: 'hsn' },
+      { Header: 'Part', accessor: 'part_num' },
+      { Header: 'Purchase date', accessor: 'purchase_date' },
       {
         Header: () => <FaBars />,
         id: 'actions',
@@ -389,26 +387,19 @@ const TrailerInventory = () => {
           if (!action_details) return null
           return (
             <div className="">
-              {/* <FaEye size={15} className={`ms-2 me-2 pointer ${action_details?.isView?"text-info":"text-secondary opacity-50"}`} onClick={() => {
-                if(action_details?.isView)
-                {
-                  console.log("working")
-                   viewvehicle(id)
-                }
-               }} /> */}
 
               {/* {action_details?.isView && (
                 <FaEye
                   size={15}
                   className="ms-2 me-2 pointer text-info"
-                  onClick={() => viewspare(id)}
+                  onClick={() => viewvehicle(id)}
                 />
               )}
               {action_details?.isEdit && (
                 <FaEdit
                   size={15}
                   className="ms-2 me-2 pointer text-info"
-                  onClick={() => editspare(id)}
+                  onClick={() => editvehicle(id)}
                 />
               )}
 
@@ -416,32 +407,29 @@ const TrailerInventory = () => {
                 <FaTrash
                   size={15}
                   className="ms-2 me-2 pointer text-info"
-                  onClick={() => deletespare(id)}
+                  onClick={() => deletevehicle(id)}
                 />
               )} */}
-              {/* 
-              <FaEdit size={15} className="ms-2 me-2 pointer text-primary" onClick={() => editvehicle(id)} />
-
-              <FaTrash size={15} className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} /> */}
               <FaEye
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isView ? "text-info" : "text-muted"}`}
-                onClick={() => action_details?.isView && viewspare(id)}
+                className={`ms-2 me-2 ${action_details?.isView ? "text-info pointer" : "text-muted"}`}
+                onClick={() => action_details?.isView && viewvehicle(id)}
+                style={{ cursor: action_details?.isView ? "pointer" : "not-allowed", opacity: action_details?.isView ? 1 : 0.5 }}
               />
 
               <FaEdit
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isEdit ? "text-primary" : "text-muted"}`}
-                onClick={() => action_details?.isEdit && editspare(id)}
+                className={`ms-2 me-2 ${action_details?.isEdit ? "text-primary pointer" : "text-muted"}`}
+                onClick={() => action_details?.isEdit && editvehicle(id)}
+                style={{ cursor: action_details?.isEdit ? "pointer" : "not-allowed", opacity: action_details?.isEdit ? 1 : 0.5 }}
               />
 
               <FaTrash
                 size={15}
-                className={`ms-2 me-2 pointer ${action_details?.isDelete ? "text-danger" : "text-muted"}`}
-                onClick={() => action_details?.isDelete && deletespare(id)}
+                className={`ms-2 me-2 ${action_details?.isDelete ? "text-danger pointer" : "text-muted"}`}
+                onClick={() => action_details?.isDelete && deletevehicle(id)}
+                style={{ cursor: action_details?.isDelete ? "pointer" : "not-allowed", opacity: action_details?.isDelete ? 1 : 0.5 }}
               />
-
-
             </div>
           );
         },
@@ -500,7 +488,7 @@ const TrailerInventory = () => {
   const [updateshow, setupdateShow] = useState(false);
   const handleEClose = () => setupdateShow(false);
 
-  const editspare = async (id) => {
+  const editvehicle = async (id) => {
     console.log("edit btn")
     if (!authToken) {
       ReactSwal.fire({
@@ -512,7 +500,7 @@ const TrailerInventory = () => {
     }
 
     try {
-      const response = await fetch(`${BASE}spare/edit/${id}`, {
+      const response = await fetch(`${BASE}trailer/edit/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -525,20 +513,24 @@ const TrailerInventory = () => {
         const res = data.data;
         setupdated_data({
           id: res.id,
-          spareName: res.spare_name,
-          type: res.type_id,
-          category: res.cat_id,
-          brandName: res.brand_id,
-          model: res.model_id,
+          trailer_number: res.trailer_number,
+          brand: res.brand_id,
+          modal: res.model_id,
           purchasedate: res.purchase_date,
-          warranty: res.years_warrenty,
+          warrentyyear: res.years_warrenty,
           amc: res.amc,
           amcdate: res.amc_date,
+          tyrecnt: res.tyre_count,
+          stepnycnt: res.step_count,
           hsn: res.hsn,
           partnum: res.part_num,
-          // image: res.image,
-
+          insurancenumber: res.insurance,
+          insuranceenddate: res.ins_date,
+          image: res.image,
+          file: null,
         });
+        console.log(res.purchase_date);
+
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
         setupdateShow(true);
@@ -562,74 +554,46 @@ const TrailerInventory = () => {
 
 
 
-  const updatespare = async () => {
+  const updatevichile = async () => {
     const data = updated_data;
     if (
-
-      !data.type ||
-
       !data.hsn
     ) {
       toast.error('All fields are required!');
       return;
     }
-
-    // const verify = vehicleNum(data.vno);
-    // if (!verify.isValid) {
-    //   toast.error('Vehicle Number Invalid!');
-    //   return;
-    // }
     const hsnCheck = validateHSN(data.hsn);
     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
 
-    // const monthCheck = ValidMonth(data.warrentyyear);
-    // if (!monthCheck.isValid) return toast.error('Months Invalid!');
+    const monthCheck = ValidMonth(data.warrentyyear);
+    if (!monthCheck.isValid) return toast.error('Months Invalid!');
 
-    // const tyreCheck = ValidSingleDigit(data.tyrecnt);
-    // if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
+    const tyreCheck = ValiddoubleleDigit(data.tyrecnt);
+    if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
 
-    // const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-    // if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
+    const stepnyCheck = ValiddoubleleDigit(data.stepnycnt);
+    if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
 
     const formData = new FormData();
-    formData.append("id", data.id || "");
-    formData.append("spare_name", data.spareName || "");
-    formData.append("type_id", data.type || "");
-    formData.append("cat_id", data.category || "");
-    formData.append("brand_id", data.brandName || "");
-    formData.append("model_id", data.model || "");
-    formData.append("purchase_date", data.purchasedate || "");
-    formData.append("years_warrenty", data.warranty || "");
-    formData.append("amc", data.amc || "");
-    formData.append("amc_date", data.amcdate || "");
-    formData.append("hsn", data.hsn || "");
-    formData.append("part_num", data.partnum || "");
 
-    if (data.file instanceof File) {
-      formData.append("file", data.file);
-    } else {
-      formData.append("image", data.image || "");
-    }
+    Object.entries(data).forEach(([key, value]) => {
 
-    console.log("🔍 Spare update payload:", [...formData.entries()]);
-    // Object.entries(data).forEach(([key, value]) => {
-
-    //   let finalValue = value;
-    //   if (value instanceof Date) {
-    //     finalValue = value.toISOString().split('T')[0];
-    //   }
+      let finalValue = value;
+      if (value instanceof Date) {
+        finalValue = value.toISOString().split('T')[0];
+      }
 
 
-    //   if (key === 'file' && value instanceof File) {
-    //     formData.append(key, value);
-    //   } else {
-    //     formData.append(key, value?.toString() || '');
-    //   }
-    // });
-    // console.log(formData)
+      if (key === 'file' && value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value?.toString() || '');
+      }
+    });
+    console.log(...formData.entries())
     try {
-      const response = await fetch(`${BASE}spare/update`, {
+      const response = await fetch(`${BASE}trailer/update`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -640,8 +604,8 @@ const TrailerInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(result)
-        toast.success('Vehicle Updated!');
+        console.log(response)
+        toast.success('Trailer Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
 
@@ -653,15 +617,15 @@ const TrailerInventory = () => {
       }
     } catch (err) {
       console.error('Error:', err);
-      toast.error('Failed to connect t. Please try again later.');
+      toast.error('Failed to connect to the server. Please try again later.');
     }
 
   };
 
-  const viewspare = async (id) => {
+  const viewvehicle = async (id) => {
     setview(true);
     try {
-      const response = await fetch(`${BASE}spare/edit/${id}`, {
+      const response = await fetch(`${BASE}trailer/edit/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -674,34 +638,33 @@ const TrailerInventory = () => {
         const res = data.data;
         setupdated_data({
           id: res.id,
-          spareName: res.spare_name,
-          type: res.type_id,
-          category: res.cat_id,
-          brandName: res.brand_id,
-          model: res.model_id,
+          trailer_number: res.trailer_number,
+          brand: res.brand_id,
+          modal: res.model_id,
           purchasedate: res.purchase_date,
-          warranty: res.years_warrenty,
+          warrentyyear: res.years_warrenty,
           amc: res.amc,
           amcdate: res.amc_date,
+          tyrecnt: res.tyre_count,
+          stepnycnt: res.step_count,
           hsn: res.hsn,
           partnum: res.part_num,
-          // image: res.image,
-
+          insurancenumber: res.insurance,
+          insuranceenddate: res.ins_date,
+          image: res.image,
         });
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
-
-        console.log("success")
       } else {
 
       }
     } catch (err) {
       console.error('Error:', err);
-      // ReactSwal.fire({
-      //   title: 'Error',
-      //   text: 'Failed to connect to the server. Please try again later.',
-      //   icon: 'error',
-      // });
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
     }
 
   }
@@ -710,7 +673,7 @@ const TrailerInventory = () => {
     setview(false)
   }
 
-  const deletespare = async (id) => {
+  const deletevehicle = async (id) => {
     try {
       const result = await ReactSwal.fire({
         title: 'Are you sure?',
@@ -722,7 +685,7 @@ const TrailerInventory = () => {
       });
 
       if (result.isConfirmed) {
-        const response = await fetch(`${BASE}spare/delete/${id}`, {
+        const response = await fetch(`${BASE}trailer/delete/${id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -733,7 +696,7 @@ const TrailerInventory = () => {
         if (response.ok) {
           ReactSwal.fire({
             title: 'Deleted!',
-            text: 'User deleted successfully!',
+            text: 'Trailer deleted successfully!',
             icon: 'success',
           });
 
@@ -756,35 +719,10 @@ const TrailerInventory = () => {
       });
     }
   };
-  const data3 = [
-    { id: 1, name: "Car", quantity: 5 },
-    { id: 2, name: "Spare", quantity: 12 },
-    { id: 3, name: "Trailer", quantity: 2 },
-  ];
-  const handleExport = () => {
-    alert("preparing excel")
-    const worksheet = XLSX.utils.json_to_sheet(data3);
 
-    // Create a new workbook and append the sheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
 
-    // Export workbook to binary array
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
 
-    // Save as file
-    const file = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(file, "data3.xlsx");
-  }
-
-  const generatePDF = () => {
-    const doc = new jsPDF();
-
-    doc.text(data3);
-    doc.save("vehicleinventory.pdf");
-  };
-
-  const fetchActionDetails = async () => {
+  const fetchActionDetails = async (pageName) => {
     console.log("fetch")
     try {
       const response = await fetch(`${BASE}permission/lists/${roleId}`, {
@@ -798,17 +736,37 @@ const TrailerInventory = () => {
       if (response.ok) {
         console.log("fetching")
         const data = await response.json();
-        let veh_invent = null;
-        if (Array.isArray(data)
-          &&
-          data[1]?.children?.[0]?.children?.[0] &&
-          data[1].children[0].children[0].name === "Vehicle Inventory") {
-          veh_invent = data[1].children[0].children[0]
+         let founditem=null
+        const findrecursively = (nodes) => {
+         for(let node of nodes){
+          if ( node.to && node.to.replace("/", "") === pageName) // compare with path
+          {
+            return node
+          }
+          if(node.children)
+          {
+            const child=findrecursively(node.children)
+            if(child)
+            {
+              return child
+            }
+          }
+         }
+         return null
         }
+         founditem = findrecursively(data)
+        console.log(founditem)
+        console.log(founditem?.isView)
+        setactiondetails(founditem)
 
-        console.log(veh_invent)
-        console.log(veh_invent?.isView)
-        setactiondetails(veh_invent)
+        // let veh_invent = null;
+        // if (Array.isArray(data)
+        //   &&
+        //   data[1]?.children?.[0]?.children?.[0] &&
+        //   data[1].children[0].children[0].name === "Trailer Inventory") {
+        //   veh_invent = data[1].children[0].children[0]
+        // }
+        // setactiondetails(veh_invent)
 
 
       } else {
@@ -828,15 +786,94 @@ const TrailerInventory = () => {
       });
     }
   }
-  useEffect(() => { fetchActionDetails() }, [roleId])
-  useEffect(() => { console.log(roleId) }, [roleId])
+  useEffect(() => { 
+      const pageName = location.pathname.replace("/", "");
+      fetchActionDetails(pageName) }, [location,roleId])
 
-  const fuelOptions = [
-    { value: "1", label: "Diesel" },
-    { value: "2", label: "Petrol" },
-    { value: "3", label: "Gas" },
-    { value: "4", label: "Battery" },
-  ];
+
+
+
+  const fetchVehicleData = async (authToken) => {
+    const response = await fetch(`${BASE}trailer/list?start=0&limit=1000`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch data");
+
+    const result = await response.json();
+    const allData = Array.isArray(result.data) ? result.data : [];
+
+    if (allData.length === 0) {
+      alert("No data found for export");
+      return [];
+    }
+
+    return allData.map((row, index) => ({
+      "SL No": index + 1,
+      "Trailer No": row.trailer_number,
+      "Brand": row.brandname,
+      "Model": row.modelname,
+      "HSN": row.hsn,
+      "Part No": row.part_num,
+      "Purchase date": row.purchase_date,
+      "Months of Warranty": row.years_warrenty,
+      "Warranty Expire Date": row.exp_warranty,
+      "AMC Number": row.amc,
+      "AMC Date": row.amc_date,
+      "Wheels count": row.tyre_count,
+      "Stepney Count": row.step_count,
+      "Insurance": row.insurance,
+      "Insurance Date": row.ins_date,
+      "Status": row.status === 1 ? "Inactive" : "Active",
+    }));
+  };
+
+
+  const handleExportExcel = async () => {
+    try {
+      setExcelLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToExcel(data, "Trailer_Inventory");
+    } catch (error) {
+      console.error("Excel Export Error:", error);
+      alert("Failed to export Excel");
+    } finally {
+      setExcelLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToPDF(data, "Trailer_Inventory");
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+      alert("Failed to export PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    try {
+      setPrintLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToPrint(data, "Trailer_Inventory");
+    } catch (error) {
+      console.error("Print Error:", error);
+      alert("Failed to print report");
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
+
+
+
   return (
     <>
       <CCard className="mb-4">
@@ -856,23 +893,35 @@ const TrailerInventory = () => {
             <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
             <CButton className="btn btn-sm btn-secondary w-auto"
               onClick={() => {
+                Excelloading
+                handleExportExcel();
+              }} disabled={Excelloading} >
+              {Excelloading ? "Exporting..." : "Excel"}
+            </CButton>
 
-                handleExport();
-              }}>
-              Excel </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={generatePDF}> PDF </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow} disabled={!action_details?.isPrint}> Print </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Pdfloading
+                handleExportPDF();
+              }} disabled={Pdfloading} >
+              {Pdfloading ? "Exporting..." : "PDF"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Printloading
+                handlePrint();
+              }} disabled={Printloading} >
+              {Printloading ? "Printing..." : "Print"}
+            </CButton>
+
           </CButtonGroup>
-
-
           <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
             <CTableHead color="secondary">
               {headerGroups.map((headerGroup) => (
-                <tr key={headerGroup.id}
-                  {...headerGroup.getHeaderGroupProps()}>
+                <tr {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
-                    <th key={column.id}
-                      {...column.getHeaderProps(column.getSortByToggleProps())}>
+                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
                       {column.render('Header')}
                       <span>
                         {column.isSorted
@@ -889,14 +938,13 @@ const TrailerInventory = () => {
             <tbody {...getTableBodyProps()}>
               {page.map((row) => {
                 prepareRow(row);
+                const serial = pageIndex * pageSize + row.index + 1;
                 return (
-                  <tr key={row.id}
-                    {...row.getRowProps()}>
+                  <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => (
 
-                      <td key={cell.column.id}
-                        {...cell.getCellProps()}>
-                        {cell.render('Cell')}
+                      <td {...cell.getCellProps()}>
+                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
                       </td>
 
 
@@ -905,13 +953,14 @@ const TrailerInventory = () => {
                 );
               })}
             </tbody>
+
           </CTable>
 
           <div>
             <span>
               Page{' '}
               <strong>
-                {pageIndex + 1} of {pageOptions.length}
+                {pageIndex + 1} of {pageCount}
               </strong>{' '}
             </span>
             <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
@@ -942,60 +991,29 @@ const TrailerInventory = () => {
         aria-labelledby="NewProcessing"
       >
         <CModalHeader className='bg-secondary'>
-          <CModalTitle id="NewProcessing">New Spare</CModalTitle>
+          <CModalTitle id="NewProcessing">New Trailer</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CRow>
             <CCol md={6}>
               <CFormLabel className="col-form-label">
-                Spare Name
+                Trailer Number
               </CFormLabel>
               <CFormInput
                 type="text"
                 size="sm"
-                placeholder="Spare Name"
+                placeholder="Trailer Number"
                 className="mb-2 vehiclenumber"
                 onChange={(e) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    spareName: e.target.value.toUpperCase(),
+                    vno: e.target.value.toUpperCase(),
                   }));
                 }}
-              // onKeyUp={(e) => {
-              //   const result = vehicleNum(e.target.value);
-              //   if (e.target.value.length > 9 && !result.isValid) {
-              //     toast.error('Vehicle Number Invalid!');
-              //   }
-              // }}
-              />
-
-              <CFormLabel className="col-form-label">
-                Type
-              </CFormLabel>
-              <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                value={save_data.type}
-                onChange={(selectedOption) => {
-                  setsave_data((prev) => ({
-                    ...prev,
-                    type: selectedOption ? selectedOption.type : '',
-                  }));
-                }}
-              />
-
-              <CFormLabel className="col-form-label">
-                Category
-              </CFormLabel>
-              <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                value={save_data.category}
-                onChange={(selectedOption) => {
-                  setsave_data((prev) => ({
-                    ...prev,
-                    category: selectedOption ? selectedOption.category : '',
-                  }));
-                  if (selectedOption) {
-                    getbrandlist(selectedOption.category);
+                onKeyUp={(e) => {
+                  const result = vehicleNum(e.target.value);
+                  if (e.target.value.length > 9 && !result.isValid) {
+                    toast.error('Trailer Number Invalid!');
                   }
                 }}
               />
@@ -1009,14 +1027,14 @@ const TrailerInventory = () => {
                 size="sm"
                 className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={save_data.brandName}
+                // value={save_data.brand}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    brandName: selectedOption ? selectedOption.brandName : '',
+                    brand: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    getmodellist(selectedOption.brandName);
+                    getmodellist(selectedOption.value);
                   }
                 }}
               />
@@ -1028,13 +1046,12 @@ const TrailerInventory = () => {
               <Select options={modeloption}
                 isMulti={false}
                 placeholder="Select Model"
-                value={save_data.model}
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
-                    model: selectedOption ? selectedOption.model : '',
+                    modal: selectedOption ? selectedOption.value : '',
                   }));
                 }}
               />
@@ -1042,7 +1059,7 @@ const TrailerInventory = () => {
               <CFormLabel className="col-form-label">
                 Purchase Date
               </CFormLabel>
-              <CFormInput type="date" value={save_data.purchaseDate} size="sm"
+              <CFormInput type="date" value={save_data.purchasedate} size="sm"
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
@@ -1058,21 +1075,48 @@ const TrailerInventory = () => {
                 onChange={(e) =>
                   setsave_data((prev) => ({
                     ...prev,
-                    warranty: e.target.value,
+                    warrentyyear: e.target.value,
                   }))
                 }
-                // onKeyUp={(e) => {
-                //   const result = ValidMonth(e.target.value);
-                //   if (e.target.value.length > 1 && !result.isValid) {
-                //     toast.error('Month Invalid!');
-                //   }
-                // }}
+                onKeyUp={(e) => {
+                  const result = ValidMonth(e.target.value);
+                  if (e.target.value.length > 1 && !result.isValid) {
+                    toast.error('Month Invalid!');
+                  }
+                }}
                 placeholder="Month of warranty" className='mb-2' />
 
+            </CCol>
+
+            <CCol md={6}>
 
 
+              <CFormLabel className="col-form-label">
+                AMC
+              </CFormLabel>
 
-              {/* <CFormLabel className="col-form-label">
+              <CInputGroup className="mb-2">
+                <CFormInput type="text" size="sm"
+                  onChange={(e) =>
+                    setsave_data((prev) => ({
+                      ...prev,
+                      amc: e.target.value,
+                    }))
+                  }
+                  placeholder="AMC File Number" />
+
+                <CFormInput type="date" value={save_data.amcdate} size="sm"
+                  onChange={(e) =>
+                    setsave_data((prev) => ({
+                      ...prev,
+                      amcdate: e.target.value,
+                    }))
+                  }
+                />
+              </CInputGroup>
+
+
+              <CFormLabel className="col-form-label">
                 Tyre count / Stepney Count
               </CFormLabel>
               <CInputGroup className="mb-2">
@@ -1084,7 +1128,7 @@ const TrailerInventory = () => {
                     }))
                   }
                   onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
+                    const result = ValiddoubleleDigit(e.target.value);
                     if (e.target.value.length > 0 && !result.isValid) {
                       toast.error('Tyre Count Invalid!');
                     }
@@ -1099,18 +1143,13 @@ const TrailerInventory = () => {
                     }))
                   }
                   onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
+                    const result = ValiddoubleleDigit(e.target.value);
                     if (e.target.value.length > 0 && !result.isValid) {
                       toast.error('Tyre Count Invalid!');
                     }
                   }}
                   placeholder="Stepney Count" />
-              </CInputGroup> */}
-
-            </CCol>
-
-            <CCol md={6}>
-
+              </CInputGroup>
 
 
               <CFormLabel className="col-form-label">
@@ -1131,6 +1170,8 @@ const TrailerInventory = () => {
                     }
                   }}
                   placeholder="HSN Number" className='mb-2' />
+
+
                 <CFormInput type="text" size="sm"
                   onChange={(e) =>
                     setsave_data((prev) => ({
@@ -1138,10 +1179,11 @@ const TrailerInventory = () => {
                       partnum: e.target.value,
                     }))
                   }
+
                   placeholder="Part Number" className='mb-2' />
               </CInputGroup>
 
-              {/* <CFormLabel className="col-form-label">
+              <CFormLabel className="col-form-label">
                 Insurance
               </CFormLabel>
 
@@ -1154,6 +1196,7 @@ const TrailerInventory = () => {
                     }))
                   }
                   placeholder="Insurance Number" />
+
                 <CFormInput type="date" value={save_data.insuranceenddate} size="sm"
                   onChange={(e) =>
                     setsave_data((prev) => ({
@@ -1164,15 +1207,7 @@ const TrailerInventory = () => {
                 />
               </CInputGroup>
 
-
- */}
-
-
-
-
-
-
-              {/* <div className="mb-3">
+              <div className="mb-3">
                 <label htmlFor="formFileSm" className="form-label">Image</label>
                 <input className="form-control form-control-sm" id="formFileSm" type="file"
                   onChange={(e) =>
@@ -1183,7 +1218,9 @@ const TrailerInventory = () => {
                   }
 
                 />
-              </div> */}
+              </div>
+
+
             </CCol>
 
           </CRow>
@@ -1203,77 +1240,41 @@ const TrailerInventory = () => {
         alignment="center"
         scrollable
         visible={updateshow}
-        size="md"
+        size="xl"
         onClose={() => handleEClose()}
         aria-labelledby="NewProcessing"
       >
         <CModalHeader className='bg-secondary'>
-          {updated_data.image ?
-            <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}
-          <CModalTitle id="NewProcessing"> {updated_data.image}</CModalTitle>
+          {updated_data.image ? <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.trailer_number}</CModalTitle>
         </CModalHeader>
         <CModalBody>
+
           <CRow>
+
             <CCol md={6}>
+
               <CFormLabel className="col-form-label">
-                SpareName
+                Trailer Numbr
               </CFormLabel>
               <CFormInput
                 type="text"
                 size="sm"
-                placeholder="Spare Name"
-                className="mb-2 small-select"
-                classNamePrefix="custom-select"
-                value={updated_data.spareName}
+                placeholder="Trailer Number"
+                className="mb-2 vehiclenumber"
+                value={updated_data.trailer_number}
                 onChange={(e) => {
                   setupdated_data((prev) => ({
                     ...prev,
-                    spareName: e.target.value.toUpperCase(),
+                    trailer_number: e.target.value.toUpperCase(),
                   }));
                 }}
-              // onKeyUp={(e) => {
-              //   const result = vehicleNum(e.target.value);
-              //   if (e.target.value.length > 9 && !result.isValid) {
-              //     toast.error('Vehicle Number Invalid!');
-              // //   }
-              // }}
-              // readOnly
-              />
-
-
-
-              <CFormLabel className="col-form-label">
-                Type
-              </CFormLabel>
-              <Select options={typelist} isMulti={false} placeholder="Select Type" size="sm"
-                classNamePrefix="custom-select"
-                className="mb-2 small-select"
-                value={typelist.find(option => option.value === updated_data.type) || null}
-                onChange={(selectedOption) => {
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    type: selectedOption ? selectedOption.value : '',
-                  }));
-                }}
-              />
-
-              <CFormLabel className="col-form-label">
-                Category
-              </CFormLabel>
-              <Select options={categoryoption} isMulti={false}
-                placeholder="Select Category"
-                size="sm" className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                value={categoryoption.find(option => option.value === updated_data.category) || null}
-                onChange={(selectedOption) => {
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    category: selectedOption ? selectedOption.value : '',
-                  }));
-                  if (selectedOption) {
-                    getbrandlist(selectedOption.value);
+                onKeyUp={(e) => {
+                  const result = vehicleNum(e.target.value);
+                  if (e.target.value.length > 9 && !result.isValid) {
+                    toast.error('Trailer Number Invalid!');
                   }
                 }}
+                readOnly
               />
 
               <CFormLabel className="col-form-label">
@@ -1281,11 +1282,11 @@ const TrailerInventory = () => {
               </CFormLabel>
               <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={brandoption.find(option => option.value === updated_data.brandName) || null}
+                value={brandoption.find(option => option.value === updated_data.brand) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
-                    brandName: selectedOption ? selectedOption.value : '',
+                    brand: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
                     getmodellist(selectedOption.value);
@@ -1299,11 +1300,11 @@ const TrailerInventory = () => {
 
               <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={modeloption.find(option => option.value === updated_data.model) || null}
+                value={modeloption.find(option => option.value === updated_data.modal) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
-                    model: selectedOption ? selectedOption.value : '',
+                    modal: selectedOption ? selectedOption.value : '',
                   }));
                 }}
               />
@@ -1325,11 +1326,11 @@ const TrailerInventory = () => {
                 Months of warranty
               </CFormLabel>
               <CFormInput type="text" size="sm"
-                value={updated_data.warranty}
+                value={updated_data.warrentyyear}
                 onChange={(e) =>
                   setupdated_data((prev) => ({
                     ...prev,
-                    warranty: e.target.value,
+                    warrentyyear: e.target.value,
                   }))
                 }
                 onKeyUp={(e) => {
@@ -1341,6 +1342,11 @@ const TrailerInventory = () => {
                 placeholder="Month of warranty" className='mb-2' />
 
 
+
+
+
+            </CCol>
+            <CCol md={6}>
 
               <CFormLabel className="col-form-label">
                 AMC
@@ -1369,7 +1375,7 @@ const TrailerInventory = () => {
               </CInputGroup>
 
 
-              {/* <CFormLabel className="col-form-label">
+              <CFormLabel className="col-form-label">
                 Tyre count / Stepney Count
               </CFormLabel>
               <CInputGroup className="mb-2">
@@ -1382,7 +1388,7 @@ const TrailerInventory = () => {
                     }))
                   }
                   onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
+                    const result = ValiddoubleleDigit(e.target.value);
                     if (e.target.value.length > 0 && !result.isValid) {
                       toast.error('Tyre Count Invalid!');
                     }
@@ -1398,14 +1404,13 @@ const TrailerInventory = () => {
                     }))
                   }
                   onKeyUp={(e) => {
-                    const result = ValidSingleDigit(e.target.value);
+                    const result = ValiddoubleleDigit(e.target.value);
                     if (e.target.value.length > 0 && !result.isValid) {
                       toast.error('Tyre Count Invalid!');
                     }
                   }}
                   placeholder="Stepney Count" />
-              </CInputGroup> */}
-
+              </CInputGroup>
 
               <CFormLabel className="col-form-label">
                 HSN Number/ Part Number
@@ -1441,7 +1446,34 @@ const TrailerInventory = () => {
               </CInputGroup>
 
 
-              {/* <div className="mb-3">
+
+              <CFormLabel className="col-form-label">
+                Insurance
+              </CFormLabel>
+
+              <CInputGroup className="mb-2">
+                <CFormInput type="text" size="sm"
+                  value={updated_data.insurancenumber}
+                  onChange={(e) =>
+                    setupdated_data((prev) => ({
+                      ...prev,
+                      insurancenumber: e.target.value,
+                    }))
+                  }
+                  placeholder="Insurance Number" />
+
+                <CFormInput type="date" size="sm"
+                  value={updated_data.insuranceenddate}
+                  onChange={(e) =>
+                    setupdated_data((prev) => ({
+                      ...prev,
+                      insuranceenddate: e.target.value,
+                    }))
+                  }
+                />
+              </CInputGroup>
+
+              <div className="mb-3">
                 <label htmlFor="formFileSm" className="form-label">Image</label>
                 <input className="form-control form-control-sm" id="formFileSm" type="file"
                   onChange={(e) =>
@@ -1451,13 +1483,13 @@ const TrailerInventory = () => {
                     }))
                   }
                 />
-              </div> */}
+              </div>
             </CCol>
           </CRow>
         </CModalBody>
 
         <CModalFooter>
-          <CButton color="primary" onClick={updatespare}>Update</CButton>
+          <CButton color="primary" onClick={updatevichile}>Update</CButton>
         </CModalFooter>
       </CModal>
 
@@ -1483,26 +1515,23 @@ const TrailerInventory = () => {
             ) : (
               ""
             )}
-            <CModalTitle id="ViewVehicle">{updated_data.spareName}</CModalTitle>
+            <CModalTitle id="ViewVehicle">{updated_data.trailer_number}</CModalTitle>
           </CModalHeader>
 
           <CModalBody>
             <CTable bordered hover>
               <CTableBody>
                 {[
-                  { label: "SL", value: updated_data.id },
-                  { label: "Spare Name", value: updated_data.spareName },
-                  { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
-                  { label: "Category", value: categoryoption.find((c) => c.value === updated_data.category)?.label },
-                  { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brandName)?.label },
-                  { label: "Model", value: modeloption.find((m) => m.value === updated_data.model)?.label },
-                  { label: "HSN Number", value: updated_data.hsn },
+                  { label: "Trailer Number", value: updated_data.trailer_number },
+                  { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brand)?.label },
+                  { label: "Model", value: modeloption.find((m) => m.value === updated_data.modal)?.label },
                   { label: "Purchase Date", value: updated_data.purchasedate },
-                  { label: "Years of Warranty", value: updated_data.warranty },
+                  { label: "Months of Warranty", value: updated_data.warrentyyear },
                   { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
-
+                  { label: "Tyre / Stepney Count", value: `${updated_data.tyrecnt} / ${updated_data.stepnycnt}` },
+                  { label: "HSN Number", value: updated_data.hsn },
                   { label: "Part Number", value: updated_data.partnum },
-
+                  { label: "Insurance", value: `${updated_data.insurancenumber} | ${updated_data.insuranceenddate}` },
                 ].map((item, idx) => (
                   <CTableRow key={idx}>
                     <CTableHeaderCell className="fw-bold" style={{ width: "30%" }}>
@@ -1511,19 +1540,6 @@ const TrailerInventory = () => {
                     <CTableDataCell>{item.value || "-"}</CTableDataCell>
                   </CTableRow>
                 ))}
-
-                {/* {updated_data.image && (
-                  <CTableRow>
-                    <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
-                    <CTableDataCell>
-                      <CImage
-                        rounded
-                        src={updated_data.image}
-                        width={200}
-                      />
-                    </CTableDataCell>
-                  </CTableRow>
-                )} */}
               </CTableBody>
             </CTable>
           </CModalBody>
