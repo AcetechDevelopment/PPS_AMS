@@ -20,7 +20,7 @@ import {
   CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
-import { useLocation } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
 import { CIcon } from '@coreui/icons-react';
 import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
@@ -34,7 +34,8 @@ import { Sharedcontext } from '../../components/Context';
 import { exportToExcel } from '../export/excel';
 import { exportToPDF } from '../export/pdf';
 import { exportToPrint } from '../export/print';
-import { useParams } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
+
 
 
 

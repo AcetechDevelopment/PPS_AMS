@@ -31,6 +31,7 @@ import { Sharedcontext } from '../../components/Context';
 import { exportToExcel } from '../export/excel';
 import { exportToPDF } from '../export/pdf';
 import { exportToPrint } from '../export/print';
+import { useLocation } from "react-router-dom";
 
 
 const SpareInventory = () => {
@@ -52,7 +53,7 @@ const SpareInventory = () => {
   const [categoryid, setcategoryid] = useState('');
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
-  const [location, setlocation] = useState('');
+  // const [location, setlocation] = useState('');
   const [loc_id, setlocationid] = useState('');
   const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
@@ -66,7 +67,7 @@ const SpareInventory = () => {
   const [view, setview] = useState(false)
   // const [action_details, setactiondetails] = useState({})
   const { roleId,action_details,fetchActionDetails } = useContext(Sharedcontext)
-
+     const location = useLocation(); 
   const intial_data = {
     spareName: '',
     type: '',
@@ -670,7 +671,9 @@ const SpareInventory = () => {
   //     });
   //   }
   // }
-  useEffect(() => { fetchActionDetails() }, [roleId])
+  useEffect(() => { 
+     const pageName = location.pathname.replace("/", "");
+    fetchActionDetails(pageName) }, [location,roleId])
 
   const typelist = [
     { value: 0, label: "Spare" },

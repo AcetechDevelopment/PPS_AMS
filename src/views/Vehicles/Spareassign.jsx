@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createRef, useMemo } from 'react'
+import React, { useEffect, useState, createRef, useMemo, useContext } from 'react'
 import {
   CButton,
   CModal,
@@ -17,7 +17,7 @@ import {
   CRow,
   CCol,
   CFormLabel,
-  CImage
+  CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
 import { CIcon } from '@coreui/icons-react';
@@ -25,25 +25,37 @@ import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
-import { toast } from 'react-toastify';
 import { vehicleNum, validateHSN, ValidMonth, ValidSingleDigit } from '../../utils/validators';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { toast } from 'react-toastify';
+import { Sharedcontext } from '../../components/Context';
+import { exportToExcel } from '../export/excel';
+import { exportToPDF } from '../export/pdf';
+import { exportToPrint } from '../export/print';
+import { useLocation } from "react-router-dom";
 
 
-const SpareAssign = () => {
+
+
+const Spareassign = () => {
+
+  const BASE = import.meta.env.VITE_BASE_URL;
   const apiUrl = import.meta.env.VITE_API_URL;
-
+  const ReactSwal = withReactContent(Swal);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [Excelloading, setExcelLoading] = useState(false);
+  const [Pdfloading, setPdfLoading] = useState(false);
+  const [Printloading, setPrintLoading] = useState(false);
+
+
   const [pageCount, setPageCount] = useState(0);
   const [search, setsearch] = useState('');
   const [categoryoption, setcategoryoption] = useState([]);
   const [categoryid, setcategoryid] = useState('');
-
-
-
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
-  const [location, setlocation] = useState('');
   const [loc_id, setlocationid] = useState('');
   const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
@@ -53,99 +65,42 @@ const SpareAssign = () => {
   const [gross_wt, setgross_wt] = useState(0);
   const [net_wt, setnet_wt] = useState(0);
   const [id, setid] = useState('');
-  const [selectedtype, setSelectedtype] = useState(null);
-
+  const [typelist, settypelist] = useState([])
+  const [view, setview] = useState(false)
+  const { roleId ,fetchActionDetails,action_details} = useContext(Sharedcontext)
+  const location = useLocation(); // 👈 gives full URL path
+ 
+   
+   const authToken = JSON.parse(sessionStorage.getItem('authToken'))
+  const intial_data = {
+    id:"",
+    vehicle_no:"",
+    trailer_no:""
+  };
 
   // new vehicle
-  const [save_data, setsave_data] = useState(
-    {
-      vno: '',
-      type: '',
-      category: '',
-      brand: '',
-      modal: '',
-      purchasedate: today,
-      warrentyyear: '',
-      amc: '',
-      amcdate: today,
-      tyrecnt: '',
-      stepnycnt: '',
-      fuel: '1',
-      enginenumber: '',
-      chassisnumber: '',
-      hsn: '',
-      insurancenumber: '',
-      insuranceenddate: today,
-      fitness: '',
-      fitnessdate: today,
-      puc: '',
-      pucdate: today,
-      greentax: '',
-      greendate: today,
-      file: null,
-    },
-  );
-
+  const [save_data, setsave_data] = useState(intial_data);
   // update vehicle 
-
-  const [updated_data, setupdated_data] = useState(
-    {
-      vno: '',
-      type: '',
-      category: '',
-      brand: '',
-      modal: '',
-      purchasedate: today,
-      warrentyyear: '',
-      amc: '',
-      amcdate: today,
-      tyrecnt: '',
-      stepnycnt: '',
-      fuel: '1',
-      enginenumber: '',
-      chassisnumber: '',
-      hsn: '',
-      insurancenumber: '',
-      insuranceenddate: today,
-      fitness: '',
-      fitnessdate: today,
-      puc: '',
-      pucdate: today,
-      greentax: '',
-      greendate: today,
-      file: null,
-    },
-  );
+  const [updated_data, setupdated_data] = useState(intial_data);
 
   const submitvichile = async () => {
     const data = save_data;
     if (
-      !data.vno ||
-      !data.type ||
-      !data.enginenumber ||
-      !data.hsn
+      !data.id||
+      !data.vehicle_no||
+      !data.trailer_no
+  
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    const verify = vehicleNum(data.vno);
+    const verify = vehicleNum(data.vehicle_no);
     if (!verify.isValid) {
       toast.error('Vehicle Number Invalid!');
       return;
     }
-    const hsnCheck = validateHSN(data.hsn);
-    if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
-
-
-    const monthCheck = ValidMonth(data.warrentyyear);
-    if (!monthCheck.isValid) return toast.error('Months Invalid!');
-
-    const tyreCheck = ValidSingleDigit(data.tyrecnt);
-    if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
-
-    const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-    if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
+  
 
     const formData = new FormData();
 
@@ -165,7 +120,7 @@ const SpareAssign = () => {
     });
 
     try {
-      const response = await fetch(`${apiUrl}vehicle/create`, {
+      const response = await fetch(`${BASE}vehicle/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -175,35 +130,15 @@ const SpareAssign = () => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log(result)
         toast.success('New Vehicle created!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
 
         setsave_data({
-          vno: '',
-          type: '',
-          category: '',
-          brand: '',
-          modal: '',
-          purchasedate: today,
-          warrentyyear: '',
-          amc: '',
-          amcdate: today,
-          tyrecnt: '',
-          stepnycnt: '',
-          fuel: '1',
-          enginenumber: '',
-          chassisnumber: '',
-          hsn: '',
-          insurancenumber: '',
-          insuranceenddate: today,
-          fitness: '',
-          fitnessdate: today,
-          puc: '',
-          pucdate: today,
-          greentax: '',
-          greendate: today,
-          file: null,
+         id:"",
+         vehicle_no:"",
+         trailer_no:""
         });
 
 
@@ -218,46 +153,17 @@ const SpareAssign = () => {
     }
 
   };
+  
 
-
-
-
-
-  const getcategorylist = async () => {
-    setcategoryoption([]);
-    try {
-      const response = await fetch(
-        `${apiUrl}options/category`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.id,
-        label: item.category
-      }));
-      setcategoryoption(datas);
-    }
-    catch (err) {
-
-    }
-  };
-
+  useEffect(() => { console.log(save_data) }, [save_data])
 
 
   const [brandoption, setbrandoption] = useState([]);
-  const [brandid, setbrandid] = useState('');
+  
 
   const getbrandlist = async (catid) => {
     setbrandoption([]);
+
     try {
       const response = await fetch(
         `${apiUrl}options/brand/${catid}`,
@@ -273,10 +179,11 @@ const SpareAssign = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      const datas = result.data.map(item => ({
+      console.log(result)
+      const datas = result?.data?.map((item) => ({
         value: item.brand_id,
         label: item.brand
-      }));
+      }))
       setbrandoption(datas);
     }
     catch (err) {
@@ -284,91 +191,14 @@ const SpareAssign = () => {
     }
   }
 
-
-  const [ebrandoption, setebrandoption] = useState([]);
-  const [ebrandid, setebrandid] = useState('');
-  const egetbrandlist = async (catid) => {
-    setebrandoption([]);
-    try {
-      const response = await fetch(
-        `${apiUrl}options/brand/${catid}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.brand_id,
-        label: item.brand
-      }));
-      setebrandoption(datas);
-    }
-    catch (err) {
-
-    }
-  }
-
-
-
-  const [emodeloption, setemodeloption] = useState([]);
-  const [emodelid, setemodelid] = useState('');
-
-  const egetmodellist = async (brandid) => {
-    setemodeloption([]);
-    try {
-      const response = await fetch(
-        `${apiUrl}options/model/${brandid}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-      const result = await response.json();
-      const datas = result.data.map(item => ({
-        value: item.id,
-        label: item.model
-      }));
-      setemodeloption(datas);
-    }
-    catch (err) {
-
-    }
-  }
-
-
-  const typelist = [
-    {
-      "value": 1,
-      'label': "Mover"
-    },
-    {
-      "value": 2,
-      'label': "Puller"
-    }
-  ];
-
-
   const [modeloption, setmodeloption] = useState([]);
-  const [modelid, setmodelid] = useState('');
+
 
   const getmodellist = async (brandid) => {
     setmodeloption([]);
     try {
       const response = await fetch(
-        `${apiUrl}options/model/${brandid}`,
+        `${BASE}options/model/${brandid}`,
         {
           method: 'GET',
           headers: {
@@ -381,7 +211,7 @@ const SpareAssign = () => {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
-      const datas = result.data.map(item => ({
+      const datas = result?.data?.map(item => ({
         value: item.id,
         label: item.model
       }));
@@ -392,65 +222,310 @@ const SpareAssign = () => {
     }
   }
 
-  useEffect(() => {
-    getcategorylist();
-  }, []);
-
-  const addnet = () => {
-    setnet_wt(gross_wt - tare_wt);
-  }
+  
+ 
 
 
-  useEffect(() => {
-    addnet();
-  }, [gross_wt, tare_wt, addnet]);
-
-  const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
-
-
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
+
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
-
     const orderBy = `${sortColumn} ${sortOrder}`;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
-
-    // const pageindex = pageIndex*15;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
     try {
-      const response = await fetch(
-        `${apiUrl}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        }
-      );
+      const url = `${BASE}spareassign/list?start=${start}&limit=${limit}&search=${encodeURIComponent(search)}&order_by=${encodeURIComponent(orderBy)}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      setData(result.data);
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+      const items = Array.isArray(result.data) ? result.data : [];
+      let pageItems = [];
+      if (items.length <= limit && pageIndex > 0) {
+        pageItems = items;
+      } else {
+        pageItems = items.slice(start, start + limit);
+      }
+
+      setData(pageItems);
+      const total = Number(result.total) || items.length || 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      setPageCount(totalPages);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
+      setPageCount(1);
     } finally {
       setLoading(false);
     }
   };
 
 
-  const delete_user = async (userId) => {
+
+
+  const columns = useMemo(
+    () => [
+      {
+        Header: 'SL',
+        id: 'sl',
+        disableSortBy: true,
+        Cell: ({ row }) => row.index + 1,
+      },
+      { Header: 'Type', accessor: 'type' },
+      
+      { Header: 'Number', accessor: 'number' },
+      {
+        Header: () => <FaBars />,
+        id: 'actions',
+        Cell: ({ row }) => {
+          const id = row.original.id;
+          if (!action_details) return null
+          return (
+            <div className="">
+              <FaEye
+                size={15}
+                className={`ms-2 me-2 ${action_details?.isView ? "text-info pointer" : "text-muted"}`}
+                onClick={() => action_details?.isView && viewvehicle(id)}
+                style={{ cursor: action_details?.isView ? "pointer" : "not-allowed", opacity: action_details?.isView ? 1 : 0.5 }}
+              />
+
+              <FaEdit
+                size={15}
+                className={`ms-2 me-2 ${action_details?.isEdit ? "text-primary pointer" : "text-muted"}`}
+                onClick={() => action_details?.isEdit && editvehicle(id)}
+                style={{ cursor: action_details?.isEdit ? "pointer" : "not-allowed", opacity: action_details?.isEdit ? 1 : 0.5 }}
+              />
+
+              <FaTrash
+                size={15}
+                className={`ms-2 me-2 ${action_details?.isDelete ? "text-danger pointer" : "text-muted"}`}
+                onClick={() => action_details?.isDelete && deletevehicle(id)}
+                style={{ cursor: action_details?.isDelete ? "pointer" : "not-allowed", opacity: action_details?.isDelete ? 1 : 0.5 }}
+              />
+
+            </div>
+          );
+        },
+        disableSortBy: true,
+      },
+    ],
+    [action_details]
+  );
+
+
+
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount: controlledPageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize, sortBy },
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 15 },
+      manualPagination: true,
+      pageCount,
+      manualSortBy: true,
+      autoResetPage: false,
+      autoResetSortBy: false,
+      fetchData,
+    },
+    useSortBy,
+    usePagination
+  );
+
+
+  useEffect(() => {
+    fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
+  }, [pageSize, pageIndex, sortBy, search, todate, location]);
+
+  useEffect(() => { console.log(save_data.vno) }, [])
+
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+
+  const [updateshow, setupdateShow] = useState(false);
+  const handleEClose = () => setupdateShow(false);
+
+  const editvehicle = async (id) => {
+    if (!authToken) {
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Unauthorized, please log in.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE}spareassign/edit/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const res = data.data;
+        setupdated_data({
+          id: res.id,
+          vehicle_no: res.vehicle_no,
+          trailer_no:res.trailer_no
+        });
+      
+        setupdateShow(true);
+      } else {
+        const error = await response.json();
+        ReactSwal.fire({
+          title: 'Error',
+          text: error.message || 'Unable to reach user data',
+          icon: 'error',
+        });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
+    }
+  }
+
+
+
+  const updatevichile = async () => {
+    const data = updated_data;
+    if (
+      !data.vehicle_no ||
+      !data.trailer_no 
+    ) {
+      toast.error('All fields are required!');
+      return;
+    }
+
+    const verify = vehicleNum(data.vehicle_no);
+    if (!verify.isValid) {
+      toast.error('Vehicle Number Invalid!');
+      return;
+    }
+  
+    const formData = new FormData();
+
+    Object.entries(data).forEach(([key, value]) => {
+
+      let finalValue = value;
+      if (value instanceof Date) {
+        finalValue = value.toISOString().split('T')[0];
+      }
+
+
+      if (key === 'file' && value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value?.toString() || '');
+      }
+    });
+    console.log(formData)
+    try {
+      const response = await fetch(`${BASE}vehicle/update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: formData,
+
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(response)
+        toast.success('Vehicle Updated!');
+        fetchData({ pageSize, pageIndex, sortBy, search });
+        setupdateShow(false);
+
+        setupdated_data(intial_data);
+      } else {
+        const error = await response.json();
+        const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
+        toast.error(`Error: ${errorMessage}`);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Failed to connect to the server. Please try again later.');
+    }
+
+  };
+
+  const viewvehicle = async (id) => {
+    setview(true);
+    try {
+      const response = await fetch(`${BASE}vehicle/edit/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const res = data.data;
+        setupdated_data({
+          id: res.id,
+         vehicle_no:res.vehicle_no,
+         trailer_no:res.trailer_no
+        });
+    
+        console.log("success")
+      } else {
+
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
+    }
+
+  }
+
+  const handleviewclose = () => {
+    setview(false)
+  }
+
+  const deletevehicle = async (id) => {
     try {
       const result = await ReactSwal.fire({
         title: 'Are you sure?',
@@ -462,7 +537,7 @@ const SpareAssign = () => {
       });
 
       if (result.isConfirmed) {
-        const response = await fetch(`${base_url}delete_user/${userId}`, {
+        const response = await fetch(`${BASE}vehicle/delete/${id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -497,390 +572,230 @@ const SpareAssign = () => {
     }
   };
 
-  const edit_user = async (userId) => {
-    if (!authToken) {
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Unauthorized, please log in.',
-        icon: 'error',
-      });
-      return;
-    }
 
+
+  const handleExportExcel = async () => {
     try {
-      const response = await fetch(`${base_url}update_user/${userId}`, {
-        method: 'GET',
+      setExcelLoading(true);
+      const response = await fetch(`${BASE}vehicle/list?start=0&limit=1000`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const ddata = data.data;
-        setid(ddata.id);
-        setName(ddata.name);
-        setUsername(ddata.username);
-        setEmail(ddata.email);
-        setMobile(ddata.mobile);
-        setgroup_id(ddata.group_id);
-        setupdateShow(true);
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
+      if (!response.ok) throw new Error("Failed to fetch data");
+
+      const result = await response.json();
+      const allData = Array.isArray(result.data) ? result.data : [];
+
+      if (allData.length === 0) {
+        alert("No data found for export");
+        return;
       }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  };
+      const dataForExcel = allData.map((row, index) => ({
+        "SL No": index + 1,
+        "Vehicle No": row.vehicle_no,
+       
+        "Brand": row.brandname,
+        "Model": row.modelname,
+        // "Engine number": row.engine_num,
+        // "Chassis number": row.chassis_num,
+        // "HSN": row.hsn,
+        // "Part No": row.part_num,
+        // "Purchase date": row.purchase_date,
+        // "Months of Warranty": row.year_warranty,
+        // "Warranty Expire Date": row.exp_warranty,
+        // "AMC Number": row.amc,
+        // "AMC Date": row.amc_date,
+        // "Wheels count": row.tyre_count,
+        // "Stepney Count": row.step_count,
+        // "Fuel Type":
+        //   row?.fuel_type == 1
+        //     ? "Diesel"
+        //     : row?.fuel_type == 2
+        //       ? "Petrol"
+        //       : row?.fuel_type == 3
+        //         ? "Gas"
+        //         : "Battery",
+        // "Insurance": row.insurance,
+        // "Insurance Date": row.ins_date,
+        // "Fitness Certificate": row.fc,
+        // "Fitness Certificate Date": row.fc_date,
+        // "Pollution Certificate": row.pc,
+        // "Pollution Certificate Date": row.pc_date,
+        // "Green Tax": row.green_tax,
+        // "Green Tax Date": row.gtax_date,
+        "Status": row.status === 1 ? "Inactive" : "Active",
+      }));
 
-  const handleUpdate = async () => {
-    if (!name || !username || !email || !password || !confirmPassword || (group_id === null || group_id === undefined || group_id === '') || !mobile) {
-      alert('All fields are required!');
-      return;
-    }
+      exportToExcel(dataForExcel, "Trailer Assign");
 
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-
-    const payload = {
-      id,
-      name,
-      username,
-      email,
-      password,
-      group_id,
-      mobile
-    };
-
-
-    try {
-      const response = await fetch(`${base_url}api/update_user`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert('User created successfully!');
-        fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
-        setupdateShow(false);
-        setName('');
-        setUsername('');
-        setEmail('');
-        setMobile(''); 3
-        setPassword('');
-        setConfirmPassword('');
-        setgroup_id('');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.message || 'Unable to register user'}`);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      alert('Failed to connect to the server. Please try again later.');
+    } catch (error) {
+      console.error("Fetch error:", error);
+      alert("Failed to fetch data");
+    } finally {
+      setExcelLoading(false);
     }
   };
 
 
-  const columns = useMemo(
-    () => [
-      { Header: 'SL', accessor: 'id', disableSortBy: true, },
-      { Header: ' Type', accessor: 'type' },
-      { Header: ' Number', accessor: 'number' },
-      { Header: 'Spare', accessor: 'spare' },
-      {
-        Header: () => <FaBars />,
-        id: 'actions',
-        Cell: ({ row }) => {
-          const id = row.original.id;
 
-          return (
-            <div className="flex gap-5">
-              <FaEye className="ms-2 pointer text-info" onClick={() => viewvehicle(id)} />
 
-              <FaEdit className="ms-2 pointer text-primary" onClick={() => editvehicle(id)} />
-
-              <FaTrash className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
-
-            </div>
-          );
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const response = await fetch(`${BASE}spareassign/list?start=0&limit=1000`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
         },
-        disableSortBy: true,
-      },
-    ],
-    []
-  );
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch data");
+
+      const result = await response.json();
+      const allData = Array.isArray(result.data) ? result.data : [];
+
+      if (allData.length === 0) {
+        alert("No data found for export");
+        return;
+      }
+      const dataForExcel = allData.map((row, index) => ({
+        "SL No": index + 1,
+        "Vehicle No": row.vehicle_no,
+        "Trailer No":row.trailer_no,
+        "Status": row.status === 1 ? "Inactive" : "Active",
+      }));
+
+      exportToPDF(dataForExcel, "Trailer Assign");
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+      alert("Failed to export PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+
+  const handlePrint = async () => {
+    try {
+      setPrintLoading(true);
+      const response = await fetch(`${BASE}spareassign/list?start=0&limit=1000`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch data");
+
+      const result = await response.json();
+      const allData = Array.isArray(result.data) ? result.data : [];
+
+      if (allData.length === 0) {
+        alert("No data found for export");
+        return;
+      }
+      const dataForExcel = allData.map((row, index) => ({
+        "SL No": index + 1,
+        "Vehicle No": row.vehicle_no,
+        'Trailer No':row.trailer_no,
+        "Status": row.status === 1 ? "Inactive" : "Active",
+      }));
+      exportToPrint(dataForExcel, "Vehicle_Inventory");
+    } catch (error) {
+      console.error("Print Error:", error);
+      alert("Failed to print report");
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
+
+  // const fetchActionDetails = async (pageName) => {
+  //   console.log("fetch")
+  //   try {
+  //     const response = await fetch(`${BASE}permission/lists/${roleId}`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${authToken}`,
+  //       },
+  //     });
+
+  //     if (response.ok) {
+  //       console.log("fetching")
+  //       console.log(response)
+  //       const data = await response.json();
+  //       let founditem=null
+  //       const findrecursively = (nodes) => {
+  //        for(let node of nodes){
+  //         if ( node.to && node.to.replace("/", "") === pageName) // compare with path
+  //         {
+  //           return node
+  //         }
+  //         if(node.children)
+  //         {
+  //           const child=findrecursively(node.children)
+  //           if(child)
+  //           {
+  //             return child
+  //           }
+  //         }
+  //        }
+  //        return null
+  //       }
+  //        founditem = findrecursively(data)
+  //       console.log(founditem)
+  //       console.log(founditem?.isView)
+  //       setactiondetails(founditem)
+
+  //       // if (Array.isArray(data)
+  //       //   &&
+  //       //   data[1]?.children?.[0]?.children?.[0] &&
+  //       //   data[1].children[0].children[0].name === "Vehicle Inventory") {
+  //       //   veh_invent = data[1].children[0].children[0]
+  //       // }
 
 
 
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount: controlledPageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize, sortBy },
-  } = useTable(
-    {
-      columns,
-      data,
-      initialState: { pageIndex: 0 },
-      manualPagination: true,
-      pageCount,
-      manualSortBy: true,
-      autoResetPage: false,
-      autoResetSortBy: false,
-      fetchData,
-    },
-    useSortBy,
-    usePagination
-  );
-
-
+  //     } else {
+  //       const error = await response.json();
+  //       ReactSwal.fire({
+  //         title: 'Error',
+  //         text: error.message || 'Unable to reach user data',
+  //         icon: 'error',
+  //       });
+  //     }
+  //   } catch (err) {
+  //     console.error('Error:', err);
+  //     ReactSwal.fire({
+  //       title: 'Error',
+  //       text: 'Failed to connect to the server. Please try again later.',
+  //       icon: 'error',
+  //     });
+  //   }
+  // }
+  //  / remove leading "/" → "vehicle_inventory"
   useEffect(() => {
-    fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
-  }, [pageSize, pageIndex, sortBy, search, todate, location]);
+    const pageName = location.pathname.replace("/", "");
+    fetchActionDetails(pageName);
+   }, [roleId,location])
 
 
+  useEffect(() => { console.log(roleId) }, [roleId])
 
-  const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-
-
-
-  const options = [
-    { value: '1', label: 'CHETPET' },
-    { value: 'pdggw', label: 'PERUNGUDI' },
-    { value: 'kdg', label: 'KODUNGAIYUR' },
-    { value: '4', label: 'SOWCARPET' },
+  const fuelOptions = [
+    { value: "1", label: "Diesel" },
+    { value: "2", label: "Petrol" },
+    { value: "3", label: "Gas" },
+    { value: "4", label: "Battery" },
   ];
-
-
-  const searchoptions = [
-    { value: '0', label: 'All Location' },
-    { value: '1', label: 'CHETPET' },
-    { value: 'pdggw', label: 'PERUNGUDI' },
-    { value: 'kdg', label: 'KODUNGAIYUR' },
-    { value: '4', label: 'SOWCARPET' },
-  ];
-
-
-
-  const [updateshow, setupdateShow] = useState(false);
-  const handleEClose = () => setupdateShow(false);
-
-  const editvehicle = async (id) => {
-    if (!authToken) {
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Unauthorized, please log in.',
-        icon: 'error',
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`${base_url}vehicle/edit/${id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const res = data.data;
-        setupdated_data({
-          id: res.id,
-          vno: res.vehicle_number,
-          type: res.type_id,
-          category: res.cat_id,
-          brand: res.brand_id,
-          modal: res.model_id,
-          purchasedate: res.purchase_date,
-          warrentyyear: res.year_warranty,
-          amc: res.amc,
-          amcdate: res.amc_date,
-          tyrecnt: res.tyre_count,
-          stepnycnt: res.step_count,
-          fuel: res.fuel_type,
-          enginenumber: res.engine_num,
-          chassisnumber: res.chassis_num,
-          hsn: res.hsn,
-          insurancenumber: res.insurance,
-          insuranceenddate: res.ins_date,
-          fitness: res.fc,
-          fitnessdate: res.fc_date,
-          puc: res.pc,
-          pucdate: res.pc_date,
-          greentax: res.green_tax,
-          greendate: res.gtax_date,
-          image: res.image,
-          file: null,
-        });
-        egetbrandlist(res.cat_id);
-        egetmodellist(res.brand_id);
-        setupdateShow(true);
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  }
-
-
-
-  const updatevichile = async () => {
-    const data = updated_data;
-    if (
-      !data.vno ||
-      !data.type ||
-      !data.enginenumber ||
-      !data.hsn
-    ) {
-      toast.error('All fields are required!');
-      return;
-    }
-
-    const verify = vehicleNum(data.vno);
-    if (!verify.isValid) {
-      toast.error('Vehicle Number Invalid!');
-      return;
-    }
-    const hsnCheck = validateHSN(data.hsn);
-    if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
-
-
-    const monthCheck = ValidMonth(data.warrentyyear);
-    if (!monthCheck.isValid) return toast.error('Months Invalid!');
-
-    const tyreCheck = ValidSingleDigit(data.tyrecnt);
-    if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
-
-    const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-    if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
-
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-
-      let finalValue = value;
-      if (value instanceof Date) {
-        finalValue = value.toISOString().split('T')[0];
-      }
-
-
-      if (key === 'file' && value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, value?.toString() || '');
-      }
-    });
-
-    try {
-      const response = await fetch(`${apiUrl}vehicle/update`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success('Vehicle Updated!');
-        fetchData({ pageSize, pageIndex, sortBy, search });
-        setupdateShow(false);
-
-        setupdated_data({
-          id: '',
-          vno: '',
-          type: '',
-          category: '',
-          brand: '',
-          modal: '',
-          purchasedate: today,
-          warrentyyear: '',
-          amc: '',
-          amcdate: today,
-          tyrecnt: '',
-          stepnycnt: '',
-          fuel: '1',
-          enginenumber: '',
-          chassisnumber: '',
-          hsn: '',
-          insurancenumber: '',
-          insuranceenddate: today,
-          fitness: '',
-          fitnessdate: today,
-          puc: '',
-          pucdate: today,
-          greentax: '',
-          greendate: today,
-          image: '',
-          file: null,
-        });
-
-
-      } else {
-        const error = await response.json();
-        const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
-        toast.error(`Error: ${errorMessage}`);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      toast.error('Failed to connect to the server. Please try again later.');
-    }
-
-  };
-
-  const viewvehicle = (id) => {
-
-  }
-
-  const deletevehicle = (id) => {
-
-  }
-  const selectoptions = [{ value: 'vehicle', label: 'Vehicle' }, { value: 'trailer', label: 'Trailer' },]
+  setTimeout(() => {
+    console.log("Image URL →", `${file_base_url}uploads/${updated_data.image}`);
+  }, 1000)
 
   return (
     <>
@@ -888,8 +803,8 @@ const SpareAssign = () => {
         <CCardHeader className='bg-secondary text-light'>
           Spare Assign
         </CCardHeader>
-        <CCardBody>
 
+        <CCardBody>
           <input
             type="search"
             onChange={(e) => setsearch(e.target.value)}
@@ -899,12 +814,31 @@ const SpareAssign = () => {
 
           <CButtonGroup role="group" aria-label="Basic example">
             <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Excel </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> PDF </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Print </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Excelloading
+                handleExportExcel();
+              }} disabled={Excelloading} >
+              {Excelloading ? "Exporting..." : "Excel"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Pdfloading
+                handleExportPDF();
+              }} disabled={Pdfloading} >
+              {Pdfloading ? "Exporting..." : "PDF"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Printloading
+                handlePrint();
+              }} disabled={Printloading} >
+              {Printloading ? "Printing..." : "Print"}
+            </CButton>
+
           </CButtonGroup>
-
-
           <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
             <CTableHead color="secondary">
               {headerGroups.map((headerGroup) => (
@@ -927,22 +861,29 @@ const SpareAssign = () => {
             <tbody {...getTableBodyProps()}>
               {page.map((row) => {
                 prepareRow(row);
+                const serial = pageIndex * pageSize + row.index + 1;
                 return (
                   <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+
+                      <td {...cell.getCellProps()}>
+                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                      </td>
+
+
                     ))}
                   </tr>
                 );
               })}
             </tbody>
+
           </CTable>
 
           <div>
             <span>
               Page{' '}
               <strong>
-                {pageIndex + 1} of {pageOptions.length}
+                {pageIndex + 1} of {pageCount}
               </strong>{' '}
             </span>
             <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
@@ -962,8 +903,7 @@ const SpareAssign = () => {
       </CCard>
 
 
-
-      {/* create */}
+     {/* create */}
       <CModal
         alignment="center"
         scrollable
@@ -971,7 +911,7 @@ const SpareAssign = () => {
         size="md"
         onClose={() => handleClose()}
         aria-labelledby="NewProcessing"
-      >
+        >
         <CModalHeader className='bg-secondary'>
           <CModalTitle id="NewProcessing">Spare Assign</CModalTitle>
         </CModalHeader>
@@ -979,62 +919,49 @@ const SpareAssign = () => {
 
           <CRow>
 
-            <CCol md={12}>
+          <CCol md={12}>
               <CFormLabel className="col-form-label">
-                Select type
+              Select Vehicle
               </CFormLabel>
-              <Select options={selectoptions} value={selectedtype}
-               isMulti={false} placeholder="Select type" size="sm"
-                className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                onChange={(option) => {
-                  setSelectedtype(option)
-                }}
-              />
-
-
-              <CFormLabel className="col-form-label">
-                Select Number
-              </CFormLabel>
-              <Select isMulti={false} placeholder="Select Number" size="sm" className='mb-2 small-select'
+                <Select options={categoryoption} isMulti={false} placeholder="Select Vehicle" size="sm" className='mb-2 small-select' 
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
-                  setsave_data((prev) => ({
-                    ...prev,
-                    brand: selectedOption ? selectedOption.value : '',
-                  }));
-                  if (selectedOption) {
-                    getmodellist(selectedOption.value);
-                  }
-                }}
-              />
+                          setsave_data((prev) => ({
+                            ...prev,
+                            category: selectedOption ? selectedOption.value : '',
+                          }));
+                          if (selectedOption) {
+                            getbrandlist(selectedOption.value);
+                          }
+                        }}
+                />
 
               <CFormLabel className="col-form-label">
-                Select Spare
+              Select Trailer
               </CFormLabel>
-              <Select options={brandoption} isMulti={false} placeholder="Select Spare" size="sm" className='mb-2 small-select'
-                classNamePrefix="custom-select"
-                onChange={(selectedOption) => {
-                  setsave_data((prev) => ({
-                    ...prev,
-                    brand: selectedOption ? selectedOption.value : '',
-                  }));
-                  if (selectedOption) {
-                    getmodellist(selectedOption.value);
-                  }
-                }}
-              />
-            </CCol>
+              <Select options={brandoption} isMulti={false} placeholder="Select Trailer" size="sm" className='mb-2 small-select'
+              classNamePrefix="custom-select"
+                        onChange={(selectedOption) => {
+                        setsave_data((prev) => ({
+                          ...prev,
+                          brand: selectedOption ? selectedOption.value : '',
+                        }));
+                        if (selectedOption) {
+                            getmodellist(selectedOption.value);
+                          }
+                      }}
+                        />
+               </CCol>
           </CRow>
         </CModalBody>
 
-        <CModalFooter>
+         <CModalFooter>
           <CButton color="primary" onClick={submitvichile}>Add</CButton>
         </CModalFooter>
       </CModal>
 
 
-
+      
 
 
       {/* update */}
@@ -1047,7 +974,8 @@ const SpareAssign = () => {
         aria-labelledby="NewProcessing"
       >
         <CModalHeader className='bg-secondary'>
-          {updated_data.image ? <CImage rounded src={`${file_base_url}uploads/${updated_data.image}`} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
+          {updated_data.image ? <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}
+          <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
         </CModalHeader>
         <CModalBody>
 
@@ -1056,18 +984,18 @@ const SpareAssign = () => {
             <CCol md={6}>
 
               <CFormLabel className="col-form-label">
-                Vehicle Number
+                Vehicle Numbr
               </CFormLabel>
               <CFormInput
                 type="text"
-                size="sm"
+                size="lg"
                 placeholder="Vehicle Number"
                 className="mb-2 vehiclenumber"
                 value={updated_data.vno}
                 onChange={(e) => {
                   setupdated_data((prev) => ({
                     ...prev,
-                    vno: e.target.value.toUpperCase(),
+                    spareName: e.target.value.toUpperCase(),
                   }));
                 }}
                 onKeyUp={(e) => {
@@ -1098,7 +1026,9 @@ const SpareAssign = () => {
               <CFormLabel className="col-form-label">
                 Category
               </CFormLabel>
-              <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
+              <Select options={categoryoption} isMulti={false}
+                placeholder="Select Category"
+                size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 value={categoryoption.find(option => option.value === updated_data.category) || null}
                 onChange={(selectedOption) => {
@@ -1107,7 +1037,7 @@ const SpareAssign = () => {
                     category: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    ebrandoption(selectedOption.value);
+                    getbrandlist(selectedOption.value);
                   }
                 }}
               />
@@ -1115,16 +1045,16 @@ const SpareAssign = () => {
               <CFormLabel className="col-form-label">
                 Brand
               </CFormLabel>
-              <Select options={ebrandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
+              <Select options={brandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={ebrandoption.find(option => option.value === updated_data.brand) || null}
+                value={brandoption.find(option => option.value === updated_data.brand) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
                     brand: selectedOption ? selectedOption.value : '',
                   }));
                   if (selectedOption) {
-                    egetmodellist(selectedOption.value);
+                    getmodellist(selectedOption.value);
                   }
                 }}
               />
@@ -1133,9 +1063,9 @@ const SpareAssign = () => {
                 Model
               </CFormLabel>
 
-              <Select options={emodeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
+              <Select options={modeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={emodeloption.find(option => option.value === updated_data.modal) || null}
+                value={modeloption.find(option => option.value === updated_data.modal) || null}
                 onChange={(selectedOption) => {
                   setupdated_data((prev) => ({
                     ...prev,
@@ -1243,10 +1173,7 @@ const SpareAssign = () => {
               </CInputGroup>
 
             </CCol>
-
             <CCol md={6}>
-
-
               <CFormLabel className="col-form-label">
                 Fuel Type
               </CFormLabel>
@@ -1291,25 +1218,40 @@ const SpareAssign = () => {
                 }
                 placeholder="Chassis number" className='mb-2' />
 
-
               <CFormLabel className="col-form-label">
-                HSN Number
+                HSN Number/ Part Number
               </CFormLabel>
-              <CFormInput type="text" size="sm"
-                value={updated_data.hsn}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    hsn: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = validateHSN(e.target.value);
-                  if (e.target.value.length > 7 && !result.isValid) {
-                    toast.error('HSN Number Invalid!');
+              <CInputGroup>
+                <CFormInput type="text" size="sm"
+                  value={updated_data.hsn}
+                  onChange={(e) =>
+                    setupdated_data((prev) => ({
+                      ...prev,
+                      hsn: e.target.value,
+                    }))
                   }
-                }}
-                placeholder="HSN Number" className='mb-2' />
+                  onKeyUp={(e) => {
+                    const result = validateHSN(e.target.value);
+                    if (e.target.value.length > 7 && !result.isValid) {
+                      toast.error('HSN Number Invalid!');
+                    }
+                  }}
+                  placeholder="HSN Number" className='mb-2' />
+
+
+                <CFormInput type="text" size="sm"
+                  value={updated_data.partnum}
+                  onChange={(e) =>
+                    setupdated_data((prev) => ({
+                      ...prev,
+                      partnum: e.target.value,
+                    }))
+                  }
+
+                  placeholder="Part Number" className='mb-2' />
+              </CInputGroup>
+
+
 
               <CFormLabel className="col-form-label">
                 Insurance
@@ -1423,12 +1365,9 @@ const SpareAssign = () => {
                       file: e.target.files[0],
                     }))
                   }
-
                 />
               </div>
-
             </CCol>
-
           </CRow>
         </CModalBody>
 
@@ -1438,8 +1377,76 @@ const SpareAssign = () => {
       </CModal>
 
 
+      {view && (
+        <CModal
+          alignment="center"
+          scrollable
+          visible={view}
+          size="md"
+          onClose={() => handleviewclose()}
+          aria-labelledby="NewProcessing"
+        >
+          <CModalHeader className="bg-secondary">
+            {updated_data.image ? (
+              <CImage
+                rounded
+                src={updated_data.image}
+                // src="/table.png"
+                width={50}
+                height={50}
+                className="me-2"
+              />
+            ) : (
+              ""
+            )}
+            <CModalTitle id="ViewVehicle">{updated_data.vno}</CModalTitle>
+          </CModalHeader>
+
+          <CModalBody>
+            <CTable bordered hover>
+              <CTableBody>
+                {[
+                  { label: "Vehicle Number", value: updated_data.vno },
+                  // { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
+                  // { label: "Category", value: categoryoption.find((c) => c.value === updated_data.category)?.label },
+                  { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brand)?.label },
+                  { label: "Model", value: modeloption.find((m) => m.value === updated_data.modal)?.label },
+                  { label: "Purchase Date", value: updated_data.purchasedate },
+                  { label: "Months of Warranty", value: updated_data.warrentyyear },
+                  { label: "AMC", value: `${updated_data.amc} | ${updated_data.amcdate}` },
+                  { label: "Tyre / Stepney Count", value: `${updated_data.tyrecnt} / ${updated_data.stepnycnt}` },
+                  { label: "Fuel Type", value: { 1: "Diesel", 2: "Petrol", 3: "Gas", 4: "Battery" }[updated_data.fuel] },
+                  { label: "Engine Number", value: updated_data.enginenumber },
+                  { label: "Chassis Number", value: updated_data.chassisnumber },
+                  { label: "HSN Number", value: updated_data.hsn },
+                  { label: "Part Number", value: updated_data.partnum },
+                  { label: "Insurance", value: `${updated_data.insurancenumber} | ${updated_data.insuranceenddate}` },
+                  { label: "Fitness Certificate", value: `${updated_data.fitness} | ${updated_data.fitnessdate}` },
+                  { label: "Pollution Certificate", value: `${updated_data.puc} | ${updated_data.pucdate}` },
+                  { label: "Green Tax", value: `${updated_data.greentax} | ${updated_data.greendate}` },
+                ].map((item, idx) => (
+                  <CTableRow key={idx}>
+                    <CTableHeaderCell className="fw-bold" style={{ width: "30%" }}>
+                      {item.label}
+                    </CTableHeaderCell>
+                //     <CTableDataCell>{item.value || "-"}</CTableDataCell>
+                  </CTableRow>
+                ))}
+
+              </CTableBody>
+            </CTable>
+          </CModalBody>
+
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setview(false)}>
+              Close
+            </CButton>
+          </CModalFooter>
+        </CModal>
+      )}
+
     </>
   )
 }
 
-export default SpareAssign
+export default Spareassign

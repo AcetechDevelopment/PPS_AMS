@@ -69,8 +69,8 @@ const TrailerInventory = () => {
   const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
-  const [action_details, setactiondetails] = useState({})
-  const { roleId } = useContext(Sharedcontext)
+  // const [action_details, setactiondetails] = useState({})
+  const { roleId,fetchActionDetails,action_details } = useContext(Sharedcontext)
   const location = useLocation(); // 👈 gives full URL path
 
 
@@ -722,70 +722,7 @@ const TrailerInventory = () => {
 
 
 
-  const fetchActionDetails = async (pageName) => {
-    console.log("fetch")
-    try {
-      const response = await fetch(`${BASE}permission/lists/${roleId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        console.log("fetching")
-        const data = await response.json();
-         let founditem=null
-        const findrecursively = (nodes) => {
-         for(let node of nodes){
-          if ( node.to && node.to.replace("/", "") === pageName) // compare with path
-          {
-            return node
-          }
-          if(node.children)
-          {
-            const child=findrecursively(node.children)
-            if(child)
-            {
-              return child
-            }
-          }
-         }
-         return null
-        }
-         founditem = findrecursively(data)
-        console.log(founditem)
-        console.log(founditem?.isView)
-        setactiondetails(founditem)
-
-        // let veh_invent = null;
-        // if (Array.isArray(data)
-        //   &&
-        //   data[1]?.children?.[0]?.children?.[0] &&
-        //   data[1].children[0].children[0].name === "Trailer Inventory") {
-        //   veh_invent = data[1].children[0].children[0]
-        // }
-        // setactiondetails(veh_invent)
-
-
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  }
+ 
   useEffect(() => { 
       const pageName = location.pathname.replace("/", "");
       fetchActionDetails(pageName) }, [location,roleId])
