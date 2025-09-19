@@ -71,23 +71,18 @@ const Spareassign = () => {
  
    
    const authToken = JSON.parse(sessionStorage.getItem('authToken'))
-  const intial_data = {
-    id:"",
-    vehicle_no:"",
-    trailer_no:""
-  };
+  
 
   // new vehicle
-  const [save_data, setsave_data] = useState(intial_data);
-  // update vehicle 
-  const [updated_data, setupdated_data] = useState(intial_data);
+  const [save_data, setsave_data] = useState(null);
+  // update vehicle const [updated_data, setupdated_data] = useState(intial_data);
 
   const submitvichile = async () => {
     const data = save_data;
     if (
-      !data.id||
-      !data.vehicle_no||
-      !data.trailer_no
+       !data.id
+      // !data.vehicle_no||
+      // !data.trailer_no
   
     ) {
       toast.error('All fields are required!');
@@ -103,6 +98,7 @@ const Spareassign = () => {
 
     const formData = new FormData();
 
+  
     Object.entries(data).forEach(([key, value]) => {
 
       let finalValue = value;
@@ -134,11 +130,7 @@ const Spareassign = () => {
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
 
-        setsave_data({
-         id:"",
-         vehicle_no:"",
-         trailer_no:""
-        });
+        setsave_data(result );
 
 
       } else {
