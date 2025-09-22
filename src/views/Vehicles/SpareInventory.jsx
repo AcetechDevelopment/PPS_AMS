@@ -41,7 +41,7 @@ const SpareInventory = () => {
 
   const ReactSwal = withReactContent(Swal);
   const [data, setData] = useState([]);
-  
+
   const [loading, setLoading] = useState(false);
   const [Excelloading, setExcelLoading] = useState(false);
   const [Pdfloading, setPdfLoading] = useState(false);
@@ -66,8 +66,8 @@ const SpareInventory = () => {
 
   const [view, setview] = useState(false)
   // const [action_details, setactiondetails] = useState({})
-  const { roleId,action_details,fetchActionDetails } = useContext(Sharedcontext)
-     const location = useLocation(); 
+  const { roleId, action_details, fetchActionDetails } = useContext(Sharedcontext)
+  const location = useLocation();
   const intial_data = {
     spareName: '',
     type: '',
@@ -79,10 +79,11 @@ const SpareInventory = () => {
     amcdate: today,
     hsn: '',
     partnum: "",
+    serialnum: "",
     file: null,
   };
 
-  const [save_data, setsave_data] = useState(intial_data); 
+  const [save_data, setsave_data] = useState(intial_data);
   const [updated_data, setupdated_data] = useState(intial_data);
 
   const submitvichile = async () => {
@@ -144,6 +145,7 @@ const SpareInventory = () => {
           amcdate: today,
           hsn: '',
           partnum: "",
+          serialnum: "",
           file: null,
         });
 
@@ -261,7 +263,7 @@ const SpareInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
- const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
+  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
 
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
@@ -312,16 +314,13 @@ const SpareInventory = () => {
     () => [
       {
         Header: 'SL',
-        id: 'sl',            
+        id: 'sl',
         disableSortBy: true,
         Cell: ({ row }) => row.index + 1,
       },
       { Header: 'Spare Name', accessor: 'spare_name' },
-      {
-        Header: 'Type',
-        accessor: 'type',
-        Cell: ({ value }) => (value === 0 ? 'Spare' : 'Tyre')
-      },
+        { Header: 'serial Number', accessor: 'seial_number' },
+
       { Header: 'Brand', accessor: 'brandname' },
       { Header: 'Model', accessor: 'modelname' },
       { Header: 'HSN Number', accessor: 'hsn' },
@@ -330,6 +329,7 @@ const SpareInventory = () => {
       { Header: 'AMC', accessor: 'amc' },
       { Header: 'AMC Date', accessor: 'amc_date' },
       { Header: 'Part Number', accessor: 'part_num' },
+     
       {
         Header: () => <FaBars />,
         id: 'actions',
@@ -436,7 +436,7 @@ const SpareInventory = () => {
         setupdated_data({
           id: res.id,
           spareName: res.spare_name,
-          type: res.type_id,
+          tserialnum: res.serial_number,
           category: res.cat_id,
           brandName: res.brand_id,
           model: res.model_id,
@@ -446,7 +446,8 @@ const SpareInventory = () => {
           amcdate: res.amc_date,
           hsn: res.hsn,
           partnum: res.part_num,
-          image:res.image,
+         
+          image: res.image,
 
         });
         getbrandlist(res.cat_id);
@@ -475,7 +476,6 @@ const SpareInventory = () => {
   const updatespare = async () => {
     const data = updated_data;
     if (
-      !data.type ||
       !data.hsn
     ) {
       toast.error('All fields are required!');
@@ -501,6 +501,7 @@ const SpareInventory = () => {
     formData.append("amc_date", data.amcdate || "");
     formData.append("hsn", data.hsn || "");
     formData.append("part_num", data.partnum || "");
+    formData.append("seral_number", data.serialnum || "");
 
     if (data.file instanceof File) {
       formData.append("file", data.file);
@@ -562,7 +563,8 @@ const SpareInventory = () => {
           amcdate: res.amc_date,
           hsn: res.hsn,
           partnum: res.part_num,
-          image:res.image,
+          serialnum: res.serial_number,
+          image: res.image,
         });
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
@@ -630,7 +632,7 @@ const SpareInventory = () => {
       });
     }
   };
- 
+
 
   // const fetchActionDetails = async () => {
   //   try {
@@ -671,195 +673,199 @@ const SpareInventory = () => {
   //     });
   //   }
   // }
-  useEffect(() => { 
-     const pageName = location.pathname.replace("/", "");
-    fetchActionDetails(pageName) }, [location,roleId])
+  useEffect(() => {
+    const pageName = location.pathname.replace("/", "");
+    fetchActionDetails(pageName)
+  }, [location, roleId])
 
   const typelist = [
     { value: 0, label: "Spare" },
     { value: 1, label: "Tyre" },
-   
+
   ];
 
 
 
-const fetchVehicleData = async (authToken) => {
-  const response = await fetch(`${BASE}spare/list?start=0&limit=1000`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
+  const fetchVehicleData = async (authToken) => {
+    const response = await fetch(`${BASE}spare/list?start=0&limit=1000`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
 
-  if (!response.ok) throw new Error("Failed to fetch data");
+    if (!response.ok) throw new Error("Failed to fetch data");
 
-  const result = await response.json();
-  const allData = Array.isArray(result.data) ? result.data : [];
+    const result = await response.json();
+    const allData = Array.isArray(result.data) ? result.data : [];
 
-  if (allData.length === 0) {
-    alert("No data found for export");
-    return [];
-  }
+    if (allData.length === 0) {
+      alert("No data found for export");
+      return [];
+    }
 
-  return allData.map((row, index) => ({
-    "SL No": index + 1,
-    "Spare Name": row.spare_name,
-    "Type": row.type_id == 0? "Spare": "Tyre",
-    "Brand":  row.brandname,
-    "Model":  row.modelname,
-    "HSN": row.hsn,
-    "Part No": row.part_num,
-    "Purchase date": row.purchase_date,
-    "Months of Warranty": row.years_warrenty,
-    "AMC Number": row.amc,
-    "AMC Date": row.amc_date,
-    "Status": row.status === 1 ? "Inactive" : "Active",
-  }));
-};
+    return allData.map((row, index) => ({
+      "SL No": index + 1,
+      "Spare Name": row.spare_name,
+      "Type": row.type_id == 0 ? "Spare" : "Tyre",
+      "Brand": row.brandname,
+      "Model": row.modelname,
+      "HSN": row.hsn,
+      "Part No": row.part_num,
+      "Purchase date": row.purchase_date,
+      "Months of Warranty": row.years_warrenty,
+      "AMC Number": row.amc,
+      "AMC Date": row.amc_date,
+      "Status": row.status === 1 ? "Inactive" : "Active",
+    }));
+  };
 
-const handleExportExcel = async () => {
-  try {
-    setExcelLoading(true);
-    const data = await fetchVehicleData(authToken);
-    if (data.length > 0) exportToExcel(data, "Spare_Inventory");
-  } catch (error) {
-    console.error("Excel Export Error:", error);
-    alert("Failed to export Excel");
-  } finally {
-    setExcelLoading(false);
-  }
-};
+  const handleExportExcel = async () => {
+    try {
+      setExcelLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToExcel(data, "Spare_Inventory");
+    } catch (error) {
+      console.error("Excel Export Error:", error);
+      alert("Failed to export Excel");
+    } finally {
+      setExcelLoading(false);
+    }
+  };
 
-const handleExportPDF = async () => {
-  try {
-    setPdfLoading(true);
-    const data = await fetchVehicleData(authToken);
-    if (data.length > 0) exportToPDF(data, "Spare_Inventory");
-  } catch (error) {
-    console.error("PDF Export Error:", error);
-    alert("Failed to export PDF");
-  } finally {
-    setPdfLoading(false);
-  }
-};
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToPDF(data, "Spare_Inventory");
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+      alert("Failed to export PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
-const handlePrint = async () => {
-  try {
-    setPrintLoading(true);
-    const data = await fetchVehicleData(authToken);
-    if (data.length > 0) exportToPrint(data, "Spare_Inventory");
-  } catch (error) {
-    console.error("Print Error:", error);
-    alert("Failed to print report");
-  } finally {
-    setPrintLoading(false);
-  }
-};
+  const handlePrint = async () => {
+    try {
+      setPrintLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToPrint(data, "Spare_Inventory");
+    } catch (error) {
+      console.error("Print Error:", error);
+      alert("Failed to print report");
+    } finally {
+      setPrintLoading(false);
+    }
+  };
 
 
 
 
   return (
     <>
-                    <CCard className="mb-4">
-                          <CCardHeader className='bg-secondary text-light'>
-                            Spare Inventory
-                          </CCardHeader>
-                  
-                          <CCardBody>
-                            <input
-                              type="search"
-                              onChange={(e) => setsearch(e.target.value)}
-                              className="form-control form-control-sm m-1 float-end w-auto"
-                              placeholder='Search'
-                            />
-                  
-                            <CButtonGroup role="group" aria-label="Basic example">
-                              <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-                              <CButton className="btn btn-sm btn-secondary w-auto"
-                                onClick={() => {Excelloading
-                                      handleExportExcel();
-                                    }} disabled={Excelloading} >
-                                      { Excelloading ? "Exporting..." : "Excel" } 
-                                  </CButton>
-            
-                              <CButton className="btn btn-sm btn-secondary w-auto" 
-                              onClick={() => {Pdfloading
-                                      handleExportPDF();
-                                    }} disabled={Pdfloading} >
-                                      { Pdfloading ? "Exporting..." : "PDF" }   
-                              </CButton>
-            
-                              <CButton className="btn btn-sm btn-secondary w-auto"
-                                  onClick={() => {Printloading
-                                      handlePrint();
-                                    }} disabled={Printloading} >
-                                      { Printloading ? "Printing..." : "Print" } 
-                                  </CButton>
-            
-                            </CButtonGroup>
-                            <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-                              <CTableHead color="secondary">
-                                {headerGroups.map((headerGroup) => (
-                                  <tr {...headerGroup.getHeaderGroupProps()}>
-                                    {headerGroup.headers.map((column) => (
-                                      <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                                        {column.render('Header')}
-                                        <span>
-                                          {column.isSorted
-                                            ? column.isSortedDesc
-                                              ? ' 🔽'
-                                              : ' 🔼'
-                                            : ''}
-                                        </span>
-                                      </th>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </CTableHead>
-                              <tbody {...getTableBodyProps()}>
-                                {page.map((row) => {
-                                  prepareRow(row);
-                                  const serial = pageIndex * pageSize + row.index + 1;
-                                  return (
-                                    <tr {...row.getRowProps()}>
-                                      {row.cells.map((cell) => (
-                  
-                                        <td {...cell.getCellProps()}>
-                                          {cell.column.id === 'sl' ? serial : cell.render('Cell')}
-                                        </td>
-                  
-                  
-                                      ))}
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                              
-                            </CTable>
-                  
-                            <div>
-                              <span>
-                                Page{' '}
-                                <strong>
-                                  {pageIndex + 1} of {pageCount}
-                                </strong>{' '}
-                              </span>
-                              <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                                {'<<'}
-                              </button>
-                              <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                                {'<'}
-                              </button>
-                              <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                                {'>'}
-                              </button>
-                              <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                                {'>>'}
-                              </button>
-                            </div>
-                          </CCardBody>
-                        </CCard>
+      <CCard className="mb-4">
+        <CCardHeader className='bg-secondary text-light'>
+          Spare Inventory
+        </CCardHeader>
+
+        <CCardBody>
+          <input
+            type="search"
+            onChange={(e) => setsearch(e.target.value)}
+            className="form-control form-control-sm m-1 float-end w-auto"
+            placeholder='Search'
+          />
+
+          <CButtonGroup role="group" aria-label="Basic example">
+            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Excelloading
+                handleExportExcel();
+              }} disabled={Excelloading} >
+              {Excelloading ? "Exporting..." : "Excel"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Pdfloading
+                handleExportPDF();
+              }} disabled={Pdfloading} >
+              {Pdfloading ? "Exporting..." : "PDF"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Printloading
+                handlePrint();
+              }} disabled={Printloading} >
+              {Printloading ? "Printing..." : "Print"}
+            </CButton>
+
+          </CButtonGroup>
+          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+            <CTableHead color="secondary">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                      {column.render('Header')}
+                      <span>
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? ' 🔽'
+                            : ' 🔼'
+                          : ''}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </CTableHead>
+            <tbody {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                const serial = pageIndex * pageSize + row.index + 1;
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map((cell) => (
+
+                      <td {...cell.getCellProps()}>
+                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                      </td>
+
+
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+
+          </CTable>
+
+          <div>
+            <span>
+              Page{' '}
+              <strong>
+                {pageIndex + 1} of {pageCount}
+              </strong>{' '}
+            </span>
+            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<<'}
+            </button>
+            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<'}
+            </button>
+            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>'}
+            </button>
+            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>>'}
+            </button>
+          </div>
+        </CCardBody>
+      </CCard>
 
 
 
@@ -878,7 +884,7 @@ const handlePrint = async () => {
         <CModalBody>
           <CRow>
             <CCol>
-            
+
               <CFormLabel className="col-form-label">
                 Spare Name
               </CFormLabel>
@@ -896,12 +902,28 @@ const handlePrint = async () => {
               />
 
               <CFormLabel className="col-form-label">
+                Serial Number
+              </CFormLabel>
+              <CFormInput
+                type="text"
+                size="sm"
+                placeholder="Spare Name"
+                className="mb-2 vehiclenumber"
+                onChange={(e) => {
+                  setsave_data((prev) => ({
+                    ...prev,
+                    serialnum: e.target.value.toUpperCase(),
+                  }));
+                }}
+              />
+
+              <CFormLabel className="col-form-label">
                 Type
               </CFormLabel>
               <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                value={typelist.find((option)=>option.value===save_data.type)}
-                defaultValue={typelist.find((option)=>option.value===0)}
+                value={typelist.find((option) => option.value === save_data.type)}
+                defaultValue={typelist.find((option) => option.value === 0)}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -934,9 +956,9 @@ const handlePrint = async () => {
                 Model
               </CFormLabel>
 
-              <Select options={modeloption} 
-              isMulti={false}
-               placeholder="Select Model"
+              <Select options={modeloption}
+                isMulti={false}
+                placeholder="Select Model"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
@@ -947,7 +969,7 @@ const handlePrint = async () => {
                 }}
               />
 
-              
+
             </CCol>
 
             <CCol md={6}>
@@ -984,29 +1006,29 @@ const handlePrint = async () => {
                 placeholder="Month of warranty" className='mb-2' />
 
 
-                <CFormLabel className="col-form-label">
-                              AMC
-                            </CFormLabel>
-              
-                            <CInputGroup className="mb-2">
-                              <CFormInput type="text" size="sm"
-                                onChange={(e) =>
-                                  setsave_data((prev) => ({
-                                    ...prev,
-                                    amc: e.target.value,
-                                  }))
-                                }
-                                placeholder="AMC File Number" />
-              
-                              <CFormInput type="date" value={save_data.amcdate} size="sm"
-                                onChange={(e) =>
-                                  setsave_data((prev) => ({
-                                    ...prev,
-                                    amcdate: e.target.value,
-                                  }))
-                                }
-                              />
-                            </CInputGroup>
+              <CFormLabel className="col-form-label">
+                AMC
+              </CFormLabel>
+
+              <CInputGroup className="mb-2">
+                <CFormInput type="text" size="sm"
+                  onChange={(e) =>
+                    setsave_data((prev) => ({
+                      ...prev,
+                      amc: e.target.value,
+                    }))
+                  }
+                  placeholder="AMC File Number" />
+
+                <CFormInput type="date" value={save_data.amcdate} size="sm"
+                  onChange={(e) =>
+                    setsave_data((prev) => ({
+                      ...prev,
+                      amcdate: e.target.value,
+                    }))
+                  }
+                />
+              </CInputGroup>
 
               <CFormLabel className="col-form-label">
                 HSN Number/  Part Number
@@ -1035,9 +1057,8 @@ const handlePrint = async () => {
                   }
                   placeholder="Part Number" className='mb-2' />
               </CInputGroup>
-            </CCol>
-            <CCol md={12}>
-              <div className="mb-3">
+
+             <div className="mb-3">
                 <label htmlFor="formFileSm" className="form-label">Image</label>
                 <input className="form-control form-control-sm" id="formFileSm" type="file"
                   onChange={(e) =>
@@ -1049,8 +1070,11 @@ const handlePrint = async () => {
 
                 />
               </div>
-            </CCol>
 
+
+          
+            </CCol>
+           
           </CRow>
         </CModalBody>
 
@@ -1074,7 +1098,7 @@ const handlePrint = async () => {
       >
         <CModalHeader className='bg-secondary'>
           {updated_data.image ?
-           <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.spareName}</CModalTitle>
+            <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.spareName}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CRow>
@@ -1097,22 +1121,27 @@ const handlePrint = async () => {
                 }}
               />
 
-
-
-              <CFormLabel className="col-form-label">
-                Type
+                <CFormLabel className="col-form-label">
+                Serial NUmber
               </CFormLabel>
-              <Select options={typelist} isMulti={false} placeholder="Select Type" size="sm"
-                classNamePrefix="custom-select"
+              <CFormInput
+                type="text"
+                size="sm"
+                placeholder="Spare Name"
                 className="mb-2 small-select"
-                value={typelist.find(option => option.value === updated_data.type) || null}
-                onChange={(selectedOption) => {
+                classNamePrefix="custom-select"
+                value={updated_data.serial_number}
+                onChange={(e) => {
                   setupdated_data((prev) => ({
                     ...prev,
-                    type: selectedOption ? selectedOption.value : '',
+                    serialnum: e.target.value.toUpperCase(),
                   }));
                 }}
               />
+
+
+
+              
 
               <CFormLabel className="col-form-label">
                 Brand
@@ -1207,7 +1236,7 @@ const handlePrint = async () => {
               </CInputGroup>
 
 
-            
+
 
 
               <CFormLabel className="col-form-label">
@@ -1254,7 +1283,7 @@ const handlePrint = async () => {
                   }
                 />
               </div>
-            
+
             </CCol>
           </CRow>
         </CModalBody>
@@ -1274,27 +1303,28 @@ const handlePrint = async () => {
           onClose={() => handleviewclose()}
           aria-labelledby="NewProcessing"
         >
-           <CModalHeader className="bg-secondary">
-                      {updated_data.image ? (
-                        <CImage
-                          rounded
-                          src={`${updated_data.image}`}
-                          width={50}
-                          height={50}
-                          className="me-2"
-                        />
-                      ) : (
-                        ""
-                      )}
-                      <CModalTitle id="ViewVehicle">{updated_data.spareName}</CModalTitle>
-                    </CModalHeader>
+          <CModalHeader className="bg-secondary">
+            {updated_data.image ? (
+              <CImage
+                rounded
+                src={`${updated_data.image}`}
+                width={50}
+                height={50}
+                className="me-2"
+              />
+            ) : (
+              ""
+            )}
+            <CModalTitle id="ViewVehicle">{updated_data.spareName}</CModalTitle>
+          </CModalHeader>
 
           <CModalBody>
             <CTable bordered hover>
               <CTableBody>
                 {[
                   { label: "Spare Name", value: updated_data.spareName },
-                  { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
+                  { label: "Serial Number", value: updated_data.serialnum },
+               
                   { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brandName)?.label },
                   { label: "Model", value: modeloption.find((m) => m.value === updated_data.model)?.label },
                   { label: "HSN Number", value: updated_data.hsn },
