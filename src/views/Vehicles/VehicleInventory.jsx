@@ -912,6 +912,7 @@ const handlePrint = async () => {
     { value: "3", label: "Gas" },
     { value: "4", label: "Battery" },
   ];
+  
   setTimeout(()=>{
      console.log("Image URL →", `${file_base_url}uploads/${updated_data.image}`);
   },1000)

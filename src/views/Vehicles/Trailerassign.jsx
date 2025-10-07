@@ -17,27 +17,34 @@ import {
   CRow,
   CCol,
   CFormLabel,
-  CImage
+  CImage,CTableRow,CTableHeaderCell,CTableBody,CTableDataCell
 } from '@coreui/react'
-import { FaBars,FaTrash,FaEdit,FaEye } from 'react-icons/fa';
+import { FaBars, FaExchangeAlt, FaMinusSquare, FaHistory } from 'react-icons/fa';
 import { CIcon } from '@coreui/icons-react';
 import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { isNumberKey, base_url, today, file_base_url } from '../service';
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import {vehicleNum,validateHSN,ValidMonth,ValidSingleDigit} from '../../utils/validators';
 
 
 const TrailerAssign = () => {
+const BASE = import.meta.env.VITE_BASE_URL;
 const apiUrl = import.meta.env.VITE_API_URL;
-
+const ReactSwal = withReactContent(Swal);
 const [data, setData] = useState([]);
 const [loading, setLoading] = useState(false);
 const [pageCount, setPageCount] = useState(0);
 const [search, setsearch] = useState('');
 const [categoryoption, setcategoryoption] = useState([]);
 const [categoryid, setcategoryid] = useState('');
+
+const [history, sethistory] = useState([]);
+
+
 
 
 
@@ -48,6 +55,7 @@ const [loc_id, setlocationid] = useState('');
 const [bill_no, setbill_no] = useState('');
 const [vehicle_no, setvehicle_no] = useState('');
 const [material, setmaterial] = useState(1);
+const[showHistory,setShowHistory]=useState(false)
 const [date_time, setdate_time] = useState(today);
 const [tare_wt, settare_wt] = useState(0);
 const [gross_wt, setgross_wt] = useState(0);
@@ -55,108 +63,25 @@ const [net_wt, setnet_wt] = useState(0);
 const [id, setid] = useState('');
 
 
-// new vehicle
-const [save_data, setsave_data] = useState(
-  {
-    vno: '', 
-    type: '',
-    category: '',
-    brand: '',
-    modal:'',
-    purchasedate:today,
-    warrentyyear:'',
-    amc:'',
-    amcdate:today,
-    tyrecnt:'',
-    stepnycnt:'',
-    fuel:'1',
-    enginenumber:'',
-    chassisnumber:'',
-    hsn:'',
-    insurancenumber:'',
-    insuranceenddate:today,
-    fitness:'',
-    fitnessdate:today,
-    puc:'',
-    pucdate:today,
-    greentax:'',
-    greendate:today,
-    file: null,
-  },
-);
 
-// update vehicle 
-
-const [updated_data, setupdated_data] = useState(
-  {
-    vno: '', 
-    type: '',
-    category: '',
-    brand: '',
-    modal:'',
-    purchasedate:today,
-    warrentyyear:'',
-    amc:'',
-    amcdate:today,
-    tyrecnt:'',
-    stepnycnt:'',
-    fuel:'1',
-    enginenumber:'',
-    chassisnumber:'',
-    hsn:'',
-    insurancenumber:'',
-    insuranceenddate:today,
-    fitness:'',
-    fitnessdate:today,
-    puc:'',
-    pucdate:today,
-    greentax:'',
-    greendate:today,
-    file: null,
-  },
-);
+const[selectedvalues,setselectedvalues]=useState({vehicle_id:"",trailer_id:""})
+const [save_data, setsave_data] = useState({vehicle_id:"",trailer_id:""});
+const [updated_data, setupdated_data] = useState({vehicle_id:"",trailer_id:""});
 
 const submitvichile = async () => {
-    const data = save_data;
+    const data = selectedvalues;
    if (
-    !data.vno ||
-    !data.type ||
-    !data.enginenumber ||
-    !data.hsn
+    !data.vehicle_id ||
+    !data.trailer_id
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    const verify = vehicleNum(data.vno);
-    if(!verify.isValid)
-    {
-      toast.error('Vehicle Number Invalid!');
-       return;
-    }
-    const hsnCheck = validateHSN(data.hsn);
-     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
-
-
-      const monthCheck = ValidMonth(data.warrentyyear);
-     if (!monthCheck.isValid) return toast.error('Months Invalid!');
-
-      const tyreCheck = ValidSingleDigit(data.tyrecnt);
-     if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
-
-      const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-     if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
   
     const formData = new FormData();
 
      Object.entries(data).forEach(([key, value]) => {
-
-      let finalValue = value;
-       if (value instanceof Date) {
-        finalValue = value.toISOString().split('T')[0];
-      }
-
-
       if (key === 'file' && value instanceof File) {
         formData.append(key, value);
       } else {
@@ -165,7 +90,7 @@ const submitvichile = async () => {
     });
   
     try {
-      const response = await fetch(`${apiUrl}vehicle/create`, {
+      const response = await fetch(`${apiUrl}trailerassign/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -175,38 +100,10 @@ const submitvichile = async () => {
     
       if (response.ok) {
         const result = await response.json();
-        toast.success('New Vehicle created!');
+        toast.success('New Trailer Assigned!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
-
-         setsave_data({
-                  vno: '', 
-                  type: '',
-                  category: '',
-                  brand: '',
-                  modal:'',
-                  purchasedate:today,
-                  warrentyyear:'',
-                  amc:'',
-                  amcdate:today,
-                  tyrecnt:'',
-                  stepnycnt:'',
-                  fuel:'1',
-                  enginenumber:'',
-                  chassisnumber:'',
-                  hsn:'',
-                  insurancenumber:'',
-                  insuranceenddate:today,
-                  fitness:'',
-                  fitnessdate:today,
-                  puc:'',
-                  pucdate:today,
-                  greentax:'',
-                  greendate:today,
-                  file: null,
-                });
-
-
+        setselectedvalues({vehicle_id:"",trailer_id:""});
       } else {
         const error = await response.json();
         const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
@@ -216,7 +113,6 @@ const submitvichile = async () => {
       console.error('Error:', err);
       toast.error('Failed to connect to the server. Please try again later.');
     }
-    
   };
 
 
@@ -365,37 +261,6 @@ const typelist = [
 ];
 
 
-const [modeloption, setmodeloption] = useState([]);
-const [modelid, setmodelid] = useState('');
-
-const getmodellist = async (brandid) =>
-{
-  setmodeloption([]);
-   try{
-       const response = await fetch(
-      `${apiUrl}options/model/${brandid}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-    const result = await response.json();
-    const datas = result.data.map(item => ({
-      value: item.id,
-      label: item.model
-    }));
-    setmodeloption(datas);
-   }
-   catch(err) {
-
-   }
-}
 
 useEffect(() => {
   getcategorylist();
@@ -427,7 +292,7 @@ useEffect(() => {
   
     try {
       const response = await fetch(
-        `${apiUrl}vehicle/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
+        `${apiUrl}trailerassign/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
         {
           method: 'GET',
           headers: {
@@ -455,160 +320,17 @@ useEffect(() => {
   };
   
 
-  const delete_user = async (userId) => {
-    try {
-      const result = await ReactSwal.fire({
-        title: 'Are you sure?',
-        text: 'You will not be able to recover this user!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
-      });
-  
-      if (result.isConfirmed) {
-        const response = await fetch(`${base_url}delete_user/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-        });
-  
-        if (response.ok) {
-          ReactSwal.fire({
-            title: 'Deleted!',
-            text: 'User deleted successfully!',
-            icon: 'success',
-          });
-          
-          fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
-        } else {
-          const error = await response.json();
-          ReactSwal.fire({
-            title: 'Error',
-            text: error.message || 'Unable to delete user',
-            icon: 'error',
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  };
-  
-  const edit_user = async (userId) => {
-    if (!authToken) {
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Unauthorized, please log in.',
-        icon: 'error',
-      });
-      return;
-    }
-  
-    try {
-      const response = await fetch(`${base_url}update_user/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        const ddata = data.data;
-        setid(ddata.id);
-        setName(ddata.name);
-        setUsername(ddata.username);
-        setEmail(ddata.email);
-        setMobile(ddata.mobile);
-        setgroup_id(ddata.group_id);
-        setupdateShow(true);
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!name || !username || !email || !password || !confirmPassword || (group_id === null || group_id === undefined || group_id === '') || !mobile) {
-      alert('All fields are required!');
-      return;
-    }
-  
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-  
-      const payload = {
-        id,
-        name,
-        username,
-        email,
-        password,
-        group_id,
-        mobile
-      };
-
-  
-    try {
-      const response = await fetch(`${base_url}api/update_user`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      if (response.ok) {
-        const result = await response.json();
-        alert('User created successfully!');
-        fetchData({ pageSize, pageIndex, sortBy,  search, todate, location });
-        setupdateShow(false);
-        setName('');
-        setUsername('');
-        setEmail('');
-        setMobile('');3
-        setPassword('');
-        setConfirmPassword('');
-        setgroup_id('');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.message || 'Unable to register user'}`);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      alert('Failed to connect to the server. Please try again later.');
-    }
-  };
-  
   
   const columns = useMemo(
     () => [
-      { Header: 'SL', accessor: 'id', disableSortBy: true, },
-      { Header: 'Vehicle Number', accessor: 'vehicle_number' },
-      { Header: 'Trailer Number', accessor: 'trailer_number' },
+      {
+        Header: 'SL',
+        id: 'sl',            
+        disableSortBy: true,
+        Cell: ({ row }) => row.index + 1,
+      },
+      { Header: 'Trailer Number', accessor: 'trailer_number'},
+      { Header: 'Vehicle Number', accessor: 'vehicle_no' },
       {
               Header: () => <FaBars />,
               id: 'actions', 
@@ -617,11 +339,11 @@ useEffect(() => {
             
                 return (
                   <div className="flex gap-5">
-                      <FaEye className="ms-2 pointer text-info" onClick={() => viewvehicle(id)}/>
+                      <FaHistory className="ms-2 pointer text-info" onClick={() => viewvehicle(id)}/>
 
-                      <FaEdit className="ms-2 pointer text-primary" onClick={() => editvehicle(id)} />
+                      <FaExchangeAlt className="ms-2 pointer text-primary" onClick={() => editvehicle(id)} />
       
-                      <FaTrash className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)}/>
+                      <FaMinusSquare className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)}/>
                         
                   </div>
                 );
@@ -676,135 +398,74 @@ useEffect(() => {
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-
-
-
-  const options = [
-    { value: '1', label: 'CHETPET' },
-    { value: 'pdggw', label: 'PERUNGUDI' },
-    { value: 'kdg', label: 'KODUNGAIYUR' },
-    { value: '4', label: 'SOWCARPET' },
-  ];
-
-
-  const searchoptions = [
-    { value: '0', label: 'All Location' },
-    { value: '1', label: 'CHETPET' },
-    { value: 'pdggw', label: 'PERUNGUDI' },
-    { value: 'kdg', label: 'KODUNGAIYUR' },
-    { value: '4', label: 'SOWCARPET' },
-  ];
-
-
   
   const [updateshow, setupdateShow] = useState(false);
   const handleEClose = () => setupdateShow(false);
 
-  const editvehicle = async(id) => 
-  {
-     if (!authToken) {
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Unauthorized, please log in.',
-        icon: 'error',
-      });
-      return;
-    }
-  
-    try {
-      const response = await fetch(`${base_url}vehicle/edit/${id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        const res = data.data;
-        setupdated_data({
-                  id:res.id,
-                  vno: res.vehicle_number, 
-                  type: res.type_id,
-                  category: res.cat_id,
-                  brand: res.brand_id,
-                  modal:res.model_id,
-                  purchasedate:res.purchase_date,
-                  warrentyyear:res.year_warranty,
-                  amc:res.amc,
-                  amcdate:res.amc_date,
-                  tyrecnt:res.tyre_count,
-                  stepnycnt:res.step_count,
-                  fuel:res.fuel_type,
-                  enginenumber:res.engine_num,
-                  chassisnumber:res.chassis_num,
-                  hsn:res.hsn,
-                  insurancenumber:res.insurance,
-                  insuranceenddate:res.ins_date,
-                  fitness:res.fc,
-                  fitnessdate:res.fc_date,
-                  puc:res.pc,
-                  pucdate:res.pc_date,
-                  greentax:res.green_tax,
-                  greendate:res.gtax_date,
-                  image:res.image,
-                  file:null,
-                });
-             egetbrandlist(res.cat_id);
-             egetmodellist(res.brand_id);
-            setupdateShow(true);
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach user data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
+ const editvehicle = async (id) => {
+  if (!authToken) {
+    ReactSwal.fire({
+      title: 'Error',
+      text: 'Unauthorized, please log in.',
+      icon: 'error',
+    });
+    return;
   }
+
+  try {
+    const response = await fetch(`${BASE}trailerassign/edit/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const res = data.data;
+
+      setupdated_data({
+        id: res.id,
+        user_id: res.user_id,
+        vehicle_id: { value: res.vehicle_id, label: res.vehicle_no },
+        trailer_id: { value: res.trailer_id, label: res.trailer_number },
+        v_id:res.vehicle_id,
+        r_id: res.trailer_id
+      });
+
+      setupdateShow(true);
+    } else {
+      const error = await response.json();
+      ReactSwal.fire({
+        title: 'Error',
+        text: error.message || 'Unable to reach Trailer data',
+        icon: 'error',
+      });
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    ReactSwal.fire({
+      title: 'Error',
+      text: 'Failed to connect to the server. Please try again later.',
+      icon: 'error',
+    });
+  }
+};
+
 
 
   
 const updatevichile = async () => {
     const data = updated_data;
    if (
-    !data.vno ||
-    !data.type ||
-    !data.enginenumber ||
-    !data.hsn
+    !data.vehicle_id ||
+    !data.trailer_id
     ) {
       toast.error('All fields are required!');
       return;
     }
 
-    const verify = vehicleNum(data.vno);
-    if(!verify.isValid)
-    {
-      toast.error('Vehicle Number Invalid!');
-       return;
-    }
-    const hsnCheck = validateHSN(data.hsn);
-     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
-
-
-     const monthCheck = ValidMonth(data.warrentyyear);
-     if (!monthCheck.isValid) return toast.error('Months Invalid!');
-
-      const tyreCheck = ValidSingleDigit(data.tyrecnt);
-     if (!tyreCheck.isValid) return toast.error('Tyre Count Invalid!');
-
-      const stepnyCheck = ValidSingleDigit(data.stepnycnt);
-     if (!stepnyCheck.isValid) return toast.error('Stepney Count Invalid!');
-  
     const formData = new FormData();
 
      Object.entries(data).forEach(([key, value]) => {
@@ -823,7 +484,7 @@ const updatevichile = async () => {
     });
   
     try {
-      const response = await fetch(`${apiUrl}vehicle/update`, {
+      const response = await fetch(`${BASE}trailerassign/update`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -833,37 +494,15 @@ const updatevichile = async () => {
     
       if (response.ok) {
         const result = await response.json();
-        toast.success('Vehicle Updated!');
+        toast.success('Trailer Exchange Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
-
          setupdated_data({
-                  id:'',
-                  vno: '', 
-                  type: '',
-                  category: '',
-                  brand: '',
-                  modal:'',
-                  purchasedate:today,
-                  warrentyyear:'',
-                  amc:'',
-                  amcdate:today,
-                  tyrecnt:'',
-                  stepnycnt:'',
-                  fuel:'1',
-                  enginenumber:'',
-                  chassisnumber:'',
-                  hsn:'',
-                  insurancenumber:'',
-                  insuranceenddate:today,
-                  fitness:'',
-                  fitnessdate:today,
-                  puc:'',
-                  pucdate:today,
-                  greentax:'',
-                  greendate:today,
-                  image:'',
-                  file: null,
+                 id: '',
+                 vehicle_id: { value: '', label: '' },
+                 trailer_id: { value: '', label: '' },
+                 v_id:'',
+                 r_id:''
                 });
 
 
@@ -879,15 +518,181 @@ const updatevichile = async () => {
     
   };
 
-  const viewvehicle = (id) =>
-  {
-   
-  }
+ const viewvehicle = async (id) => {
+  try {
+    const response = await fetch(`${BASE}trailerassign/history/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
 
-  const deletevehicle = (id) => 
-  {
-    
+    if (response.ok) {
+      const data = await response.json();
+      sethistory(data.data); // assuming your API returns { data: [...] }
+      setShowHistory(true)
+    } else {
+      const error = await response.json();
+      ReactSwal.fire({
+        title: 'Error',
+        text: error.message || 'Failed to fetch history',
+        icon: 'error',
+      });
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    ReactSwal.fire({
+      title: 'Error',
+      text: 'Unable to connect to the server',
+      icon: 'error',
+    });
   }
+};
+
+
+ const deletevehicle = async (id) => {
+    try {
+      const result = await ReactSwal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this Data!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+      });
+
+      if (result.isConfirmed) {
+        const response = await fetch(`${BASE}trailerassign/delete/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+
+        if (response.ok) {
+          ReactSwal.fire({
+            title: 'Deleted!',
+            text: 'Trailer Assign deleted successfully!',
+            icon: 'success',
+          });
+
+          fetchData({ pageSize, pageIndex, sortBy, search, todate, location });
+        } else {
+          const error = await response.json();
+          ReactSwal.fire({
+            title: 'Error',
+            text: error.message || 'Unable to delete user',
+            icon: 'error',
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
+    }
+  };
+
+
+    const [vehicle_search, setVehicle_search] = useState("");
+    const [vehicle_options, setVehicle_options] = useState([]);
+  
+  
+    const [trailer_search, settrailer_search] = useState("");
+    const [trailer_options, settrailer_options] = useState([]);
+  
+  
+  const fetchvehicle_search = async (search) => {
+    if (!search) {
+      setVehicle_options([]);
+      return;
+    }
+  
+    try {
+      const url = `${BASE}vehicle/search/${encodeURIComponent(search)}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+  
+      const result = await response.json();
+  
+      // transform API -> react-select format
+      const formatted = result.map((item) => ({
+        value: item.id,
+        label: item.vehicle_number,
+      }));
+  
+      setVehicle_options(formatted);
+     // vehicle options created
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  
+  const fetchtrailer_search = async (search) => {
+    if (!search) {
+      settrailer_options([]);
+      return;
+    }
+  
+    try {
+      const url = `${BASE}trailer/search/${encodeURIComponent(search)}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+  
+      const result = await response.json();
+  
+      // transform API -> react-select format
+      const formatted = result.map((item) => ({
+        value: item.id,
+        label: item.trailer_number,
+      }));
+  
+      settrailer_options(formatted);
+     // vehicle options created
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  
+    useEffect(() => {
+      const delayDebounce = setTimeout(() => {
+        fetchvehicle_search(vehicle_search);
+      }, 5); 
+  
+      return () => clearTimeout(delayDebounce);
+    }, [vehicle_search]);
+   
+      useEffect(() => {
+      const delayDebounce = setTimeout(() => {
+        fetchtrailer_search(trailer_search);
+      }, 5); 
+  
+      return () => clearTimeout(delayDebounce);
+    }, [trailer_search]);
+   
   
 
   return (
@@ -907,9 +712,6 @@ const updatevichile = async () => {
 
                 <CButtonGroup role="group" aria-label="Basic example">
                 <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-                 <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Excel </CButton>
-                 <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> PDF </CButton>
-                 <CButton className="btn btn-sm btn-secondary w-auto" onClick={handleShow}> Print </CButton>
                  </CButtonGroup>
 
 
@@ -991,37 +793,53 @@ const updatevichile = async () => {
           <CRow>
 
           <CCol md={12}>
+
+             <CFormLabel className="col-form-label">
+              Select Trailer
+              </CFormLabel>
+                <Select options={trailer_options} 
+                      isMulti={false}
+                      placeholder="Select Trailer" 
+                      size="sm" className='mb-2 small-select'
+                      classNamePrefix="custom-select"
+                      menuPortalTarget={document.body}
+                      styles={{
+                        menuPortal: base => ({ ...base, zIndex: 9999 }) 
+                      }}
+                      onInputChange={(inputValue, { action }) => {
+                            if (action === "input-change") {
+                              settrailer_search(inputValue);
+                            }
+                          }}
+                              onChange={(selectedOption) => {
+                            setselectedvalues((prev)=>({...prev,trailer_id:selectedOption? selectedOption.value:""}))     
+                          }}
+                     />
+
+
               <CFormLabel className="col-form-label">
               Select Vehicle
               </CFormLabel>
-                <Select options={categoryoption} isMulti={false} placeholder="Select Vehicle" size="sm" className='mb-2 small-select' 
+                <Select
+                options={vehicle_options}
+                placeholder="Select Vehicle"
+                className="mb-2 small-select"
                 classNamePrefix="custom-select"
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 }) 
+                }}
+                onInputChange={(inputValue, { action }) => {
+                  if (action === "input-change") {
+                    setVehicle_search(inputValue);
+                  }
+                }}
                 onChange={(selectedOption) => {
-                          setsave_data((prev) => ({
-                            ...prev,
-                            category: selectedOption ? selectedOption.value : '',
-                          }));
-                          if (selectedOption) {
-                            getbrandlist(selectedOption.value);
-                          }
-                        }}
-                />
-
-              <CFormLabel className="col-form-label">
-              Select Trailer
-              </CFormLabel>
-              <Select options={brandoption} isMulti={false} placeholder="Select Trailer" size="sm" className='mb-2 small-select'
-              classNamePrefix="custom-select"
-                        onChange={(selectedOption) => {
-                        setsave_data((prev) => ({
-                          ...prev,
-                          brand: selectedOption ? selectedOption.value : '',
-                        }));
-                        if (selectedOption) {
-                            getmodellist(selectedOption.value);
-                          }
-                      }}
-                        />
+                  setselectedvalues((prev) => ({
+                    ...prev, vehicle_id: selectedOption ? selectedOption.value : "",
+                  }));
+                }}
+              />
                </CCol>
           </CRow>
         </CModalBody>
@@ -1040,7 +858,7 @@ const updatevichile = async () => {
         alignment="center"
         scrollable
         visible={updateshow}
-        size="xl"
+        size="md"
         onClose={() => handleEClose()}
         aria-labelledby="NewProcessing"
         >
@@ -1051,387 +869,112 @@ const updatevichile = async () => {
 
           <CRow>
 
-          <CCol md={6}>
+          <CCol md={12}>
 
-             <CFormLabel className="col-form-label">
-              Vehicle Number
-              </CFormLabel>
-              <CFormInput
-                  type="text"
-                  size="sm"
-                  placeholder="Vehicle Number"
-                  className="mb-2 vehiclenumber"
-                  value = {updated_data.vno}
-                  onChange={(e) => {
-                    setupdated_data((prev) => ({
-                      ...prev,
-                      vno: e.target.value.toUpperCase(),
-                    }));
-                  }}
-                   onKeyUp={(e) => {
-                    const result = vehicleNum(e.target.value);
-                   if (e.target.value.length > 9 && !result.isValid) {
-                      toast.error('Vehicle Number Invalid!');
-                    }
-                   }}
-                   readOnly
-                />
-
-            
-
-              <CFormLabel className="col-form-label">
-              Type
-              </CFormLabel>
-               <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select' 
-                classNamePrefix="custom-select"
-                value={typelist.find(option => option.value === updated_data.type) || null}
-                onChange={(selectedOption) => {
+                  <CFormLabel className="col-form-label">
+                    Select Trailer
+                  </CFormLabel>
+                   <Select
+                        options={trailer_options}
+                        isMulti={false}
+                        placeholder="Select Trailer"
+                        size="sm" className='mb-2 small-select'
+                        classNamePrefix="custom-select"
+                        value={updated_data.trailer_id}
+                        onChange={(selectedOption) => {
                           setupdated_data((prev) => ({
                             ...prev,
-                            type: selectedOption ? selectedOption.value : '',
+                            trailer_id: selectedOption,
+                            r_id: selectedOption ? selectedOption.value : "",
                           }));
                         }}
-                />
-
-              <CFormLabel className="col-form-label">
-               Category
-              </CFormLabel>
-                <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select' 
-                classNamePrefix="custom-select"
-                 value={categoryoption.find(option => option.value === updated_data.category) || null}
-                onChange={(selectedOption) => {
-                          setupdated_data((prev) => ({
-                            ...prev,
-                            category: selectedOption ? selectedOption.value : '',
-                          }));
-                          if (selectedOption) {
-                            ebrandoption(selectedOption.value);
-                          }
+                        onInputChange={(inputValue, { action }) => {
+                          if (action === "input-change") settrailer_search(inputValue);
                         }}
-                />
+                        menuPortalTarget={document.body}
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                      />
 
-              <CFormLabel className="col-form-label">
-              Brand
-              </CFormLabel>
-              <Select options={ebrandoption} isMulti={false} placeholder="Select Brand" size="sm" className='mb-2 small-select'
-              classNamePrefix="custom-select"
-              value={ebrandoption.find(option => option.value === updated_data.brand) || null}
-                        onChange={(selectedOption) => {
-                        setupdated_data((prev) => ({
-                          ...prev,
-                          brand: selectedOption ? selectedOption.value : '',
-                        }));
-                        if (selectedOption) {
-                            egetmodellist(selectedOption.value);
-                          }
-                      }}
-                        />
-
-              <CFormLabel className="col-form-label">
-               Model
-              </CFormLabel>
-
-                 <Select options={emodeloption} isMulti={false} placeholder="Select Model" size="sm" className='mb-2 small-select' 
-                 classNamePrefix="custom-select"
-                 value={emodeloption.find(option => option.value === updated_data.modal) || null}
-                        onChange={(selectedOption) => {
-                        setupdated_data((prev) => ({
-                          ...prev,
-                          modal: selectedOption ? selectedOption.value : '',
-                        }));
-                      }}
-                        />
-
-              <CFormLabel className="col-form-label">
-              Purchase Date
-              </CFormLabel>
-              <CFormInput type="date" size="sm" 
-               value = {updated_data.purchasedate}
-                onChange={(e) =>
-                setupdated_data((prev) => ({
-                  ...prev,
-                  purchasedate: e.target.value,
-                }))
-              }
-               className='mb-2' />
-
-              <CFormLabel className="col-form-label">
-               Months of warranty
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              value = {updated_data.warrentyyear}
-              onChange={(e) =>
-                setupdated_data((prev) => ({
-                  ...prev,
-                  warrentyyear: e.target.value,
-                }))
-              }
-               onKeyUp={(e) => {
-                  const result = ValidMonth(e.target.value);
-                  if (e.target.value.length > 1 && !result.isValid) {
-                    toast.error('Month Invalid!');
-                  }
-                  }}
-              placeholder="Month of warranty" className='mb-2' />
-
-
-
-               <CFormLabel className="col-form-label">
-                AMC 
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm"
-                 value = {updated_data.amc}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    amc: e.target.value,
-                  }))
-                }
-                placeholder="AMC File Number" />
-
-                <CFormInput type="date" size="sm" 
-                 value = {updated_data.amcdate}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    amcdate: e.target.value,
-                  }))
-                }
-                />
-              </CInputGroup>
-
-
-               <CFormLabel className="col-form-label">
-               Tyre count / Stepney Count
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                value = {updated_data.tyrecnt}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    tyrecnt: e.target.value,
-                  }))
-                }
-                 onKeyUp={(e) => {
-                  const result = ValidSingleDigit(e.target.value);
-                  if (e.target.value.length > 0 && !result.isValid) {
-                    toast.error('Tyre Count Invalid!');
-                  }
-                  }}
-                placeholder="Tyre count" />
-
-                <CFormInput type="text" size="sm" 
-                value = {updated_data.stepnycnt}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    stepnycnt: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = ValidSingleDigit(e.target.value);
-                  if (e.target.value.length > 0 && !result.isValid) {
-                    toast.error('Tyre Count Invalid!');
-                  }
-                  }}
-                placeholder="Stepney Count" />
-              </CInputGroup>
-
-               </CCol>
-
-            <CCol md={6}>
-
-
-              <CFormLabel className="col-form-label">
-               Fuel Type
-              </CFormLabel>
-                <select placeholder="Select Brand" size="sm" className='form-control form-control-sm mb-2' 
-                 value={updated_data.fuel}
-                  onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    fuel: e.target.value,
-                  }))
-                   }
-                  >
-                      <option value="1">Diesel</option>
-                      <option value="2">Petrol</option>
-                      <option value="3">Gas</option>
-                      <option value="4">Battery</option>
-                    </select>
-
-             <CFormLabel className="col-form-label">
-               Engine Number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              value = {updated_data.enginenumber}
-              onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    enginenumber: e.target.value,
-                  }))
-                }
-              placeholder="Engine Number" className='mb-2' />
-
-              <CFormLabel className="col-form-label">
-               Chassis number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              value = {updated_data.chassisnumber}
-              onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    chassisnumber: e.target.value,
-                  }))
-                }
-              placeholder="Chassis number" className='mb-2' />
-
-
-              <CFormLabel className="col-form-label">
-               HSN Number
-              </CFormLabel>
-              <CFormInput type="text" size="sm" 
-              value = {updated_data.hsn}
-              onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    hsn: e.target.value,
-                  }))
-                }
-                onKeyUp={(e) => {
-                  const result = validateHSN(e.target.value);
-                  if (e.target.value.length > 7 && !result.isValid) {
-                    toast.error('HSN Number Invalid!');
-                  }
-                  }}
-              placeholder="HSN Number" className='mb-2' />
-
-               <CFormLabel className="col-form-label">
-               Insurance
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                value = {updated_data.insurancenumber}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    insurancenumber: e.target.value,
-                  }))
-                }
-                placeholder="Insurance Number" />
-
-                <CFormInput type="date"  size="sm" 
-                value = {updated_data.insuranceenddate}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    insuranceenddate: e.target.value,
-                  }))
-                }
-                />
-              </CInputGroup>
-               
-              <CFormLabel className="col-form-label">
-               Fitness Certificate
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                value = {updated_data.fitness}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    fitness: e.target.value,
-                  }))
-                }
-                placeholder="Fitness Certificate Number" />
-
-                <CFormInput type="date" size="sm" 
-                 value = {updated_data.fitnessdate}
-                 onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    fitnessdate: e.target.value,
-                   }))
-                 }
-                />
-              </CInputGroup>
-
-
-               <CFormLabel className="col-form-label">
-                Pollution  Certificate
-              </CFormLabel>
-
-                <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                value = {updated_data.puc}
-                 onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    puc: e.target.value,
-                   }))
-                 }
-                placeholder="Pollution Certificate Number" />
-
-                <CFormInput type="date" size="sm" 
-                value = {updated_data.pucdate}
-                onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    pucdate: e.target.value,
-                   }))
-                 }
-                />
-              </CInputGroup>
-
-              <CFormLabel className="col-form-label">
-               Green Tax
-              </CFormLabel>
-              <CInputGroup className="mb-2">
-                <CFormInput type="text" size="sm" 
-                value = {updated_data.greentax}
-                 onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    greentax: e.target.value,
-                   }))
-                 }
-                placeholder="Green Tax Number" />
-
-                <CFormInput type="date" size="sm" 
-                value = {updated_data.greendate}
-                 onChange={(e) =>
-                  setupdated_data((prev) => ({
-                    ...prev,
-                    greendate: e.target.value,
-                   }))
-                 }
-                />
-              </CInputGroup>
-
-                 <div className="mb-3">
-                    <label htmlFor="formFileSm" className="form-label">Image</label>
-                    <input className="form-control form-control-sm" id="formFileSm" type="file"
-                    onChange={(e) =>
-                      setupdated_data((prev) => ({
-                        ...prev,
-                        file: e.target.files[0],
-                      }))
-                    }
-                    
-                    />
-                  </div>
-
+                      <CFormLabel className="col-form-label">
+                      Select Vehicle
+                      </CFormLabel>
+                        <Select
+                            options={vehicle_options}
+                            isMulti={false}
+                            placeholder="Select Vehicle"
+                            size="sm" className='mb-2 small-select'
+                            classNamePrefix="custom-select"
+                            value={updated_data.vehicle_id}
+                            onChange={(selectedOption) => {
+                              setupdated_data((prev) => ({
+                                ...prev,
+                                vehicle_id: selectedOption,
+                                v_id: selectedOption ? selectedOption.value : "",
+                              }));
+                            }}
+                            onInputChange={(inputValue, { action }) => {
+                              if (action === "input-change") setVehicle_search(inputValue);
+                            }}
+                            menuPortalTarget={document.body}
+                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                          />
             </CCol>
-
           </CRow>
         </CModalBody>
 
          <CModalFooter>
-          <CButton color="primary" onClick={updatevichile}>Update</CButton>
+          <CButton color="primary" onClick={updatevichile}>Exchange</CButton>
+        </CModalFooter>
+      </CModal>
+
+
+
+      <CModal visible={showHistory} onClose={() => setShowHistory(false)} size="lg">
+        <CModalHeader>
+          <CModalTitle>Trailer Exchange History</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {history.length > 0 ? (
+            <CTable
+              striped
+            bordered
+            hover
+            size="sm"
+            variant="dark"
+            style={{ fontSize: '0.75rem' }}
+            >
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>ID</CTableHeaderCell>
+                  <CTableHeaderCell>Updated By</CTableHeaderCell>
+                  <CTableHeaderCell>Vehicle No</CTableHeaderCell>
+                  <CTableHeaderCell>Trailer No</CTableHeaderCell>
+                  <CTableHeaderCell>Status</CTableHeaderCell>
+                  <CTableHeaderCell>DateTime</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {history.map((row, index) => (
+                  <CTableRow key={row.id}>
+                    <CTableDataCell>{index + 1}</CTableDataCell>
+                    <CTableDataCell>{row.user_id}</CTableDataCell>
+                    <CTableDataCell>{row.vehicle_no}</CTableDataCell>
+                    <CTableDataCell>{row.trailer_number}</CTableDataCell>
+                    <CTableDataCell>{row.status}</CTableDataCell>
+                    <CTableDataCell>{row.datetime}</CTableDataCell>
+                  </CTableRow>
+                ))}
+
+              </CTableBody>
+            </CTable>
+          ) : (
+            <p>No history available for this trailer.</p>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowHistory(false)}>
+            Close
+          </CButton>
         </CModalFooter>
       </CModal>
 

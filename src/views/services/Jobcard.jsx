@@ -24,12 +24,14 @@ import { useMemo } from 'react';
 import { FaTrash, FaEdit, FaBars } from 'react-icons/fa';
 import { useContext, useEffect } from 'react';
 import { Sharedcontext } from '../../components/Context';
-
+const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 const Jobcard = () => {
+    const BASE = import.meta.env.VITE_BASE_URL;
     const [pageCount, setPageCount] = useState(0);
     const [data, setData] = useState([]);
     const [show, setShow] = useState(false);
+    const [save_data, setsave_data] = useState({});
 
 
 
@@ -40,7 +42,7 @@ const Jobcard = () => {
         setShow(false)
         setjobcard(null)
         setvehicleno("")
-        setservices(null)
+        setservices(1)
         setspares(null)
         settools(null)
         setDescription("")
@@ -195,11 +197,58 @@ const Jobcard = () => {
 
     //select service type
 
-    const service_types = [{ label: "vehicle", value: "vehicle" }, { label: "trailer", value: "trailer" }, { label: "spare", value: "spare" }]
-    const [services, setservices] = useState(null)
+    const service_types = [
+        { label: "Vehicle", value: "1" }, 
+        { label: "Trailer", value: "2" }, 
+        { label: "Spare", value: "3" }]
+
+    const [services, setservices] = useState(1)
+
+
+    
+    const [vehicle_search, setVehicle_search] = useState("");
+    const [vehicle_options, setVehicle_options] = useState([]);
+
+
+    const srvicetoadata = async() => {
+          let service_data = services.value;
+           try {
+            const response = await fetch(
+                `${BASE}options/search_option/${service_data}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+            const result = await response.json();
+            const options = result.map(item => ({
+                value: item.id,
+                label: item.vehicle_number   // 👈 show this in dropdown
+                }));
+
+                setVehicle_options(options);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            
+        } finally {
+           
+        }
+             
+    }
+
+      useEffect(() => {
+         srvicetoadata();
+        }, [services]);
 
     //select tyres/spares
-    const mainoptions = [{ label: "spare", value: "spare" }, { label: "tyre", value: "tyre" }]
+    const mainoptions = [{ label: "Spare", value: "spare" }, { label: "Tyre", value: "tyre" }]
     const [category, setcategory] = useState(null)
     const [items, setitems] = useState(null)
 
@@ -213,6 +262,16 @@ const Jobcard = () => {
 
     useEffect(() => { console.log(jobcard, vehicleno, spares, tools, service_engineer, tyrespares, category, description, address, items, services) },
         [tyrespares, jobcard, vehicleno, spares, tools, service_engineer, category, description, address, items, services])
+
+
+
+
+
+  
+
+
+
+
 
     return (
         <>
@@ -326,28 +385,6 @@ const Jobcard = () => {
                             />
 
                             <CFormLabel className="col-form-label">
-                                Jobcard Id
-                            </CFormLabel>
-                            <input
-                                type="text"
-                                className="form-control form-control-sm mb-2 small-select"
-                                placeholder="Vehicle no"
-                                value={jobcardId}
-                                onChange={(e) => setjobId(e.target.value)}
-                            />
-                            <>
-                                <CFormLabel className="col-form-label">
-                                    Vehicle no
-                                </CFormLabel>
-                                <input
-                                    type="text"
-                                    className="form-control form-control-sm mb-2 small-select"
-                                    placeholder="Vehicle no"
-                                    value={vehicleno}
-                                    onChange={(e) => setvehicleno(e.target.value)}
-                                />
-
-                                <CFormLabel className="col-form-label">
                                     Select Type of Service
                                 </CFormLabel>
                                 <Select options={service_types} isMulti={false} placeholder="Select service types"
@@ -361,18 +398,29 @@ const Jobcard = () => {
                                 />
 
                                 <CFormLabel className="col-form-label">
-                                    Select Spares
+                                    Vehicle no
                                 </CFormLabel>
-                                <Select options={initial_spares} isMulti={false} placeholder="Select spares"
+                                <Select
+                                    options={vehicle_options}
+                                    isMulti={false}
+                                    placeholder="Select Vehicle"
                                     size="sm"
-                                    className='mb-2 small-select'
+                                    className="mb-2 small-select"
                                     classNamePrefix="custom-select"
-                                    value={spares}
+                                    value={vehicle_options.find(opt => opt.value === save_data.id) || null}
                                     onChange={(selectedOption) => {
-                                        setspares(selectedOption)
+                                        setsave_data((prev) => ({
+                                        ...prev,
+                                        vehicle_number: selectedOption ? selectedOption.label : "",
+                                        id: selectedOption ? selectedOption.value : "",
+                                        }));
                                     }}
-                                />
-
+                                    onInputChange={(inputValue, { action }) => {
+                                        if (action === "input-change") setVehicle_search(inputValue);
+                                    }}
+                                    menuPortalTarget={document.body}
+                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                    />
 
 
                                 <CFormLabel className="col-form-label">
@@ -421,49 +469,10 @@ const Jobcard = () => {
                                         />
                                     </>}
 
-                                <CFormLabel className="col-form-label">
-                                    Spare/ Tyre
-                                </CFormLabel>
-                                <Select options={mainoptions} isMulti={false} placeholder="Select Spare/Tyre"
-                                    size="sm"
-                                    className='mb-2 small-select'
-                                    classNamePrefix="custom-select"
-                                    value={category}
-                                    onChange={(selectedOption) => {
-                                        setcategory(selectedOption)
-                                        setitems(null)
-                                    }}
-                                />
-                            </>
-
-                            {category?.value === "tyre" &&
-                                <Select options={tyreoptions} isMulti={false} placeholder="Select tyre type"
-                                    size="sm"
-                                    className='mb-2 small-select'
-                                    classNamePrefix="custom-select"
-                                    value={items}
-                                    onChange={(selectedOption) => {
-                                        setitems(selectedOption)
-                                    }}
-                                />
-                            }
-
-                            {category?.value === "spare" &&
-                                <Select options={spareoptions} isMulti={false} placeholder="Select spare type"
-                                    size="sm"
-                                    className='mb-2 small-select'
-                                    classNamePrefix="custom-select"
-                                    value={items}
-                                    onChange={(selectedOption) => {
-                                        setitems(selectedOption)
-                                    }}
-                                />
-
-
-                            }
+                               
                             {jobcard?.value === "external" && <>
                                 <CRow >
-                                    <CCol md={6}>
+                                    <CCol md={12}>
                                         <CFormLabel className="col-form-label">
                                             Address:
                                         </CFormLabel>

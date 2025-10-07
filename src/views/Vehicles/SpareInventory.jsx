@@ -70,6 +70,7 @@ const SpareInventory = () => {
   const intial_data = {
     spareName: '',
     type: '',
+    serial_number: '',
     brand: '',
     model: '',
     purchasedate: today,
@@ -136,6 +137,7 @@ const SpareInventory = () => {
         setsave_data({
           spareName: '',
           type: '',
+          serial_number : '',
           model: '',
           purchasedate: today,
           warranty: '',
@@ -198,7 +200,7 @@ const SpareInventory = () => {
 
     try {
       const response = await fetch(
-        `${apiUrl}options/brand/9`,
+        `${apiUrl}options/brand_spare`,
         {
           method: 'GET',
           headers: {
@@ -213,7 +215,7 @@ const SpareInventory = () => {
       const result = await response.json();
       const datas = result?.data?.map((item) => ({
         value: item.brand_id,
-        label: item.brand
+        label: item.brand_name
       }))
       setbrandoption(datas);
     }
@@ -316,10 +318,11 @@ const SpareInventory = () => {
         Cell: ({ row }) => row.index + 1,
       },
       { Header: 'Spare Name', accessor: 'spare_name' },
+      { Header: 'Serial Number', accessor: 'serial_number' },
       {
         Header: 'Type',
-        accessor: 'type',
-        Cell: ({ value }) => (value === 0 ? 'Spare' : 'Tyre')
+        accessor: 'type_id',
+        Cell: ({ value }) => (value == 1 ? 'Tyre' : 'Spare')
       },
       { Header: 'Brand', accessor: 'brandname' },
       { Header: 'Model', accessor: 'modelname' },
@@ -432,6 +435,7 @@ const SpareInventory = () => {
         setupdated_data({
           id: res.id,
           spareName: res.spare_name,
+          serial_number: res.serial_number,
           type: res.type_id,
           category: res.cat_id,
           brandName: res.brand_id,
@@ -471,7 +475,7 @@ const SpareInventory = () => {
   const updatespare = async () => {
     const data = updated_data;
     if (
-      !data.type ||
+      !data.spareName ||
       !data.hsn
     ) {
       toast.error('All fields are required!');
@@ -488,6 +492,7 @@ const SpareInventory = () => {
     const formData = new FormData();
     formData.append("id", data.id || "");
     formData.append("spare_name", data.spareName || "");
+    formData.append("serial_number", data.serial_number || "");
     formData.append("type_id", data.type || "");
     formData.append("brand_id", data.brandName || "");
     formData.append("model_id", data.model || "");
@@ -515,7 +520,7 @@ const SpareInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success('Vehicle Updated!');
+        toast.success('Spare Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
 
@@ -554,6 +559,7 @@ const SpareInventory = () => {
           model: res.model_id,
           purchasedate: res.purchase_date,
           warranty: res.years_warrenty,
+          serial_number: res.serial_number,
           amc: res.amc,
           amcdate: res.amc_date,
           hsn: res.hsn,
@@ -670,7 +676,7 @@ const SpareInventory = () => {
   useEffect(() => { fetchActionDetails() }, [roleId])
 
   const typelist = [
-    { value: 0, label: "Spare" },
+    { value: 2, label: "Spare" },
     { value: 1, label: "Tyre" },
    
   ];
@@ -699,6 +705,7 @@ const fetchVehicleData = async (authToken) => {
     "SL No": index + 1,
     "Spare Name": row.spare_name,
     "Type": row.type_id == 0? "Spare": "Tyre",
+    "Serial Number": row.serial_number,
     "Brand":  row.brandname,
     "Model":  row.modelname,
     "HSN": row.hsn,
@@ -890,6 +897,22 @@ const handlePrint = async () => {
               />
 
               <CFormLabel className="col-form-label">
+                Serial Number
+              </CFormLabel>
+              <CFormInput
+                type="text"
+                size="sm"
+                placeholder="Serial Number"
+                className="mb-2 vehiclenumber"
+                onChange={(e) => {
+                  setsave_data((prev) => ({
+                    ...prev,
+                    serial_number: e.target.value.toUpperCase(),
+                  }));
+                }}
+              />
+
+              <CFormLabel className="col-form-label">
                 Type
               </CFormLabel>
               <Select options={typelist} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
@@ -1029,9 +1052,9 @@ const handlePrint = async () => {
                   }
                   placeholder="Part Number" className='mb-2' />
               </CInputGroup>
-            </CCol>
-            <CCol md={12}>
-              <div className="mb-3">
+
+
+             <div className="mb-3">
                 <label htmlFor="formFileSm" className="form-label">Image</label>
                 <input className="form-control form-control-sm" id="formFileSm" type="file"
                   onChange={(e) =>
@@ -1043,6 +1066,7 @@ const handlePrint = async () => {
 
                 />
               </div>
+
             </CCol>
 
           </CRow>
@@ -1087,6 +1111,25 @@ const handlePrint = async () => {
                   setupdated_data((prev) => ({
                     ...prev,
                     spareName: e.target.value.toUpperCase(),
+                  }));
+                }}
+              />
+
+
+              <CFormLabel className="col-form-label">
+                Serial Number
+              </CFormLabel>
+              <CFormInput
+                type="text"
+                size="sm"
+                placeholder="Serial Number"
+                className="mb-2 small-select"
+                classNamePrefix="custom-select"
+                value={updated_data.serial_number}
+                onChange={(e) => {
+                  setupdated_data((prev) => ({
+                    ...prev,
+                    serial_number: e.target.value.toUpperCase(),
                   }));
                 }}
               />
@@ -1288,6 +1331,7 @@ const handlePrint = async () => {
               <CTableBody>
                 {[
                   { label: "Spare Name", value: updated_data.spareName },
+                  { label: "Serial Number", value: updated_data.serial_number },
                   { label: "Type", value: typelist.find((t) => t.value === updated_data.type)?.label },
                   { label: "Brand", value: brandoption.find((b) => b.value === updated_data.brandName)?.label },
                   { label: "Model", value: modeloption.find((m) => m.value === updated_data.model)?.label },
