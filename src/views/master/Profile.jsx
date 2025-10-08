@@ -34,7 +34,7 @@ const Profile = () => {
             setsavedData(data.data)
         })
     }, [])
-    console.log(userinfo)
+  
     const [savedData, setsavedData] = useState({ ...userinfo });
     const [isEditingInfo, setIsEditingInfo] = useState(false);
     const [isEditingSecurity, setIsEditingSecurity] = useState(false);

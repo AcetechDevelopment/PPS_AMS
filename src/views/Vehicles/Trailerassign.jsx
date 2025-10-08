@@ -41,7 +41,13 @@ const [pageCount, setPageCount] = useState(0);
 const [search, setsearch] = useState('');
 const [categoryoption, setcategoryoption] = useState([]);
 const [categoryid, setcategoryid] = useState('');
-const [history, sethistory] = useState([])
+
+const [history, sethistory] = useState([]);
+
+
+
+
+
 const [fromdate, setfromdate] = useState(today);
 const [todate, settodate] = useState(today);
 const [location, setlocation] = useState('');
@@ -49,6 +55,7 @@ const [loc_id, setlocationid] = useState('');
 const [bill_no, setbill_no] = useState('');
 const [vehicle_no, setvehicle_no] = useState('');
 const [material, setmaterial] = useState(1);
+const[showHistory,setShowHistory]=useState(false)
 const [date_time, setdate_time] = useState(today);
 const [tare_wt, settare_wt] = useState(0);
 const [gross_wt, setgross_wt] = useState(0);
@@ -58,7 +65,6 @@ const [id, setid] = useState('');
 
 
 const[selectedvalues,setselectedvalues]=useState({vehicle_id:"",trailer_id:""})
-const[showHistory,setShowHistory]=useState(false)
 const [save_data, setsave_data] = useState({vehicle_id:"",trailer_id:""});
 const [updated_data, setupdated_data] = useState({vehicle_id:"",trailer_id:""});
 
@@ -920,54 +926,59 @@ const updatevichile = async () => {
           <CButton color="primary" onClick={updatevichile}>Exchange</CButton>
         </CModalFooter>
       </CModal>
-     
+
+
+
       <CModal visible={showHistory} onClose={() => setShowHistory(false)} size="lg">
-  <CModalHeader>
-    <CModalTitle>Trailer Exchange History</CModalTitle>
-  </CModalHeader>
-  <CModalBody>
-    {history.length > 0 ? (
-      <CTable
-        striped
-      bordered
-      hover
-      size="sm"
-      variant="dark"
-      style={{ fontSize: '0.75rem' }}
-      >
-        <CTableHead>
-          <CTableRow>
-            <CTableHeaderCell>ID</CTableHeaderCell>
-            <CTableHeaderCell>User ID</CTableHeaderCell>
-            <CTableHeaderCell>Vehicle No</CTableHeaderCell>
-            <CTableHeaderCell>Trailer No</CTableHeaderCell>
-            <CTableHeaderCell>Status</CTableHeaderCell>
-            <CTableHeaderCell>DateTime</CTableHeaderCell>
-          </CTableRow>
-        </CTableHead>
-        <CTableBody>
-          {history.map((row) => (
-            <CTableRow key={row.id}>
-              <CTableDataCell>{row.id}</CTableDataCell>
-              <CTableDataCell>{row.user_id}</CTableDataCell>
-              <CTableDataCell>{row.vehicle_no}</CTableDataCell>
-              <CTableDataCell>{row.trailer_number}</CTableDataCell>
-              <CTableDataCell>{row.status}</CTableDataCell>
-              <CTableDataCell>{row.datetime}</CTableDataCell>
-            </CTableRow>
-          ))}
-        </CTableBody>
-      </CTable>
-    ) : (
-      <p>No history available for this trailer.</p>
-    )}
-  </CModalBody>
-  <CModalFooter>
-    <CButton color="secondary" onClick={() => setShowHistory(false)}>
-      Close
-    </CButton>
-  </CModalFooter>
-</CModal>
+        <CModalHeader>
+          <CModalTitle>Trailer Exchange History</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {history.length > 0 ? (
+            <CTable
+              striped
+            bordered
+            hover
+            size="sm"
+            variant="dark"
+            style={{ fontSize: '0.75rem' }}
+            >
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>ID</CTableHeaderCell>
+                  <CTableHeaderCell>Updated By</CTableHeaderCell>
+                  <CTableHeaderCell>Vehicle No</CTableHeaderCell>
+                  <CTableHeaderCell>Trailer No</CTableHeaderCell>
+                  <CTableHeaderCell>Status</CTableHeaderCell>
+                  <CTableHeaderCell>DateTime</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {history.map((row, index) => (
+                  <CTableRow key={row.id}>
+                    <CTableDataCell>{index + 1}</CTableDataCell>
+                    <CTableDataCell>{row.user_id}</CTableDataCell>
+                    <CTableDataCell>{row.vehicle_no}</CTableDataCell>
+                    <CTableDataCell>{row.trailer_number}</CTableDataCell>
+                    <CTableDataCell>{row.status}</CTableDataCell>
+                    <CTableDataCell>{row.datetime}</CTableDataCell>
+                  </CTableRow>
+                ))}
+
+              </CTableBody>
+            </CTable>
+          ) : (
+            <p>No history available for this trailer.</p>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowHistory(false)}>
+            Close
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+
     </>
   )
 }

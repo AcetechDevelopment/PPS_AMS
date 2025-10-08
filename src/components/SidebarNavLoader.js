@@ -13,7 +13,8 @@ import {
   cilTablet,
   cilFolderOpen,
   cilHouse,
-  cibTodoist,cilSettings
+  cibTodoist,
+  cilSettings,
 } from '@coreui/icons'
 
 // Map string names from backend to icons
@@ -27,7 +28,8 @@ const iconMap = {
   cilTablet,
   cilFolderOpen,
   cilHouse,
-  cibTodoist,cilSettings
+  cibTodoist,
+  cilSettings,
 }
 
 // Map string names to CoreUI components

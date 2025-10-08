@@ -1,4 +1,4 @@
-import React, {useMemo,useState} from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import classNames from 'classnames'
 import { useTable, usePagination, useSortBy } from 'react-table';
 import { FaBars } from 'react-icons/fa';
@@ -20,7 +20,7 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
-   CTableCaption,
+  CTableCaption,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -59,17 +59,14 @@ import MainChart from './MainChart'
 import { useEffect } from 'react';
 
 const Dashboard = () => {
-   const [data, setData] = useState([]);
-   const [pageCount, setPageCount] = useState(0);
-    const[totalNumbers,settotalNumbers]=useState({})
-    const[selectedValue,setselectedValue]=useState("")
-    const[selectedMonth,setselectedMonth]=useState("")
-    const BASE = import.meta.env.VITE_BASE_URL;
-    const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
-   
-    const getTotalNumbers=async()=>{
-     try {
-      console.log("try")
+  const [data, setData] = useState([]);
+  const [pageCount, setPageCount] = useState(0);
+  const [category, setcategory] = useState("category")
+  const [day, setday] = useState("")
+
+
+  const getTotalNumbers = async () => {
+    try {
       const response = await fetch(`${BASE}options/dashboard`, {
         method: 'GET',
         headers: {
@@ -77,133 +74,124 @@ const Dashboard = () => {
           'Authorization': `Bearer ${authToken}`,
         },
       });
-      if(response.ok){
-      const data=await response.json()
-      console.log("response")
-      console.log(data)
-      settotalNumbers(data)
+      if (response.ok) {
+        const data = await response.json()
+
+        // settotalNumbers(data)
       }
-      
-   }
-  catch(err)
-  {
-    console.log(err.message)
+    }
+    catch (err) {
+
+    }
   }
-}
-useEffect(()=>{{
-  console.log("effect run")
-  getTotalNumbers()
-}},[])
-  
-  
+  useEffect(() => {
+    getTotalNumbers()
+  }, [])
   const progressExample = [
-    { title: 'Insurance', value: '29', percent: 0, color: 'success' },
-    { title: 'FC', value: '24', percent: 0, color: 'info' },
-    { title: 'PUC', value: '78', percent: 0, color: 'warning' },
-    { title: 'Green', value: '22', percent: 0, color: 'danger' },
-    { title: 'Driver', value: '12', percent:0, color: 'primary' },
-    { title: 'Fuel', value: '4', percent: 0, color: 'primary' },
+    { title: 'Insurance', value: '29', percent: 2, color: 'success' },
+    { title: 'FC', value: '24', percent: 20, color: 'info' },
+    { title: 'PUC', value: '78', percent: 60, color: 'warning' },
+    { title: 'Green', value: '22', percent: 80, color: 'danger' },
+    { title: 'Driver', value: '12', percent: 40.15, color: 'primary' },
+    { title: 'Fuel', value: '4', percent: 40.15, color: 'primary' },
   ]
-//  const progress_calculated=progressExample.map((prev)=>({...prev,percent:prev.value/50*100}))
+
   const progressExample1 = [
-      { title: 'Tools', value: '29',  color: 'success' },
-      { title: 'Spare', value: '24',color: 'info' },
-      { title: 'Tyre', value: '78',  color: 'warning' },
-      { title: 'Oil', value: '22',color: 'danger' },
+    { title: 'Tools', value: '29', color: 'success' },
+    { title: 'Spare', value: '24', color: 'info' },
+    { title: 'Tyre', value: '78', color: 'warning' },
+    { title: 'Oil', value: '22', color: 'danger' },
   ]
 
 
-  
+
   const materialColumns = useMemo(
-  () => [
-    { Header: 'Material Name', accessor: 'vehicle_number' },
-    { Header: 'HSN', accessor: 'type' },
-    { Header: 'Available', accessor: 'engine_number' },
-  ],
-  []
-);
+    () => [
+      { Header: 'Material Name', accessor: 'vehicle_number' },
+      { Header: 'HSN', accessor: 'type' },
+      { Header: 'Available', accessor: 'engine_number' },
+    ],
+    []
+  );
 
 
   const {
-  getTableProps: getMaterialTableProps,
-  getTableBodyProps: getMaterialBodyProps,
-  headerGroups: materialHeaderGroups,
-  prepareRow: prepareMaterialRow,
-  page: materialPage,
-  canPreviousPage: canMaterialPreviousPage,
-  canNextPage: canMaterialNextPage,
-  pageOptions: materialPageOptions,
-  pageCount: materialPageCount,
-  gotoPage: gotoMaterialPage,
-  nextPage: nextMaterialPage,
-  previousPage: previousMaterialPage,
-  setPageSize: setMaterialPageSize,
-  state: { pageIndex: materialPageIndex, pageSize: materialPageSize, sortBy: materialSortBy },
-} = useTable(
-  {
-    columns: materialColumns,
-    data,
-    initialState: { pageIndex: 0 },
-    manualPagination: true,
-    pageCount,
-    manualSortBy: true,
-    autoResetPage: false,
-    autoResetSortBy: false,
-    // fetchData,
-  },
-  useSortBy,
-  usePagination
-);
-
- const initial_vehDetails={
-    vehicle_number:"",
-    category:"",
-    expiry_date:""
-
-  }
-  const[vehicleDetails,setvehicleDetails]=useState(initial_vehDetails)
-
-   const columns = useMemo(
-      () => [
-        { Header: 'SL', accessor: 'id', disableSortBy: true, },
-        { Header: 'Vehicle Number', accessor: 'vehicle_number' },
-        { Header: 'Category', accessor: 'category' },
-        { Header: 'Expiry Date', accessor: 'expiry_date' },
-      ],
-      []
-    );
+    getTableProps: getMaterialTableProps,
+    getTableBodyProps: getMaterialBodyProps,
+    headerGroups: materialHeaderGroups,
+    prepareRow: prepareMaterialRow,
+    page: materialPage,
+    canPreviousPage: canMaterialPreviousPage,
+    canNextPage: canMaterialNextPage,
+    pageOptions: materialPageOptions,
+    pageCount: materialPageCount,
+    gotoPage: gotoMaterialPage,
+    nextPage: nextMaterialPage,
+    previousPage: previousMaterialPage,
+    setPageSize: setMaterialPageSize,
+    state: { pageIndex: materialPageIndex, pageSize: materialPageSize, sortBy: materialSortBy },
+  } = useTable(
+    {
+      columns: materialColumns,
+      data,
+      initialState: { pageIndex: 0 },
+      manualPagination: true,
+      pageCount,
+      manualSortBy: true,
+      autoResetPage: false,
+      autoResetSortBy: false,
+      // fetchData,
+    },
+    useSortBy,
+    usePagination
+  );
 
 
-     const {
-        getTableProps,
-        getTableBodyProps,
-        headerGroups,
-        prepareRow,
-        page,
-        canPreviousPage,
-        canNextPage,
-        pageOptions,
-        pageCount: controlledPageCount,
-        gotoPage,
-        nextPage,
-        previousPage,
-        setPageSize,
-        state: { pageIndex, pageSize, sortBy },
-      } = useTable(
-        {
-          columns,
-          data,
-          initialState: { pageIndex: 0 },
-          manualPagination: true,
-          pageCount,
-          manualSortBy: true,
-          autoResetPage: false,
-          autoResetSortBy: false,
-          // fetchData,
-        },
-        useSortBy,
-        usePagination
-      );
+
+  const columns = useMemo(
+    () => [
+      { Header: 'SL', accessor: 'id', disableSortBy: true, },
+      { Header: 'Vehicle Number', accessor: 'vehicle_number' },
+      {
+        Header: () => <span>{category}</span>,
+        accessor: 'type'
+      },
+      { Header: 'Expiry Date', accessor: 'engine_number' },
+    ],
+    [category]
+  );
+
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount: controlledPageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize, sortBy },
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0 },
+      manualPagination: true,
+      pageCount,
+      manualSortBy: true,
+      autoResetPage: false,
+      autoResetSortBy: false,
+      // fetchData,
+    },
+    useSortBy,
+    usePagination
+  );
 
   const progressGroupExample1 = [
     { title: 'Monday', value1: 34, value2: 78 },
@@ -317,202 +305,202 @@ useEffect(()=>{{
       activity: 'Last week',
     },
   ]
- const handleclick=(value)=>{
-  setselectedValue(value)
-  fetchdata(value)
- } 
-const handlemonth=(value)=>{
- setselectedMonth(value)
- }
-  const fetchdata=(value)=>{
-     console.log(value)
-    
-  }
+
+
+  const handleclick = useCallback((value) => {
+
+    setcategory(value)
+  }, [category])
+
+  const handleday = useCallback((value) => {
+    setday(value)
+  }, [day])
+
   return (
     <>
 
-  {totalNumbers&&<WidgetsDropdown className="mb-4" item={totalNumbers}  />}
+      <WidgetsDropdown className="mb-4" />
 
- <CRow>
- <CCol sm={4}>
-   <CCard className="mb-4">
-        <CCardBody>
-          <CRow className="mb-4">
-            <CCol sm={7}>
-              <h4 id="traffic" className="card-title mb-0">
-                Shortage
-              </h4>
-            </CCol>
-             <CCol sm={5} className="d-none d-md-block">
-              
-              <CButtonGroup className="float-end me-3">
-                {['Today', 'Month'].map((value) => (
-                  <CButton
-                    color="outline-secondary"
-                    key={value}
-                    className="mx-0"
-                    active={selectedMonth===value}
-                    onClick={()=>handlemonth(value)}
-                  >
-                    {value}
-                  </CButton>
-                ))}
-              </CButtonGroup>
-            </CCol>
-          </CRow>
-                <CTable striped bordered hover size="sm" variant="dark" {...getMaterialTableProps()} style={{ fontSize: '0.75rem' }}>
-                  <CTableHead color="secondary">
-                    {materialHeaderGroups.map((headerGroup) => (
-                      <tr {...headerGroup.getHeaderGroupProps()}>
-                        {headerGroup.headers.map((column) => (
-                          <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                            {column.render('Header')}
-                            <span>
-                              {column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
-                            </span>
-                          </th>
+      <CRow>
+        <CCol sm={4}>
+          <CCard className="mb-4">
+            <CCardBody>
+              <CRow className="mb-4">
+                <CCol sm={7}>
+                  <h4 id="traffic" className="card-title mb-0">
+                    Shortage
+                  </h4>
+                </CCol>
+                <CCol sm={5} className="d-none d-md-block">
+
+                  <CButtonGroup className="float-end me-3">
+                    {['Today', 'Month'].map((value) => (
+                      <CButton
+                        color="outline-secondary"
+                        key={value}
+                        className="mx-0"
+                        active={value === day}
+                        onClick={() => handleday(value)}
+                      >
+                        {value}
+                      </CButton>
+                    ))}
+                  </CButtonGroup>
+                </CCol>
+              </CRow>
+              <CTable striped bordered hover size="sm" variant="dark" {...getMaterialTableProps()} style={{ fontSize: '0.75rem' }}>
+                <CTableHead color="secondary">
+                  {materialHeaderGroups.map((headerGroup) => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column) => (
+                        <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                          {column.render('Header')}
+                          <span>
+                            {column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </CTableHead>
+                <tbody {...getMaterialBodyProps()}>
+                  {materialPage.map((row) => {
+                    prepareMaterialRow(row);
+                    return (
+                      <tr {...row.getRowProps()}>
+                        {row.cells.map((cell) => (
+                          <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                         ))}
                       </tr>
-                    ))}
-                  </CTableHead>
-                  <tbody {...getMaterialBodyProps()}>
-                    {materialPage.map((row) => {
-                      prepareMaterialRow(row);
-                      return (
-                        <tr {...row.getRowProps()}>
-                          {row.cells.map((cell) => (
-                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </CTable>
+                    );
+                  })}
+                </tbody>
+              </CTable>
 
 
 
 
-        </CCardBody>
-        <CCardFooter>
-          <CRow
-            xs={{ cols: 1, gutter: 4 }}
-            sm={{ cols: 2 }}
-            lg={{ cols: 4 }}
-            xl={{ cols: 4 }}
-            className="mb-2 text-center"
-          >
-            {progressExample1.map((item, index, items) => (
-              <CCol
-                className={classNames({
-                  'd-none d-xl-block': index + 1 === items.length,
-                })}
-                key={index}
+            </CCardBody>
+            <CCardFooter>
+              <CRow
+                xs={{ cols: 1, gutter: 4 }}
+                sm={{ cols: 2 }}
+                lg={{ cols: 4 }}
+                xl={{ cols: 4 }}
+                className="mb-2 text-center"
               >
-                <div className="text-body-secondary">{item.title}</div>
-                <div className="fw-semibold text-truncate">
-                  {item.value}
-                </div>
-                <CProgress thin className="mt-2" color={item.color} value={item.percent} />
-              </CCol>
-            ))}
-          </CRow>
-        </CCardFooter>
-      </CCard>
- </CCol>
-
-  <CCol sm={8}>
-    <CCard className="mb-4">
-        <CCardBody>
-          <CRow className="mb-4">
-            <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                Notifications
-              </h4>
-            </CCol>
-
-            <CCol sm={7} className="d-none d-md-block">
-              
-              <CButtonGroup className="float-end me-3">
-                {['FC', 'Insurance', 'PUC', 'Driver', 'Green', 'Fuel'].map((value) => (
-                  <CButton
-                    color="outline-secondary"
-                    key={value}
-                    className="mx-0"
-                    active={selectedValue === value}
-                    onClick={()=>handleclick(value)}
+                {progressExample1.map((item, index, items) => (
+                  <CCol
+                    className={classNames({
+                      'd-none d-xl-block': index + 1 === items.length,
+                    })}
+                    key={index}
                   >
-                    {value}
-                  </CButton>
+                    <div className="text-body-secondary">{item.title}</div>
+                    <div className="fw-semibold text-truncate">
+                      {item.value}
+                    </div>
+                    <CProgress thin className="mt-2" color={item.color} value={item.percent} />
+                  </CCol>
                 ))}
-              </CButtonGroup>
-            </CCol>
-          </CRow>
-                <CTable striped bordered hover size="sm"  variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-                  <CTableHead color="secondary">
-                    {headerGroups.map((headerGroup) => (
-                      <tr {...headerGroup.getHeaderGroupProps()}>
-                        {headerGroup.headers.map((column) => (
-                          <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                            {column.render('Header')}
-                            <span>
-                              {column.isSorted
-                                ? column.isSortedDesc
-                                  ? ' 🔽'
-                                  : ' 🔼'
-                                : ''}
-                            </span>
-                          </th>
+              </CRow>
+            </CCardFooter>
+          </CCard>
+        </CCol>
+
+        <CCol sm={8}>
+          <CCard className="mb-4">
+            <CCardBody>
+              <CRow className="mb-4">
+                <CCol sm={5}>
+                  <h4 id="traffic" className="card-title mb-0">
+                    Notifications
+                  </h4>
+                </CCol>
+
+                <CCol sm={7} className="d-none d-md-block">
+
+                  <CButtonGroup className="float-end me-3">
+                    {['FC', 'Insurance', 'PUC', 'Driver', 'Green', 'Fuel'].map((value) => (
+                      <CButton
+                        color="outline-secondary"
+                        key={value}
+                        className="mx-0"
+                        active={value === category}
+                        onClick={() => handleclick(value)}
+                      >
+                        {value}
+                      </CButton>
+                    ))}
+                  </CButtonGroup>
+                </CCol>
+              </CRow>
+              <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                <CTableHead color="secondary">
+                  {headerGroups.map((headerGroup) => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column) => (
+                        <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                          {column.render('Header')}
+                          <span>
+                            {column.isSorted
+                              ? column.isSortedDesc
+                                ? ' 🔽'
+                                : ' 🔼'
+                              : ''}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </CTableHead>
+                <tbody {...getTableBodyProps()}>
+                  {page.map((row) => {
+                    prepareRow(row);
+                    return (
+                      <tr {...row.getRowProps()}>
+                        {row.cells.map((cell) => (
+                          <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                         ))}
                       </tr>
-                    ))}
-                  </CTableHead>
-                  <tbody {...getTableBodyProps()}>
-                    {page.map((row) => {
-                      prepareRow(row);
-                      return (
-                        <tr {...row.getRowProps()}>
-                          {row.cells.map((cell) => (
-                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </CTable>
+                    );
+                  })}
+                </tbody>
+              </CTable>
 
 
 
-        </CCardBody>
-        <CCardFooter>
-          <CRow
-            xs={{ cols: 1, gutter: 4 }}
-            sm={{ cols: 2 }}
-            lg={{ cols: 4 }}
-            xl={{ cols: 6 }}
-            className="mb-2 text-center"
-          >
-            {progressExample.map((item, index, items) => (
-              <CCol
-                className={classNames({
-                  'd-none d-xl-block': index + 1 === items.length,
-                })}
-                key={index}
+            </CCardBody>
+            <CCardFooter>
+              <CRow
+                xs={{ cols: 1, gutter: 4 }}
+                sm={{ cols: 2 }}
+                lg={{ cols: 4 }}
+                xl={{ cols: 6 }}
+                className="mb-2 text-center"
               >
-                <div className="text-body-secondary">{item.title}</div>
-                <div className="fw-semibold text-truncate">
-                  {item.value} ({item.percent}%)
-                </div>
-                <CProgress thin className="mt-2" color={item.color} value={item.percent} />
-              </CCol>
-            ))}
-          </CRow>
-        </CCardFooter>
-      </CCard>
+                {progressExample.map((item, index, items) => (
+                  <CCol
+                    className={classNames({
+                      'd-none d-xl-block': index + 1 === items.length,
+                    })}
+                    key={index}
+                  >
+                    <div className="text-body-secondary">{item.title}</div>
+                    <div className="fw-semibold text-truncate">
+                      {item.value} ({item.percent}%)
+                    </div>
+                    <CProgress thin className="mt-2" color={item.color} value={item.percent} />
+                  </CCol>
+                ))}
+              </CRow>
+            </CCardFooter>
+          </CCard>
 
-  </CCol>
+        </CCol>
 
- </CRow>
-      
+      </CRow>
+
 
 
     </>

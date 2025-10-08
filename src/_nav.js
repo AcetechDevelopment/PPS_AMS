@@ -1,37 +1,33 @@
-import React from 'react'
+// SidebarNavLoader.js
+import React, { useEffect, useState } from 'react'
 import CIcon from '@coreui/icons-react'
 import {
-  cilLibrary,
   cilGarage,
-  cilRecycle,
-  cilLoopCircular,
   cilTruck,
   cilGrid,
-  cilTrash,
   cilCog,
   cilLayers,
-  cilCart,
-  cilRoom,
-  cilHouse,
-  cibBuffer,
-  cibMega,
-  cibC,
-  cilCarAlt,
   cilPeople,
   cilTablet,
   cilSettings,
   cilFolderOpen,
   cibTodoist, cilUser,
 } from '@coreui/icons'
-import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
+import { AppSidebarNav } from './AppSidebarNav'
 
-const _nav = [
-  {
-    component: CNavItem,
-    name: 'Dashboard',
-    to: '/dashboard',
-    icon: <CIcon icon={cilGrid} customClassName="nav-icon" />,
-  },
+// Map icon names (from Laravel JSON) to CoreUI icons
+const iconMap = {
+  cilGarage,
+  cilTruck,
+  cilGrid,
+  cilCog,
+  cilLayers,
+  cilPeople,
+  cilTablet,
+  cilFolderOpen,
+  cilHouse,
+  cibTodoist,
+}
 
   {
     component: CNavTitle,

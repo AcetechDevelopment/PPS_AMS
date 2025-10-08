@@ -56,7 +56,7 @@ const SpareAssign = () => {
   const [id, setid] = useState('');
   const [selectedvalues, setselectedvalues] = useState({ vehicle_id: "", trailer_id: "" })
   const [showHistory, setShowHistory] = useState(false)
-  // const [save_data, setsave_data] = useState({ vehicle_id: "", trailer_id: "" });
+  const [save_data, setsave_data] = useState({ vehicle_id: "", trailer_id: "", brand: "", modal: "", partnumber: "", serialno: ""  });
   // const [updated_data, setupdated_data] = useState({ vehicle_id: "", trailer_id: "" });
   const [brandoption, setbrandoption] = useState([]);
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
@@ -64,10 +64,10 @@ const SpareAssign = () => {
 
 
   const submitvichile = async () => {
-    const data = selectedvalues;
+    const data = save_data;
     if (
       !data.vehicle_id ||
-      !data.trailer_id
+      !data.serialno
     ) {
       toast.error('All fields are required!');
       return;
@@ -85,7 +85,7 @@ const SpareAssign = () => {
     });
 
     try {
-      const response = await fetch(`${apiUrl}trailerassign/create`, {
+      const response = await fetch(`${apiUrl}spareassign/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -95,10 +95,10 @@ const SpareAssign = () => {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success('New Trailer Assigned!');
+        toast.success('New Spare Assigned!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
-        setselectedvalues({ vehicle_id: "", trailer_id: "" });
+        setsave_data({ vehicle_id: "", trailer_id: "", brand: "", modal: "", partnumber: "", serialno: "" });
       } else {
         const error = await response.json();
         const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
@@ -174,7 +174,7 @@ const SpareAssign = () => {
     }
   }
 
-  
+
    const [partnoOption, setpartnoOption] = useState([]);
  
   const getpartnolist = async (modelid) => {
@@ -195,8 +195,8 @@ const SpareAssign = () => {
       }
       const result = await response.json();
       const datas = result?.spare?.map(item => ({
-        value: item.id,
-        label: item.spare_name
+        value: item.part_num,
+        label: item.part_num
       }));
       setpartnoOption(datas);
     }
@@ -226,7 +226,7 @@ const SpareAssign = () => {
       const result = await response.json();
       const datas = result?.data?.map(item => ({
         value: item.id,
-        label: item.model
+        label: item.serial_number
       }));
       setserialnoOptions(datas);
     }
@@ -236,21 +236,19 @@ const SpareAssign = () => {
   }
 
 
-  const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
+  const fetchData = async ({ pageSize = 15, pageIndex, sortBy, search, todate, location }) => {
     setLoading(true);
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
     const sortOrder = sortBy.length > 0 && sortBy[0].desc ? 'desc' : 'asc';
 
     const orderBy = `${sortColumn} ${sortOrder}`;
 
-    const pageSizee = 15;
-    const pageindex = pageIndex * pageSizee;
-
-    // const pageindex = pageIndex*15;
+    const limit = pageSize;
+    const start = pageIndex * limit;
 
     try {
       const response = await fetch(
-        `${apiUrl}trailerassign/list?start=${pageindex}&limit=${pageSizee}&search=${search}&order_by=${orderBy}`,
+        `${apiUrl}spareassign/list?start=${start}&limit=${limit}&search=${search}&order_by=${orderBy}`,
         {
           method: 'GET',
           headers: {
@@ -263,15 +261,24 @@ const SpareAssign = () => {
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-
       const result = await response.json();
-      setData(result.data);
-      const tot = Math.round(result.total * 1 / 15)
-      setPageCount(tot);
+      const items = Array.isArray(result.data) ? result.data : [];
+      let pageItems = [];
+      if (items.length <= limit && pageIndex > 0) {
+        pageItems = items;
+      } else {
+        pageItems = items.slice(start, start + limit);
+      }
+
+      setData(pageItems);
+      const total = Number(result.total) || items.length || 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      setPageCount(totalPages);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
+      setPageCount(1);
     } finally {
       setLoading(false);
     }
@@ -287,12 +294,12 @@ const SpareAssign = () => {
         disableSortBy: true,
         Cell: ({ row }) => row.index + 1,
       },
-      { Header: 'Vehicle', accessor: 'type' },
-      { Header: 'Brand', accessor: 'number' },
-      { Header: 'Model', accessor: '' },
-     
-      { Header: 'Part No', accessor: '' },
-       { Header: 'Serial No', accessor: '' },
+      { Header: 'Vehicle', accessor: 'vehicle_number' },
+      { Header: 'Brand', accessor: 'brand_name' },
+      { Header: 'Model', accessor: 'model' },
+      { Header: 'Part No', accessor: 'part_num' },
+      { Header: 'Spare Name', accessor: 'spare_name' },
+      { Header: 'Serial No', accessor: 'serial_number' },
       {
         Header: () => <FaBars />,
         id: 'actions',
@@ -302,8 +309,6 @@ const SpareAssign = () => {
           return (
             <div className="flex gap-5">
               <FaHistory className="ms-2 pointer text-info" onClick={() => viewvehicle(id)} />
-
-              <FaExchangeAlt className="ms-2 pointer text-primary" onClick={() => editvehicle(id)} />
 
               <FaMinusSquare className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
 
@@ -338,7 +343,7 @@ const SpareAssign = () => {
     {
       columns,
       data,
-      initialState: { pageIndex: 0 },
+      initialState: { pageIndex: 0, pageSize: 15 },
       manualPagination: true,
       pageCount,
       manualSortBy: true,
@@ -361,128 +366,11 @@ const SpareAssign = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const [updateshow, setupdateShow] = useState(false);
-  const handleEClose = () => setupdateShow(false);
 
-  const editvehicle = async (id) => {
-    if (!authToken) {
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Unauthorized, please log in.',
-        icon: 'error',
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BASE}trailerassign/edit/${id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const res = data.data;
-
-        setupdated_data({
-          id: res.id,
-          user_id: res.user_id,
-          vehicle_id: { value: res.vehicle_id, label: res.vehicle_no },
-          trailer_id: { value: res.trailer_id, label: res.trailer_number },
-          v_id: res.vehicle_id,
-          r_id: res.trailer_id
-        });
-
-        setupdateShow(true);
-      } else {
-        const error = await response.json();
-        ReactSwal.fire({
-          title: 'Error',
-          text: error.message || 'Unable to reach Trailer data',
-          icon: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      ReactSwal.fire({
-        title: 'Error',
-        text: 'Failed to connect to the server. Please try again later.',
-        icon: 'error',
-      });
-    }
-  };
-
-
-
-
-  const updatevichile = async () => {
-    const data = updated_data;
-    if (
-      !data.vehicle_id ||
-      !data.trailer_id
-    ) {
-      toast.error('All fields are required!');
-      return;
-    }
-
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-
-      let finalValue = value;
-      if (value instanceof Date) {
-        finalValue = value.toISOString().split('T')[0];
-      }
-
-
-      if (key === 'file' && value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, value?.toString() || '');
-      }
-    });
-
-    try {
-      const response = await fetch(`${BASE}trailerassign/update`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success('Trailer Exchange Updated!');
-        fetchData({ pageSize, pageIndex, sortBy, search });
-        setupdateShow(false);
-        setupdated_data({
-          id: '',
-          vehicle_id: { value: '', label: '' },
-          trailer_id: { value: '', label: '' },
-          v_id: '',
-          r_id: ''
-        });
-
-
-      } else {
-        const error = await response.json();
-        const errorMessage = error.message || Object.values(error)[0] || 'Duplicate entry';
-        toast.error(`Error: ${errorMessage}`);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      toast.error('Failed to connect to the server. Please try again later.');
-    }
-
-  };
 
   const viewvehicle = async (id) => {
     try {
-      const response = await fetch(`${BASE}trailerassign/history/${id}`, {
+      const response = await fetch(`${BASE}spareassign/history/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -525,7 +413,7 @@ const SpareAssign = () => {
       });
 
       if (result.isConfirmed) {
-        const response = await fetch(`${BASE}trailerassign/delete/${id}`, {
+        const response = await fetch(`${BASE}spareassign/delete/${id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -536,7 +424,7 @@ const SpareAssign = () => {
         if (response.ok) {
           ReactSwal.fire({
             title: 'Deleted!',
-            text: 'Trailer Assign deleted successfully!',
+            text: 'Spare Assign deleted successfully!',
             icon: 'success',
           });
 
@@ -545,7 +433,7 @@ const SpareAssign = () => {
           const error = await response.json();
           ReactSwal.fire({
             title: 'Error',
-            text: error.message || 'Unable to delete user',
+            text: error.message || 'Unable to delete Spare Assign',
             icon: 'error',
           });
         }
@@ -600,6 +488,57 @@ const SpareAssign = () => {
     }
   };
 
+
+
+  const [brand_search, setbrand_search] = useState("");
+  const [brand_options, setbrand_options] = useState([]);
+
+
+  const fetchbrand_search = async (search) => {
+    if (!search) {
+      setbrand_options([]);
+      return;
+    }
+
+    try {
+      const url = `${BASE}options/brand_search/${encodeURIComponent(search)}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const result = data.data;
+      // transform API -> react-select format
+      const formatted = result.map((item) => ({
+        value: item.brand_id,
+        label: item.brand_name,
+      }));
+
+      setbrand_options(formatted);
+
+      console.log("brand options", formatted);
+      
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+   useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchbrand_search(brand_search);
+    }, 5);
+
+    return () => clearTimeout(delayDebounce);
+  }, [brand_search]);
+
   
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -616,81 +555,85 @@ const SpareAssign = () => {
   return (
     <>
       <CCard className="mb-4">
-        <CCardHeader className='bg-secondary text-light'>
-          Spare Assign
-        </CCardHeader>
-        <CCardBody>
-
-          <input
-            type="search"
-            onChange={(e) => setsearch(e.target.value)}
-            className="form-control form-control-sm m-1 float-end w-auto"
-            placeholder='Search'
-          />
-
-          <CButtonGroup role="group" aria-label="Basic example">
-            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-          </CButtonGroup>
-
-
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-            <CTableHead color="secondary">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </CTableHead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-
-                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-
-
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </CTable>
-
-          <div>
-            <span>
-              Page{' '}
-              <strong>
-                {pageIndex + 1} of {pageOptions.length}
-              </strong>{' '}
-            </span>
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<<'}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<'}
-            </button>
-            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>'}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>>'}
-            </button>
-          </div>
-        </CCardBody>
-      </CCard>
+                    <CCardHeader className='bg-secondary text-light'>
+                      Spare Assign
+                    </CCardHeader>
+            
+                    <CCardBody>
+                      <input
+                        type="search"
+                        onChange={(e) => setsearch(e.target.value)}
+                        className="form-control form-control-sm m-1 float-end w-auto"
+                        placeholder='Search'
+                      />
+            
+                      <CButtonGroup role="group" aria-label="Basic example">
+                        <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+                       
+      
+                      </CButtonGroup>
+                      <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                        <CTableHead color="secondary">
+                          {headerGroups.map((headerGroup) => (
+                            <tr {...headerGroup.getHeaderGroupProps()}>
+                              {headerGroup.headers.map((column) => (
+                                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                                  {column.render('Header')}
+                                  <span>
+                                    {column.isSorted
+                                      ? column.isSortedDesc
+                                        ? ' 🔽'
+                                        : ' 🔼'
+                                      : ''}
+                                  </span>
+                                </th>
+                              ))}
+                            </tr>
+                          ))}
+                        </CTableHead>
+                        <tbody {...getTableBodyProps()}>
+                          {page.map((row) => {
+                            prepareRow(row);
+                            const serial = pageIndex * pageSize + row.index + 1;
+                            return (
+                              <tr {...row.getRowProps()}>
+                                {row.cells.map((cell) => (
+            
+                                  <td {...cell.getCellProps()}>
+                                    {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                                  </td>
+            
+            
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                        
+                      </CTable>
+            
+                      <div>
+                        <span>
+                          Page{' '}
+                          <strong>
+                            {pageIndex + 1} of {pageCount}
+                          </strong>{' '}
+                        </span>
+                        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'<<'}
+                        </button>
+                        <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'<'}
+                        </button>
+                        <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'>'}
+                        </button>
+                        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'>>'}
+                        </button>
+                      </div>
+                    </CCardBody>
+                  </CCard>
 
 
 
@@ -730,22 +673,27 @@ const SpareAssign = () => {
                   }
                 }}
                 onChange={(selectedOption) => {
-                  setselectedvalues((prev) => ({ ...prev, trailer_id: selectedOption ? selectedOption.value : "" }))
+                  setsave_data((prev) => ({ ...prev, vehicle_id: selectedOption ? selectedOption.value : "" }))
                 }}
               />
-
-
 
               <CFormLabel className="col-form-label">
                 Brand
               </CFormLabel>
-              <Select options={brandoption}
+              <Select options={brand_options}
                 isMulti={false}
                 placeholder="Select Brand"
-                size="sm"
-                className='mb-2 small-select'
+                size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-                // value={save_data.brand}
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 })
+                }}
+                onInputChange={(inputValue, { action }) => {
+                  if (action === "input-change") {
+                    setbrand_search(inputValue);
+                  }
+                }}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -766,6 +714,10 @@ const SpareAssign = () => {
                 placeholder="Select Model"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 })
+                }}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -785,6 +737,10 @@ const SpareAssign = () => {
                 placeholder="Select PartNumber"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 })
+                }}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -805,6 +761,10 @@ const SpareAssign = () => {
                 placeholder="Select SerialNo"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({ ...base, zIndex: 9999 })
+                }}
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -823,6 +783,57 @@ const SpareAssign = () => {
           <CButton color="primary" onClick={submitvichile}>Add</CButton>
         </CModalFooter>
       </CModal>
+
+
+
+             <CModal visible={showHistory} onClose={() => setShowHistory(false)} size="lg">
+              <CModalHeader>
+                <CModalTitle>Spare Assign History</CModalTitle>
+              </CModalHeader>
+              <CModalBody>
+                {history.length > 0 ? (
+                  <CTable
+                    striped
+                  bordered
+                  hover
+                  size="sm"
+                  variant="dark"
+                  style={{ fontSize: '0.75rem' }}
+                  >
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>ID</CTableHeaderCell>
+                        <CTableHeaderCell>Updated By</CTableHeaderCell>
+                        <CTableHeaderCell>Vehicle No</CTableHeaderCell>
+                        <CTableHeaderCell>Spare Name</CTableHeaderCell>
+                        <CTableHeaderCell>Status</CTableHeaderCell>
+                        <CTableHeaderCell>DateTime</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      {history.map((row, index) => (
+                        <CTableRow key={row.id}>
+                          <CTableDataCell>{index + 1}</CTableDataCell>
+                          <CTableDataCell>{row.user_id}</CTableDataCell>
+                          <CTableDataCell>{row.vehicle_no}</CTableDataCell>
+                          <CTableDataCell>{row.spare_name}</CTableDataCell>
+                          <CTableDataCell>{row.status}</CTableDataCell>
+                          <CTableDataCell>{row.datetime}</CTableDataCell>
+                        </CTableRow>
+                      ))}
+      
+                    </CTableBody>
+                  </CTable>
+                ) : (
+                  <p>No history available for this Spare.</p>
+                )}
+              </CModalBody>
+              <CModalFooter>
+                <CButton color="secondary" onClick={() => setShowHistory(false)}>
+                  Close
+                </CButton>
+              </CModalFooter>
+            </CModal>
 </>
   )
 }

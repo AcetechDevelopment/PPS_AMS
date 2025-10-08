@@ -34,7 +34,7 @@ const Timeline = ({ vehicleId, jobcardId }) => {
 
     return (
 
-        <div style={{ backgroundColor: "#C9CBCF" }}>
+        <div style={{ backgroundColor: "#212223ff" }}>
             <div style={{display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}}>
                 <p>VehicleId:{vehicleId}</p>
                 <p>JobcardId:{jobcardId}</p>
@@ -48,7 +48,7 @@ const Timeline = ({ vehicleId, jobcardId }) => {
                     iconStyle={{ background: "rgb(33, 150, 243)", color: "#fff" }}
                  icon={<FaPlay/>}
                 >
-                    <ul>
+                    <ul style={{color:"black"}}>
                         <li>Date:{initial_timeline.date}</li>
                         <li>Fault:{initial_timeline.fault}</li>
                         <li>Assigned:{initial_timeline.assigned}</li>

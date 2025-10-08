@@ -34,7 +34,6 @@ import { Sharedcontext } from '../../components/Context';
 import { exportToExcel } from '../export/excel';
 import { exportToPDF } from '../export/pdf';
 import { exportToPrint } from '../export/print';
-import { useLocation } from "react-router-dom";
 
 
 const TrailerInventory = () => {
@@ -56,7 +55,7 @@ const TrailerInventory = () => {
   const [categoryid, setcategoryid] = useState('');
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
-
+  const [location, setlocation] = useState('');
   const [loc_id, setlocationid] = useState('');
   const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
@@ -69,10 +68,8 @@ const TrailerInventory = () => {
   const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
-  // const [action_details, setactiondetails] = useState({})
-  const { roleId,fetchActionDetails,action_details } = useContext(Sharedcontext)
-  const location = useLocation(); // 👈 gives full URL path
-
+  const [action_details, setactiondetails] = useState({})
+  const { roleId } = useContext(Sharedcontext)
 
   const intial_data = {
     trailer_number: '',
@@ -89,7 +86,6 @@ const TrailerInventory = () => {
     insurancenumber: '',
     insuranceenddate: today,
     file: null,
-    image:""
   };
 
 
@@ -106,7 +102,7 @@ const TrailerInventory = () => {
       return;
     }
 
-
+    
     const hsnCheck = validateHSN(data.hsn);
     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
@@ -166,7 +162,6 @@ const TrailerInventory = () => {
           partnum: "",
           insurancenumber: '',
           insuranceenddate: today,
-          image:"",
           file: null,
         });
 
@@ -316,7 +311,7 @@ const TrailerInventory = () => {
 
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
-  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
+const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
 
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
@@ -362,13 +357,13 @@ const TrailerInventory = () => {
       setLoading(false);
     }
   };
-
+  
 
   const columns = useMemo(
     () => [
       {
         Header: 'SL',
-        id: 'sl',
+        id: 'sl',            
         disableSortBy: true,
         Cell: ({ row }) => row.index + 1,
       },
@@ -388,7 +383,7 @@ const TrailerInventory = () => {
           return (
             <div className="">
 
-              {/* {action_details?.isView && (
+              {action_details?.isView && (
                 <FaEye
                   size={15}
                   className="ms-2 me-2 pointer text-info"
@@ -409,27 +404,7 @@ const TrailerInventory = () => {
                   className="ms-2 me-2 pointer text-info"
                   onClick={() => deletevehicle(id)}
                 />
-              )} */}
-              <FaEye
-                size={15}
-                className={`ms-2 me-2 ${action_details?.isView ? "text-info pointer" : "text-muted"}`}
-                onClick={() => action_details?.isView && viewvehicle(id)}
-                style={{ cursor: action_details?.isView ? "pointer" : "not-allowed", opacity: action_details?.isView ? 1 : 0.5 }}
-              />
-
-              <FaEdit
-                size={15}
-                className={`ms-2 me-2 ${action_details?.isEdit ? "text-primary pointer" : "text-muted"}`}
-                onClick={() => action_details?.isEdit && editvehicle(id)}
-                style={{ cursor: action_details?.isEdit ? "pointer" : "not-allowed", opacity: action_details?.isEdit ? 1 : 0.5 }}
-              />
-
-              <FaTrash
-                size={15}
-                className={`ms-2 me-2 ${action_details?.isDelete ? "text-danger pointer" : "text-muted"}`}
-                onClick={() => action_details?.isDelete && deletevehicle(id)}
-                style={{ cursor: action_details?.isDelete ? "pointer" : "not-allowed", opacity: action_details?.isDelete ? 1 : 0.5 }}
-              />
+              )}
             </div>
           );
         },
@@ -530,7 +505,7 @@ const TrailerInventory = () => {
           file: null,
         });
         console.log(res.purchase_date);
-
+        
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
         setupdateShow(true);
@@ -591,7 +566,7 @@ const TrailerInventory = () => {
         formData.append(key, value?.toString() || '');
       }
     });
-    console.log(...formData.entries())
+    console.log(formData)
     try {
       const response = await fetch(`${BASE}trailer/update`, {
         method: 'POST',
@@ -604,7 +579,6 @@ const TrailerInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(response)
         toast.success('Trailer Updated!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setupdateShow(false);
@@ -656,7 +630,7 @@ const TrailerInventory = () => {
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
       } else {
-
+        
       }
     } catch (err) {
       console.error('Error:', err);
@@ -722,91 +696,128 @@ const TrailerInventory = () => {
 
 
 
- 
-  useEffect(() => { 
-      const pageName = location.pathname.replace("/", "");
-      fetchActionDetails(pageName) }, [location,roleId])
-
-
-
-
-  const fetchVehicleData = async (authToken) => {
-    const response = await fetch(`${BASE}trailer/list?start=0&limit=1000`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-
-    if (!response.ok) throw new Error("Failed to fetch data");
-
-    const result = await response.json();
-    const allData = Array.isArray(result.data) ? result.data : [];
-
-    if (allData.length === 0) {
-      alert("No data found for export");
-      return [];
-    }
-
-    return allData.map((row, index) => ({
-      "SL No": index + 1,
-      "Trailer No": row.trailer_number,
-      "Brand": row.brandname,
-      "Model": row.modelname,
-      "HSN": row.hsn,
-      "Part No": row.part_num,
-      "Purchase date": row.purchase_date,
-      "Months of Warranty": row.years_warrenty,
-      "Warranty Expire Date": row.exp_warranty,
-      "AMC Number": row.amc,
-      "AMC Date": row.amc_date,
-      "Wheels count": row.tyre_count,
-      "Stepney Count": row.step_count,
-      "Insurance": row.insurance,
-      "Insurance Date": row.ins_date,
-      "Status": row.status === 1 ? "Inactive" : "Active",
-    }));
-  };
-
-
-  const handleExportExcel = async () => {
+  const fetchActionDetails = async () => {
+    console.log("fetch")
     try {
-      setExcelLoading(true);
-      const data = await fetchVehicleData(authToken);
-      if (data.length > 0) exportToExcel(data, "Trailer_Inventory");
-    } catch (error) {
-      console.error("Excel Export Error:", error);
-      alert("Failed to export Excel");
-    } finally {
-      setExcelLoading(false);
-    }
-  };
+      const response = await fetch(`${BASE}permission/lists/${roleId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
 
-  const handleExportPDF = async () => {
-    try {
-      setPdfLoading(true);
-      const data = await fetchVehicleData(authToken);
-      if (data.length > 0) exportToPDF(data, "Trailer_Inventory");
-    } catch (error) {
-      console.error("PDF Export Error:", error);
-      alert("Failed to export PDF");
-    } finally {
-      setPdfLoading(false);
-    }
-  };
+      if (response.ok) {
+        const data = await response.json();
+        let veh_invent = null;
+        if (Array.isArray(data)
+          &&
+          data[1]?.children?.[0]?.children?.[0] &&
+          data[1].children[0].children[0].name === "Vehicle Inventory") {
+          veh_invent = data[1].children[0].children[0]
+        }
+        setactiondetails(veh_invent)
 
-  const handlePrint = async () => {
-    try {
-      setPrintLoading(true);
-      const data = await fetchVehicleData(authToken);
-      if (data.length > 0) exportToPrint(data, "Trailer_Inventory");
-    } catch (error) {
-      console.error("Print Error:", error);
-      alert("Failed to print report");
-    } finally {
-      setPrintLoading(false);
+
+      } else {
+        const error = await response.json();
+        ReactSwal.fire({
+          title: 'Error',
+          text: error.message || 'Unable to reach user data',
+          icon: 'error',
+        });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
+      });
     }
-  };
+  }
+  useEffect(() => { fetchActionDetails() }, [roleId])
+
+
+
+
+const fetchVehicleData = async (authToken) => {
+  const response = await fetch(`${BASE}trailer/list?start=0&limit=1000`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch data");
+
+  const result = await response.json();
+  const allData = Array.isArray(result.data) ? result.data : [];
+
+  if (allData.length === 0) {
+    alert("No data found for export");
+    return [];
+  }
+
+  return allData.map((row, index) => ({
+    "SL No": index + 1,
+    "Trailer No": row.trailer_number,
+    "Brand": row.brandname,
+    "Model": row.modelname,
+    "HSN": row.hsn,
+    "Part No": row.part_num,
+    "Purchase date": row.purchase_date,
+    "Months of Warranty": row.years_warrenty,
+    "Warranty Expire Date": row.exp_warranty,
+    "AMC Number": row.amc,
+    "AMC Date": row.amc_date,
+    "Wheels count": row.tyre_count,
+    "Stepney Count": row.step_count,
+    "Insurance": row.insurance,
+    "Insurance Date": row.ins_date,
+    "Status": row.status === 1 ? "Inactive" : "Active",
+  }));
+};
+
+
+const handleExportExcel = async () => {
+  try {
+    setExcelLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToExcel(data, "Trailer_Inventory");
+  } catch (error) {
+    console.error("Excel Export Error:", error);
+    alert("Failed to export Excel");
+  } finally {
+    setExcelLoading(false);
+  }
+};
+
+const handleExportPDF = async () => {
+  try {
+    setPdfLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPDF(data, "Trailer_Inventory");
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    alert("Failed to export PDF");
+  } finally {
+    setPdfLoading(false);
+  }
+};
+
+const handlePrint = async () => {
+  try {
+    setPrintLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPrint(data, "Trailer_Inventory");
+  } catch (error) {
+    console.error("Print Error:", error);
+    alert("Failed to print report");
+  } finally {
+    setPrintLoading(false);
+  }
+};
 
 
 
@@ -814,107 +825,104 @@ const TrailerInventory = () => {
   return (
     <>
       <CCard className="mb-4">
-        <CCardHeader className='bg-secondary text-light'>
-          Trailer Inventory
-        </CCardHeader>
-
-        <CCardBody>
-          <input
-            type="search"
-            onChange={(e) => setsearch(e.target.value)}
-            className="form-control form-control-sm m-1 float-end w-auto"
-            placeholder='Search'
-          />
-
-          <CButtonGroup role="group" aria-label="Basic example">
-            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-                Excelloading
-                handleExportExcel();
-              }} disabled={Excelloading} >
-              {Excelloading ? "Exporting..." : "Excel"}
-            </CButton>
-
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-                Pdfloading
-                handleExportPDF();
-              }} disabled={Pdfloading} >
-              {Pdfloading ? "Exporting..." : "PDF"}
-            </CButton>
-
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-                Printloading
-                handlePrint();
-              }} disabled={Printloading} >
-              {Printloading ? "Printing..." : "Print"}
-            </CButton>
-
-          </CButtonGroup>
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-            <CTableHead color="secondary">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </CTableHead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                const serial = pageIndex * pageSize + row.index + 1;
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-
-                      <td {...cell.getCellProps()}>
-                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
-                      </td>
-
-
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-
-          </CTable>
-
-          <div>
-            <span>
-              Page{' '}
-              <strong>
-                {pageIndex + 1} of {pageCount}
-              </strong>{' '}
-            </span>
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<<'}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<'}
-            </button>
-            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>'}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>>'}
-            </button>
-          </div>
-        </CCardBody>
-      </CCard>
+                    <CCardHeader className='bg-secondary text-light'>
+                      Trailer Inventory
+                    </CCardHeader>
+            
+                    <CCardBody>
+                      <input
+                        type="search"
+                        onChange={(e) => setsearch(e.target.value)}
+                        className="form-control form-control-sm m-1 float-end w-auto"
+                        placeholder='Search'
+                      />
+            
+                      <CButtonGroup role="group" aria-label="Basic example">
+                        <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+                        <CButton className="btn btn-sm btn-secondary w-auto"
+                          onClick={() => {Excelloading
+                                handleExportExcel();
+                              }} disabled={Excelloading} >
+                                { Excelloading ? "Exporting..." : "Excel" } 
+                            </CButton>
+      
+                        <CButton className="btn btn-sm btn-secondary w-auto" 
+                        onClick={() => {Pdfloading
+                                handleExportPDF();
+                              }} disabled={Pdfloading} >
+                                { Pdfloading ? "Exporting..." : "PDF" }   
+                        </CButton>
+      
+                        <CButton className="btn btn-sm btn-secondary w-auto"
+                            onClick={() => {Printloading
+                                handlePrint();
+                              }} disabled={Printloading} >
+                                { Printloading ? "Printing..." : "Print" } 
+                            </CButton>
+      
+                      </CButtonGroup>
+                      <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                        <CTableHead color="secondary">
+                          {headerGroups.map((headerGroup) => (
+                            <tr {...headerGroup.getHeaderGroupProps()}>
+                              {headerGroup.headers.map((column) => (
+                                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                                  {column.render('Header')}
+                                  <span>
+                                    {column.isSorted
+                                      ? column.isSortedDesc
+                                        ? ' 🔽'
+                                        : ' 🔼'
+                                      : ''}
+                                  </span>
+                                </th>
+                              ))}
+                            </tr>
+                          ))}
+                        </CTableHead>
+                        <tbody {...getTableBodyProps()}>
+                          {page.map((row) => {
+                            prepareRow(row);
+                            const serial = pageIndex * pageSize + row.index + 1;
+                            return (
+                              <tr {...row.getRowProps()}>
+                                {row.cells.map((cell) => (
+            
+                                  <td {...cell.getCellProps()}>
+                                    {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                                  </td>
+            
+            
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                        
+                      </CTable>
+            
+                      <div>
+                        <span>
+                          Page{' '}
+                          <strong>
+                            {pageIndex + 1} of {pageCount}
+                          </strong>{' '}
+                        </span>
+                        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'<<'}
+                        </button>
+                        <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'<'}
+                        </button>
+                        <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'>'}
+                        </button>
+                        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                          {'>>'}
+                        </button>
+                      </div>
+                    </CCardBody>
+                  </CCard>
 
 
 
@@ -980,9 +988,9 @@ const TrailerInventory = () => {
                 Model
               </CFormLabel>
 
-              <Select options={modeloption}
-                isMulti={false}
-                placeholder="Select Model"
+              <Select options={modeloption} 
+              isMulti={false}
+               placeholder="Select Model"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
@@ -1028,7 +1036,7 @@ const TrailerInventory = () => {
             <CCol md={6}>
 
 
-              <CFormLabel className="col-form-label">
+               <CFormLabel className="col-form-label">
                 AMC
               </CFormLabel>
 
@@ -1182,7 +1190,7 @@ const TrailerInventory = () => {
         aria-labelledby="NewProcessing"
       >
         <CModalHeader className='bg-secondary'>
-          {updated_data.image ? <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.trailer_number}</CModalTitle>
+          {updated_data.image ? <CImage rounded src={`${updated_data.image}`} width={50} height={50} className='me-2' /> : ''}  <CModalTitle id="NewProcessing"> {updated_data.trailer_number}</CModalTitle>
         </CModalHeader>
         <CModalBody>
 
@@ -1280,12 +1288,12 @@ const TrailerInventory = () => {
 
 
 
-
+             
 
             </CCol>
             <CCol md={6}>
 
-              <CFormLabel className="col-form-label">
+               <CFormLabel className="col-form-label">
                 AMC
               </CFormLabel>
 
@@ -1444,7 +1452,7 @@ const TrailerInventory = () => {
             {updated_data.image ? (
               <CImage
                 rounded
-                src={updated_data.image}
+                src={`${updated_data.image}`}
                 width={50}
                 height={50}
                 className="me-2"
@@ -1482,7 +1490,7 @@ const TrailerInventory = () => {
           </CModalBody>
 
           <CModalFooter>
-            <CButton color="secondary" onClick={() => setview(false)}>
+            <CButton color="secondary" onClick={() => setVisible(false)}>
               Close
             </CButton>
           </CModalFooter>

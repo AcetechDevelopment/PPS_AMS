@@ -20,7 +20,6 @@ import {
   CImage, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell
 } from '@coreui/react'
 import { FaBars, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
-// import { useLocation } from "react-router-dom";
 import { CIcon } from '@coreui/icons-react';
 import { cilTrash, cilPencil } from '@coreui/icons';
 import Select from 'react-select';
@@ -34,8 +33,6 @@ import { Sharedcontext } from '../../components/Context';
 import { exportToExcel } from '../export/excel';
 import { exportToPDF } from '../export/pdf';
 import { exportToPrint } from '../export/print';
-import { useLocation } from "react-router-dom";
-
 
 
 
@@ -58,6 +55,7 @@ const VehicleInventory = () => {
   const [categoryid, setcategoryid] = useState('');
   const [fromdate, setfromdate] = useState(today);
   const [todate, settodate] = useState(today);
+  const [location, setlocation] = useState('');
   const [loc_id, setlocationid] = useState('');
   const [bill_no, setbill_no] = useState('');
   const [vehicle_no, setvehicle_no] = useState('');
@@ -70,10 +68,9 @@ const VehicleInventory = () => {
   const [typelist, settypelist] = useState([])
 
   const [view, setview] = useState(false)
-  // const [action_details, setactiondetails] = useState({})
-  const { roleId ,fetchActionDetails,action_details} = useContext(Sharedcontext)
-  const location = useLocation(); // 👈 gives full URL path
- 
+  const [action_details, setactiondetails] = useState({})
+  const { roleId } = useContext(Sharedcontext)
+  
 
   const intial_data = {
     vno: '',
@@ -167,7 +164,6 @@ const VehicleInventory = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(result)
         toast.success('New Vehicle created!');
         fetchData({ pageSize, pageIndex, sortBy, search });
         setShow(false);
@@ -349,7 +345,7 @@ const VehicleInventory = () => {
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
 
-  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
+   const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
 
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
@@ -397,13 +393,13 @@ const VehicleInventory = () => {
   };
 
 
-
+  
 
   const columns = useMemo(
     () => [
-      {
+     {
         Header: 'SL',
-        id: 'sl',
+        id: 'sl',            
         disableSortBy: true,
         Cell: ({ row }) => row.index + 1,
       },
@@ -425,7 +421,7 @@ const VehicleInventory = () => {
           if (!action_details) return null
           return (
             <div className="">
-              {/* {action_details?.isView && (
+              {action_details?.isView && (
                 <FaEye
                   size={15}
                   className="ms-2 me-2 pointer text-info"
@@ -446,28 +442,7 @@ const VehicleInventory = () => {
                   className="ms-2 me-2 pointer text-info"
                   onClick={() => deletevehicle(id)}
                 />
-              )} */}
-              <FaEye
-                size={15}
-                className={`ms-2 me-2 ${action_details?.isView ? "text-info pointer" : "text-muted"}`}
-                onClick={() => action_details?.isView && viewvehicle(id)}
-                style={{ cursor: action_details?.isView ? "pointer" : "not-allowed", opacity: action_details?.isView ? 1 : 0.5 }}
-              />
-
-              <FaEdit
-                size={15}
-                className={`ms-2 me-2 ${action_details?.isEdit ? "text-primary pointer" : "text-muted"}`}
-                onClick={() => action_details?.isEdit && editvehicle(id)}
-                style={{ cursor: action_details?.isEdit ? "pointer" : "not-allowed", opacity: action_details?.isEdit ? 1 : 0.5 }}
-              />
-
-              <FaTrash
-                size={15}
-                className={`ms-2 me-2 ${action_details?.isDelete ? "text-danger pointer" : "text-muted"}`}
-                onClick={() => action_details?.isDelete && deletevehicle(id)}
-                style={{ cursor: action_details?.isDelete ? "pointer" : "not-allowed", opacity: action_details?.isDelete ? 1 : 0.5 }}
-              />
-
+              )}
             </div>
           );
         },
@@ -789,278 +764,147 @@ const VehicleInventory = () => {
     }
   };
 
+const fetchVehicleData = async (authToken) => {
+  const response = await fetch(`${BASE}vehicle/list?start=0&limit=1000`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch data");
+
+  const result = await response.json();
+  const allData = Array.isArray(result.data) ? result.data : [];
+
+  if (allData.length === 0) {
+    alert("No data found for export");
+    return [];
+  }
+
+  return allData.map((row, index) => ({
+    "SL No": index + 1,
+    "Vehicle No": row.vehicle_number,
+    "Category": row.category,
+    "Brand": row.brandname,
+    "Model": row.modelname,
+    "Engine number": row.engine_num,
+    "Chassis number": row.chassis_num,
+    "HSN": row.hsn,
+    "Part No": row.part_num,
+    "Purchase date": row.purchase_date,
+    "Months of Warranty": row.year_warranty,
+    "Warranty Expire Date": row.exp_warranty,
+    "AMC Number": row.amc,
+    "AMC Date": row.amc_date,
+    "Wheels count": row.tyre_count,
+    "Stepney Count": row.step_count,
+    "Fuel Type":
+      row?.fuel_type == 1
+        ? "Diesel"
+        : row?.fuel_type == 2
+        ? "Petrol"
+        : row?.fuel_type == 3
+        ? "Gas"
+        : "Battery",
+    "Insurance": row.insurance,
+    "Insurance Date": row.ins_date,
+    "Fitness Certificate": row.fc,
+    "Fitness Certificate Date": row.fc_date,
+    "Pollution Certificate": row.pc,
+    "Pollution Certificate Date": row.pc_date,
+    "Green Tax": row.green_tax,
+    "Green Tax Date": row.gtax_date,
+    "Status": row.status === 1 ? "Inactive" : "Active",
+  }));
+};
 
 
-  const handleExportExcel = async () => {
+const handleExportExcel = async () => {
+  try {
+    setExcelLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToExcel(data, "Vehicle_Inventory");
+  } catch (error) {
+    console.error("Excel Export Error:", error);
+    alert("Failed to export Excel");
+  } finally {
+    setExcelLoading(false);
+  }
+};
+
+const handleExportPDF = async () => {
+  try {
+    setPdfLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPDF(data, "Vehicle_Inventory");
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    alert("Failed to export PDF");
+  } finally {
+    setPdfLoading(false);
+  }
+};
+
+const handlePrint = async () => {
+  try {
+    setPrintLoading(true);
+    const data = await fetchVehicleData(authToken);
+    if (data.length > 0) exportToPrint(data, "Vehicle_Inventory");
+  } catch (error) {
+    console.error("Print Error:", error);
+    alert("Failed to print report");
+  } finally {
+    setPrintLoading(false);
+  }
+};
+
+
+  const fetchActionDetails = async () => {
+    console.log("fetch")
     try {
-      setExcelLoading(true);
-      const response = await fetch(`${BASE}vehicle/list?start=0&limit=1000`, {
+      const response = await fetch(`${BASE}permission/lists/${roleId}`, {
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
         },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch data");
+      if (response.ok) {
+        console.log("fetching")
+        const data = await response.json();
+        let veh_invent = null;
+        if (Array.isArray(data)
+          &&
+          data[1]?.children?.[0]?.children?.[0] &&
+          data[1].children[0].children[0].name === "Vehicle Inventory") {
+          veh_invent = data[1].children[0].children[0]
+        }
 
-      const result = await response.json();
-      const allData = Array.isArray(result.data) ? result.data : [];
+        console.log(veh_invent)
+        console.log(veh_invent?.isView)
+        setactiondetails(veh_invent)
 
-      if (allData.length === 0) {
-        alert("No data found for export");
-        return;
+
+      } else {
+        const error = await response.json();
+        ReactSwal.fire({
+          title: 'Error',
+          text: error.message || 'Unable to reach user data',
+          icon: 'error',
+        });
       }
-      const dataForExcel = allData.map((row, index) => ({
-        "SL No": index + 1,
-        "Vehicle No": row.vehicle_number,
-        "Category": row.category,
-        "Brand": row.brandname,
-        "Model": row.modelname,
-        "Engine number": row.engine_num,
-        "Chassis number": row.chassis_num,
-        "HSN": row.hsn,
-        "Part No": row.part_num,
-        "Purchase date": row.purchase_date,
-        "Months of Warranty": row.year_warranty,
-        "Warranty Expire Date": row.exp_warranty,
-        "AMC Number": row.amc,
-        "AMC Date": row.amc_date,
-        "Wheels count": row.tyre_count,
-        "Stepney Count": row.step_count,
-        "Fuel Type":
-          row?.fuel_type == 1
-            ? "Diesel"
-            : row?.fuel_type == 2
-              ? "Petrol"
-              : row?.fuel_type == 3
-                ? "Gas"
-                : "Battery",
-        "Insurance": row.insurance,
-        "Insurance Date": row.ins_date,
-        "Fitness Certificate": row.fc,
-        "Fitness Certificate Date": row.fc_date,
-        "Pollution Certificate": row.pc,
-        "Pollution Certificate Date": row.pc_date,
-        "Green Tax": row.green_tax,
-        "Green Tax Date": row.gtax_date,
-        "Status": row.status === 1 ? "Inactive" : "Active",
-      }));
-
-      exportToExcel(dataForExcel, "Vehicle_Inventory");
-
-    } catch (error) {
-      console.error("Fetch error:", error);
-      alert("Failed to fetch data");
-    } finally {
-      setExcelLoading(false);
-    }
-  };
-
-
-
-
-  const handleExportPDF = async () => {
-    try {
-      setPdfLoading(true);
-      const response = await fetch(`${BASE}vehicle/list?start=0&limit=1000`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
+    } catch (err) {
+      console.error('Error:', err);
+      ReactSwal.fire({
+        title: 'Error',
+        text: 'Failed to connect to the server. Please try again later.',
+        icon: 'error',
       });
-
-      if (!response.ok) throw new Error("Failed to fetch data");
-
-      const result = await response.json();
-      const allData = Array.isArray(result.data) ? result.data : [];
-
-      if (allData.length === 0) {
-        alert("No data found for export");
-        return;
-      }
-      const dataForExcel = allData.map((row, index) => ({
-        "SL No": index + 1,
-        "Vehicle No": row.vehicle_number,
-        "Category": row.category,
-        "Brand": row.brandname,
-        "Model": row.modelname,
-        "Engine number": row.engine_num,
-        "Chassis number": row.chassis_num,
-        "HSN": row.hsn,
-        "Part No": row.part_num,
-        "Purchase date": row.purchase_date,
-        "Months of Warranty": row.year_warranty,
-        "Warranty Expire Date": row.exp_warranty,
-        "AMC Number": row.amc,
-        "AMC Date": row.amc_date,
-        "Wheels count": row.tyre_count,
-        "Stepney Count": row.step_count,
-        "Fuel Type":
-          row?.fuel_type == 1
-            ? "Diesel"
-            : row?.fuel_type == 2
-              ? "Petrol"
-              : row?.fuel_type == 3
-                ? "Gas"
-                : "Battery",
-        "Insurance": row.insurance,
-        "Insurance Date": row.ins_date,
-        "Fitness Certificate": row.fc,
-        "Fitness Certificate Date": row.fc_date,
-        "Pollution Certificate": row.pc,
-        "Pollution Certificate Date": row.pc_date,
-        "Green Tax": row.green_tax,
-        "Green Tax Date": row.gtax_date,
-        "Status": row.status === 1 ? "Inactive" : "Active",
-      }));
-
-      exportToPDF(dataForExcel, "Vehicle_Inventory");
-    } catch (error) {
-      console.error("PDF Export Error:", error);
-      alert("Failed to export PDF");
-    } finally {
-      setPdfLoading(false);
     }
-  };
-
-
-  const handlePrint = async () => {
-    try {
-      setPrintLoading(true);
-      const response = await fetch(`${BASE}vehicle/list?start=0&limit=1000`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (!response.ok) throw new Error("Failed to fetch data");
-
-      const result = await response.json();
-      const allData = Array.isArray(result.data) ? result.data : [];
-
-      if (allData.length === 0) {
-        alert("No data found for export");
-        return;
-      }
-      const dataForExcel = allData.map((row, index) => ({
-        "SL No": index + 1,
-        "Vehicle No": row.vehicle_number,
-        "Category": row.category,
-        "Brand": row.brandname,
-        "Model": row.modelname,
-        "Engine number": row.engine_num,
-        "Chassis number": row.chassis_num,
-        "HSN": row.hsn,
-        "Part No": row.part_num,
-        "Purchase date": row.purchase_date,
-        "Months of Warranty": row.year_warranty,
-        "Warranty Expire Date": row.exp_warranty,
-        "AMC Number": row.amc,
-        "AMC Date": row.amc_date,
-        "Wheels count": row.tyre_count,
-        "Stepney Count": row.step_count,
-        "Fuel Type":
-          row?.fuel_type == 1
-            ? "Diesel"
-            : row?.fuel_type == 2
-              ? "Petrol"
-              : row?.fuel_type == 3
-                ? "Gas"
-                : "Battery",
-        "Insurance": row.insurance,
-        "Insurance Date": row.ins_date,
-        "Fitness Certificate": row.fc,
-        "Fitness Certificate Date": row.fc_date,
-        "Pollution Certificate": row.pc,
-        "Pollution Certificate Date": row.pc_date,
-        "Green Tax": row.green_tax,
-        "Green Tax Date": row.gtax_date,
-        "Status": row.status === 1 ? "Inactive" : "Active",
-      }));
-      exportToPrint(dataForExcel, "Vehicle_Inventory");
-    } catch (error) {
-      console.error("Print Error:", error);
-      alert("Failed to print report");
-    } finally {
-      setPrintLoading(false);
-    }
-  };
-
-
-  // const fetchActionDetails = async (pageName) => {
-  //   console.log("fetch")
-  //   try {
-  //     const response = await fetch(`${BASE}permission/lists/${roleId}`, {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${authToken}`,
-  //       },
-  //     });
-
-  //     if (response.ok) {
-  //       console.log("fetching")
-  //       console.log(response)
-  //       const data = await response.json();
-  //       let founditem=null
-  //       const findrecursively = (nodes) => {
-  //        for(let node of nodes){
-  //         if ( node.to && node.to.replace("/", "") === pageName) // compare with path
-  //         {
-  //           return node
-  //         }
-  //         if(node.children)
-  //         {
-  //           const child=findrecursively(node.children)
-  //           if(child)
-  //           {
-  //             return child
-  //           }
-  //         }
-  //        }
-  //        return null
-  //       }
-  //        founditem = findrecursively(data)
-  //       console.log(founditem)
-  //       console.log(founditem?.isView)
-  //       setactiondetails(founditem)
-
-  //       // if (Array.isArray(data)
-  //       //   &&
-  //       //   data[1]?.children?.[0]?.children?.[0] &&
-  //       //   data[1].children[0].children[0].name === "Vehicle Inventory") {
-  //       //   veh_invent = data[1].children[0].children[0]
-  //       // }
-
-
-
-
-  //     } else {
-  //       const error = await response.json();
-  //       ReactSwal.fire({
-  //         title: 'Error',
-  //         text: error.message || 'Unable to reach user data',
-  //         icon: 'error',
-  //       });
-  //     }
-  //   } catch (err) {
-  //     console.error('Error:', err);
-  //     ReactSwal.fire({
-  //       title: 'Error',
-  //       text: 'Failed to connect to the server. Please try again later.',
-  //       icon: 'error',
-  //     });
-  //   }
-  // }
-  //  / remove leading "/" → "vehicle_inventory"
-  useEffect(() => {
-    const pageName = location.pathname.replace("/", "");
-    fetchActionDetails(pageName);
-   }, [roleId,location])
-
-
-  useEffect(() => { console.log(roleId) }, [roleId])
+  }
+  useEffect(() => { fetchActionDetails() }, [roleId])
 
   const fuelOptions = [
     { value: "1", label: "Diesel" },
@@ -1068,114 +912,112 @@ const VehicleInventory = () => {
     { value: "3", label: "Gas" },
     { value: "4", label: "Battery" },
   ];
-  setTimeout(() => {
-    console.log("Image URL →", `${file_base_url}uploads/${updated_data.image}`);
-  }, 1000)
-
+  
+  setTimeout(()=>{
+     console.log("Image URL →", `${file_base_url}uploads/${updated_data.image}`);
+  },1000)
+ 
   return (
     <>
-      <CCard className="mb-4">
-        <CCardHeader className='bg-secondary text-light'>
-          Vehicle Inventory
-        </CCardHeader>
+       <CCard className="mb-4">
+              <CCardHeader className='bg-secondary text-light'>
+                Vehicle Inventory
+              </CCardHeader>
+      
+              <CCardBody>
+                <input
+                  type="search"
+                  onChange={(e) => setsearch(e.target.value)}
+                  className="form-control form-control-sm m-1 float-end w-auto"
+                  placeholder='Search'
+                />
+      
+                <CButtonGroup role="group" aria-label="Basic example">
+                  <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+                  <CButton className="btn btn-sm btn-secondary w-auto"
+                    onClick={() => {Excelloading
+                          handleExportExcel();
+                        }} disabled={Excelloading} >
+                          { Excelloading ? "Exporting..." : "Excel" } 
+                       </CButton>
 
-        <CCardBody>
-          <input
-            type="search"
-            onChange={(e) => setsearch(e.target.value)}
-            className="form-control form-control-sm m-1 float-end w-auto"
-            placeholder='Search'
-          />
+                  <CButton className="btn btn-sm btn-secondary w-auto" 
+                  onClick={() => {Pdfloading
+                          handleExportPDF();
+                        }} disabled={Pdfloading} >
+                          { Pdfloading ? "Exporting..." : "PDF" }   
+                  </CButton>
 
-          <CButtonGroup role="group" aria-label="Basic example">
-            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-                Excelloading
-                handleExportExcel();
-              }} disabled={Excelloading} >
-              {Excelloading ? "Exporting..." : "Excel"}
-            </CButton>
+                  <CButton className="btn btn-sm btn-secondary w-auto"
+                      onClick={() => {Printloading
+                          handlePrint();
+                        }} disabled={Printloading} >
+                          { Printloading ? "Printing..." : "Print" } 
+                       </CButton>
 
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-                Pdfloading
-                handleExportPDF();
-              }} disabled={Pdfloading} >
-              {Pdfloading ? "Exporting..." : "PDF"}
-            </CButton>
-
-            <CButton className="btn btn-sm btn-secondary w-auto"
-              onClick={() => {
-                Printloading
-                handlePrint();
-              }} disabled={Printloading} >
-              {Printloading ? "Printing..." : "Print"}
-            </CButton>
-
-          </CButtonGroup>
-          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-            <CTableHead color="secondary">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </CTableHead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                const serial = pageIndex * pageSize + row.index + 1;
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => (
-
-                      <td {...cell.getCellProps()}>
-                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
-                      </td>
-
-
+                </CButtonGroup>
+                <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+                  <CTableHead color="secondary">
+                    {headerGroups.map((headerGroup) => (
+                      <tr {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map((column) => (
+                          <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                            {column.render('Header')}
+                            <span>
+                              {column.isSorted
+                                ? column.isSortedDesc
+                                  ? ' 🔽'
+                                  : ' 🔼'
+                                : ''}
+                            </span>
+                          </th>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-
-          </CTable>
-
-          <div>
-            <span>
-              Page{' '}
-              <strong>
-                {pageIndex + 1} of {pageCount}
-              </strong>{' '}
-            </span>
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<<'}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'<'}
-            </button>
-            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>'}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-              {'>>'}
-            </button>
-          </div>
-        </CCardBody>
-      </CCard>
+                  </CTableHead>
+                  <tbody {...getTableBodyProps()}>
+                    {page.map((row) => {
+                      prepareRow(row);
+                      const serial = pageIndex * pageSize + row.index + 1;
+                      return (
+                        <tr {...row.getRowProps()}>
+                          {row.cells.map((cell) => (
+      
+                            <td {...cell.getCellProps()}>
+                              {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                            </td>
+      
+      
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  
+                </CTable>
+      
+                <div>
+                  <span>
+                    Page{' '}
+                    <strong>
+                      {pageIndex + 1} of {pageCount}
+                    </strong>{' '}
+                  </span>
+                  <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'<<'}
+                  </button>
+                  <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'<'}
+                  </button>
+                  <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'>'}
+                  </button>
+                  <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+                    {'>>'}
+                  </button>
+                </div>
+              </CCardBody>
+            </CCard>
 
 
 
@@ -1234,7 +1076,6 @@ const VehicleInventory = () => {
               </CFormLabel>
               <Select options={categoryoption} isMulti={false} placeholder="Select Category" size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
-
                 onChange={(selectedOption) => {
                   setsave_data((prev) => ({
                     ...prev,
@@ -1584,8 +1425,8 @@ const VehicleInventory = () => {
         aria-labelledby="NewProcessing"
       >
         <CModalHeader className='bg-secondary'>
-          {updated_data.image ? <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''}
-          <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
+          {updated_data.image ? <CImage rounded src={updated_data.image} width={50} height={50} className='me-2' /> : ''} 
+           <CModalTitle id="NewProcessing"> {updated_data.vno}</CModalTitle>
         </CModalHeader>
         <CModalBody>
 
@@ -2001,7 +1842,7 @@ const VehicleInventory = () => {
               <CImage
                 rounded
                 src={updated_data.image}
-                // src="/table.png"
+                  // src="/table.png"
                 width={50}
                 height={50}
                 className="me-2"
@@ -2043,6 +1884,20 @@ const VehicleInventory = () => {
                   </CTableRow>
                 ))}
 
+                {/* {updated_data.image && (
+                  <CTableRow>
+                    <CTableHeaderCell className="fw-bold">Image</CTableHeaderCell>
+                    <CTableDataCell>
+                      <CImage
+                        rounded
+                        src={`${file_base_url}/uploads/${updated_data.image}`}
+                        // src="/table.png"
+                        width={200}
+                       
+                      />
+                    </CTableDataCell>
+                  </CTableRow>
+                )} */}
               </CTableBody>
             </CTable>
           </CModalBody>

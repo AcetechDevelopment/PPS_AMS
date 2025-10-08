@@ -15,10 +15,42 @@ import { CChartBar, CChartLine } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
 
-const WidgetsDropdown = ({ item }) => {
+const WidgetsDropdown = (props) => {
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
+  const [totalNumbers, settotalNumbers] = useState({})
 
+
+
+
+  const BASE = import.meta.env.VITE_BASE_URL;
+  const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
+
+  const getTotalNumbers = async () => {
+    try {
+      const response = await fetch(`${BASE}options/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json()
+
+        settotalNumbers(data)
+      }
+    }
+    catch (err) {
+      console.log(err.message)
+    }
+  }
+  useEffect(() => {
+    {
+
+      getTotalNumbers()
+    }
+  }, [])
   useEffect(() => {
     document.documentElement.addEventListener('ColorSchemeChange', () => {
       if (widgetChartRef1.current) {
@@ -38,15 +70,15 @@ const WidgetsDropdown = ({ item }) => {
   }, [widgetChartRef1, widgetChartRef2])
 
   return (
-    <CRow className="mb-4" xs={{ gutter: 6}}  md={{ gutter: 8 }}>
-      <CCol sm={6} xl={4} xxl={3}   className="mb-3">
+    <CRow className={props.className} xs={{ gutter: 6 }}>
+      <CCol sm={2} xl={2} xxl={3}>
         <CWidgetStatsA
           color="primary"
 
           title="Total Vehicles"
           value={
             <>
-              {item.Vehicle ? item.Vehicle : 0}
+              {totalNumbers.Vehicle}
             </>
           }
           chart={
@@ -116,13 +148,13 @@ const WidgetsDropdown = ({ item }) => {
       </CCol>
 
 
-      <CCol sm={6} xl={4} xxl={3}  className="mb-3 mb-sm-0">
+      <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="info"
           title="Total Trailers"
           value={
             <>
-              {item.Trailer ? item.Trailer : 0}
+              {totalNumbers.Trailer}
             </>
           }
 
@@ -191,13 +223,13 @@ const WidgetsDropdown = ({ item }) => {
           }
         />
       </CCol>
-      <CCol sm={6} xl={4} xxl={3}  className="mb-3 mb-sm-0">
+      <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="warning"
           title="Total Spares"
           value={
             <>
-              {item.Spare ? item.Spare : 0}
+              {totalNumbers.Spare}
             </>
           }
 
@@ -249,7 +281,7 @@ const WidgetsDropdown = ({ item }) => {
           }
         />
       </CCol>
-      <CCol sm={6} xl={4} xxl={3} >
+      <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="danger"
           value={
