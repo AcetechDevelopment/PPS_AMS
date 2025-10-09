@@ -102,7 +102,7 @@ const TrailerInventory = () => {
       return;
     }
 
-    
+
     const hsnCheck = validateHSN(data.hsn);
     if (!hsnCheck.isValid) return toast.error(hsnCheck.error);
 
@@ -311,7 +311,7 @@ const TrailerInventory = () => {
 
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
 
-const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
+  const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '', todate, location } = {}) => {
     setLoading(true);
 
     const sortColumn = sortBy.length > 0 ? sortBy[0].id : 'id';
@@ -357,13 +357,14 @@ const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '
       setLoading(false);
     }
   };
-  
+
+  const centerClass = "text-center flex justify-center items-center";
 
   const columns = useMemo(
     () => [
       {
         Header: 'SL',
-        id: 'sl',            
+        id: 'sl',
         disableSortBy: true,
         Cell: ({ row }) => row.index + 1,
       },
@@ -375,13 +376,17 @@ const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '
       { Header: 'Part', accessor: 'part_num' },
       { Header: 'Purchase date', accessor: 'purchase_date' },
       {
-        Header: () => <FaBars />,
+        Header: () => (
+          <div className={centerClass}>
+            <FaBars />
+          </div>
+        ),
         id: 'actions',
         Cell: ({ row }) => {
           const id = row.original.id;
           if (!action_details) return null
           return (
-            <div className="">
+            <div className={centerClass}>
 
               {action_details?.isView && (
                 <FaEye
@@ -505,7 +510,7 @@ const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '
           file: null,
         });
         console.log(res.purchase_date);
-        
+
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
         setupdateShow(true);
@@ -630,7 +635,7 @@ const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '
         getbrandlist(res.cat_id);
         getmodellist(res.brand_id);
       } else {
-        
+
       }
     } catch (err) {
       console.error('Error:', err);
@@ -741,83 +746,83 @@ const fetchData = async ({ pageSize = 15, pageIndex = 0, sortBy = [], search = '
 
 
 
-const fetchVehicleData = async (authToken) => {
-  const response = await fetch(`${BASE}trailer/list?start=0&limit=1000`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
+  const fetchVehicleData = async (authToken) => {
+    const response = await fetch(`${BASE}trailer/list?start=0&limit=1000`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
 
-  if (!response.ok) throw new Error("Failed to fetch data");
+    if (!response.ok) throw new Error("Failed to fetch data");
 
-  const result = await response.json();
-  const allData = Array.isArray(result.data) ? result.data : [];
+    const result = await response.json();
+    const allData = Array.isArray(result.data) ? result.data : [];
 
-  if (allData.length === 0) {
-    alert("No data found for export");
-    return [];
-  }
+    if (allData.length === 0) {
+      alert("No data found for export");
+      return [];
+    }
 
-  return allData.map((row, index) => ({
-    "SL No": index + 1,
-    "Trailer No": row.trailer_number,
-    "Brand": row.brandname,
-    "Model": row.modelname,
-    "HSN": row.hsn,
-    "Part No": row.part_num,
-    "Purchase date": row.purchase_date,
-    "Months of Warranty": row.years_warrenty,
-    "Warranty Expire Date": row.exp_warranty,
-    "AMC Number": row.amc,
-    "AMC Date": row.amc_date,
-    "Wheels count": row.tyre_count,
-    "Stepney Count": row.step_count,
-    "Insurance": row.insurance,
-    "Insurance Date": row.ins_date,
-    "Status": row.status === 1 ? "Inactive" : "Active",
-  }));
-};
+    return allData.map((row, index) => ({
+      "SL No": index + 1,
+      "Trailer No": row.trailer_number,
+      "Brand": row.brandname,
+      "Model": row.modelname,
+      "HSN": row.hsn,
+      "Part No": row.part_num,
+      "Purchase date": row.purchase_date,
+      "Months of Warranty": row.years_warrenty,
+      "Warranty Expire Date": row.exp_warranty,
+      "AMC Number": row.amc,
+      "AMC Date": row.amc_date,
+      "Wheels count": row.tyre_count,
+      "Stepney Count": row.step_count,
+      "Insurance": row.insurance,
+      "Insurance Date": row.ins_date,
+      "Status": row.status === 1 ? "Inactive" : "Active",
+    }));
+  };
 
 
-const handleExportExcel = async () => {
-  try {
-    setExcelLoading(true);
-    const data = await fetchVehicleData(authToken);
-    if (data.length > 0) exportToExcel(data, "Trailer_Inventory");
-  } catch (error) {
-    console.error("Excel Export Error:", error);
-    alert("Failed to export Excel");
-  } finally {
-    setExcelLoading(false);
-  }
-};
+  const handleExportExcel = async () => {
+    try {
+      setExcelLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToExcel(data, "Trailer_Inventory");
+    } catch (error) {
+      console.error("Excel Export Error:", error);
+      alert("Failed to export Excel");
+    } finally {
+      setExcelLoading(false);
+    }
+  };
 
-const handleExportPDF = async () => {
-  try {
-    setPdfLoading(true);
-    const data = await fetchVehicleData(authToken);
-    if (data.length > 0) exportToPDF(data, "Trailer_Inventory");
-  } catch (error) {
-    console.error("PDF Export Error:", error);
-    alert("Failed to export PDF");
-  } finally {
-    setPdfLoading(false);
-  }
-};
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToPDF(data, "Trailer_Inventory");
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+      alert("Failed to export PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
-const handlePrint = async () => {
-  try {
-    setPrintLoading(true);
-    const data = await fetchVehicleData(authToken);
-    if (data.length > 0) exportToPrint(data, "Trailer_Inventory");
-  } catch (error) {
-    console.error("Print Error:", error);
-    alert("Failed to print report");
-  } finally {
-    setPrintLoading(false);
-  }
-};
+  const handlePrint = async () => {
+    try {
+      setPrintLoading(true);
+      const data = await fetchVehicleData(authToken);
+      if (data.length > 0) exportToPrint(data, "Trailer_Inventory");
+    } catch (error) {
+      console.error("Print Error:", error);
+      alert("Failed to print report");
+    } finally {
+      setPrintLoading(false);
+    }
+  };
 
 
 
@@ -825,104 +830,107 @@ const handlePrint = async () => {
   return (
     <>
       <CCard className="mb-4">
-                    <CCardHeader className='bg-secondary text-light'>
-                      Trailer Inventory
-                    </CCardHeader>
-            
-                    <CCardBody>
-                      <input
-                        type="search"
-                        onChange={(e) => setsearch(e.target.value)}
-                        className="form-control form-control-sm m-1 float-end w-auto"
-                        placeholder='Search'
-                      />
-            
-                      <CButtonGroup role="group" aria-label="Basic example">
-                        <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-                        <CButton className="btn btn-sm btn-secondary w-auto"
-                          onClick={() => {Excelloading
-                                handleExportExcel();
-                              }} disabled={Excelloading} >
-                                { Excelloading ? "Exporting..." : "Excel" } 
-                            </CButton>
-      
-                        <CButton className="btn btn-sm btn-secondary w-auto" 
-                        onClick={() => {Pdfloading
-                                handleExportPDF();
-                              }} disabled={Pdfloading} >
-                                { Pdfloading ? "Exporting..." : "PDF" }   
-                        </CButton>
-      
-                        <CButton className="btn btn-sm btn-secondary w-auto"
-                            onClick={() => {Printloading
-                                handlePrint();
-                              }} disabled={Printloading} >
-                                { Printloading ? "Printing..." : "Print" } 
-                            </CButton>
-      
-                      </CButtonGroup>
-                      <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-                        <CTableHead color="secondary">
-                          {headerGroups.map((headerGroup) => (
-                            <tr {...headerGroup.getHeaderGroupProps()}>
-                              {headerGroup.headers.map((column) => (
-                                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                                  {column.render('Header')}
-                                  <span>
-                                    {column.isSorted
-                                      ? column.isSortedDesc
-                                        ? ' 🔽'
-                                        : ' 🔼'
-                                      : ''}
-                                  </span>
-                                </th>
-                              ))}
-                            </tr>
-                          ))}
-                        </CTableHead>
-                        <tbody {...getTableBodyProps()}>
-                          {page.map((row) => {
-                            prepareRow(row);
-                            const serial = pageIndex * pageSize + row.index + 1;
-                            return (
-                              <tr {...row.getRowProps()}>
-                                {row.cells.map((cell) => (
-            
-                                  <td {...cell.getCellProps()}>
-                                    {cell.column.id === 'sl' ? serial : cell.render('Cell')}
-                                  </td>
-            
-            
-                                ))}
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                        
-                      </CTable>
-            
-                      <div>
-                        <span>
-                          Page{' '}
-                          <strong>
-                            {pageIndex + 1} of {pageCount}
-                          </strong>{' '}
-                        </span>
-                        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'<<'}
-                        </button>
-                        <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'<'}
-                        </button>
-                        <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'>'}
-                        </button>
-                        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'>>'}
-                        </button>
-                      </div>
-                    </CCardBody>
-                  </CCard>
+        <CCardHeader className='bg-secondary text-light'>
+          Trailer Inventory
+        </CCardHeader>
+
+        <CCardBody>
+          <input
+            type="search"
+            onChange={(e) => setsearch(e.target.value)}
+            className="form-control form-control-sm m-1 float-end w-auto"
+            placeholder='Search'
+          />
+
+          <CButtonGroup role="group" aria-label="Basic example">
+            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Excelloading
+                handleExportExcel();
+              }} disabled={Excelloading} >
+              {Excelloading ? "Exporting..." : "Excel"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Pdfloading
+                handleExportPDF();
+              }} disabled={Pdfloading} >
+              {Pdfloading ? "Exporting..." : "PDF"}
+            </CButton>
+
+            <CButton className="btn btn-sm btn-secondary w-auto"
+              onClick={() => {
+                Printloading
+                handlePrint();
+              }} disabled={Printloading} >
+              {Printloading ? "Printing..." : "Print"}
+            </CButton>
+
+          </CButtonGroup>
+          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+            <CTableHead color="secondary">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                      {column.render('Header')}
+                      <span>
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? ' 🔽'
+                            : ' 🔼'
+                          : ''}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </CTableHead>
+            <tbody {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                const serial = pageIndex * pageSize + row.index + 1;
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map((cell) => (
+
+                      <td {...cell.getCellProps()}>
+                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                      </td>
+
+
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+
+          </CTable>
+
+          <div>
+            <span>
+              Page{' '}
+              <strong>
+                {pageIndex + 1} of {pageCount}
+              </strong>{' '}
+            </span>
+            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<<'}
+            </button>
+            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<'}
+            </button>
+            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>'}
+            </button>
+            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>>'}
+            </button>
+          </div>
+        </CCardBody>
+      </CCard>
 
 
 
@@ -988,9 +996,9 @@ const handlePrint = async () => {
                 Model
               </CFormLabel>
 
-              <Select options={modeloption} 
-              isMulti={false}
-               placeholder="Select Model"
+              <Select options={modeloption}
+                isMulti={false}
+                placeholder="Select Model"
                 size="sm" className='mb-2 small-select'
                 classNamePrefix="custom-select"
                 onChange={(selectedOption) => {
@@ -1036,7 +1044,7 @@ const handlePrint = async () => {
             <CCol md={6}>
 
 
-               <CFormLabel className="col-form-label">
+              <CFormLabel className="col-form-label">
                 AMC
               </CFormLabel>
 
@@ -1288,12 +1296,12 @@ const handlePrint = async () => {
 
 
 
-             
+
 
             </CCol>
             <CCol md={6}>
 
-               <CFormLabel className="col-form-label">
+              <CFormLabel className="col-form-label">
                 AMC
               </CFormLabel>
 

@@ -78,7 +78,7 @@ const Login = () => {
 
   return (
     <section className="vh-90 mt-5">
-      <div className="container py-5 h-100">
+      <div className="container py-3 h-100">
         <div className="row d-flex align-items-center justify-content-center h-100">
           <div className="col-md-8 col-lg-7 col-xl-6">
             <img src="./loginbg.svg" className="img-fluid" alt="poster" />
@@ -92,7 +92,7 @@ const Login = () => {
 
             <div data-mdb-input-init="" className="form-outline mb-4">
               <label className="form-label" htmlFor="form1Example13">Mobile Number</label>
-              <input type="email" id="form1Example13" value={mobile} className="form-control form-control-lg" placeholder="Mobile Number" onChange={(e) => setmobile(e.target.value)} />
+              <input type="text" id="form1Example13" value={mobile} className="form-control form-control-lg" placeholder="Mobile Number" onChange={(e) => setmobile(e.target.value)} />
             </div>
 
             <div data-mdb-input-init="" className="form-outline mb-4">

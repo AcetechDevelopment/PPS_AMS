@@ -56,11 +56,11 @@ const SpareAssign = () => {
   const [id, setid] = useState('');
   const [selectedvalues, setselectedvalues] = useState({ vehicle_id: "", trailer_id: "" })
   const [showHistory, setShowHistory] = useState(false)
-  const [save_data, setsave_data] = useState({ vehicle_id: "", trailer_id: "", brand: "", modal: "", partnumber: "", serialno: ""  });
+  const [save_data, setsave_data] = useState({ vehicle_id: "", trailer_id: "", brand: "", modal: "", partnumber: "", serialno: "" });
   // const [updated_data, setupdated_data] = useState({ vehicle_id: "", trailer_id: "" });
   const [brandoption, setbrandoption] = useState([]);
   const authToken = JSON.parse(sessionStorage.getItem('authToken')) || '';
-  
+
 
 
   const submitvichile = async () => {
@@ -175,8 +175,8 @@ const SpareAssign = () => {
   }
 
 
-   const [partnoOption, setpartnoOption] = useState([]);
- 
+  const [partnoOption, setpartnoOption] = useState([]);
+
   const getpartnolist = async (modelid) => {
     setpartnoOption([]);
     try {
@@ -204,7 +204,7 @@ const SpareAssign = () => {
 
     }
   }
-   const [serialnoOptions, setserialnoOptions] = useState([]);
+  const [serialnoOptions, setserialnoOptions] = useState([]);
 
 
   const getserialnolist = async (partno) => {
@@ -284,8 +284,9 @@ const SpareAssign = () => {
     }
   };
 
+    const centerClass = "text-center flex justify-center items-center";
 
-
+ 
   const columns = useMemo(
     () => [
       {
@@ -301,13 +302,17 @@ const SpareAssign = () => {
       { Header: 'Spare Name', accessor: 'spare_name' },
       { Header: 'Serial No', accessor: 'serial_number' },
       {
-        Header: () => <FaBars />,
+        Header: () => (
+          <div className={centerClass}>
+            <FaBars />
+          </div>
+        ),
         id: 'actions',
         Cell: ({ row }) => {
           const id = row.original.id;
 
           return (
-            <div className="flex gap-5">
+            <div className={`flex gap-5 ${centerClass}`}>
               <FaHistory className="ms-2 pointer text-info" onClick={() => viewvehicle(id)} />
 
               <FaMinusSquare className="ms-2 pointer text-danger" onClick={() => deletevehicle(id)} />
@@ -525,13 +530,13 @@ const SpareAssign = () => {
       setbrand_options(formatted);
 
       console.log("brand options", formatted);
-      
+
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
-   useEffect(() => {
+  useEffect(() => {
     const delayDebounce = setTimeout(() => {
       fetchbrand_search(brand_search);
     }, 5);
@@ -539,7 +544,7 @@ const SpareAssign = () => {
     return () => clearTimeout(delayDebounce);
   }, [brand_search]);
 
-  
+
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       fetchvehicle_search(vehicle_search);
@@ -548,92 +553,92 @@ const SpareAssign = () => {
     return () => clearTimeout(delayDebounce);
   }, [vehicle_search]);
 
- 
+
 
 
 
   return (
     <>
       <CCard className="mb-4">
-                    <CCardHeader className='bg-secondary text-light'>
-                      Spare Assign
-                    </CCardHeader>
-            
-                    <CCardBody>
-                      <input
-                        type="search"
-                        onChange={(e) => setsearch(e.target.value)}
-                        className="form-control form-control-sm m-1 float-end w-auto"
-                        placeholder='Search'
-                      />
-            
-                      <CButtonGroup role="group" aria-label="Basic example">
-                        <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
-                       
-      
-                      </CButtonGroup>
-                      <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
-                        <CTableHead color="secondary">
-                          {headerGroups.map((headerGroup) => (
-                            <tr {...headerGroup.getHeaderGroupProps()}>
-                              {headerGroup.headers.map((column) => (
-                                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                                  {column.render('Header')}
-                                  <span>
-                                    {column.isSorted
-                                      ? column.isSortedDesc
-                                        ? ' 🔽'
-                                        : ' 🔼'
-                                      : ''}
-                                  </span>
-                                </th>
-                              ))}
-                            </tr>
-                          ))}
-                        </CTableHead>
-                        <tbody {...getTableBodyProps()}>
-                          {page.map((row) => {
-                            prepareRow(row);
-                            const serial = pageIndex * pageSize + row.index + 1;
-                            return (
-                              <tr {...row.getRowProps()}>
-                                {row.cells.map((cell) => (
-            
-                                  <td {...cell.getCellProps()}>
-                                    {cell.column.id === 'sl' ? serial : cell.render('Cell')}
-                                  </td>
-            
-            
-                                ))}
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                        
-                      </CTable>
-            
-                      <div>
-                        <span>
-                          Page{' '}
-                          <strong>
-                            {pageIndex + 1} of {pageCount}
-                          </strong>{' '}
-                        </span>
-                        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'<<'}
-                        </button>
-                        <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'<'}
-                        </button>
-                        <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'>'}
-                        </button>
-                        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
-                          {'>>'}
-                        </button>
-                      </div>
-                    </CCardBody>
-                  </CCard>
+        <CCardHeader className='bg-secondary text-light'>
+          Spare Assign
+        </CCardHeader>
+
+        <CCardBody>
+          <input
+            type="search"
+            onChange={(e) => setsearch(e.target.value)}
+            className="form-control form-control-sm m-1 float-end w-auto"
+            placeholder='Search'
+          />
+
+          <CButtonGroup role="group" aria-label="Basic example">
+            <CButton className="btn btn-sm btn-primary w-auto" onClick={handleShow}> New </CButton>
+
+
+          </CButtonGroup>
+          <CTable striped bordered hover size="sm" variant="dark" {...getTableProps()} style={{ fontSize: '0.75rem' }}>
+            <CTableHead color="secondary">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                      {column.render('Header')}
+                      <span>
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? ' 🔽'
+                            : ' 🔼'
+                          : ''}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </CTableHead>
+            <tbody {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                const serial = pageIndex * pageSize + row.index + 1;
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map((cell) => (
+
+                      <td {...cell.getCellProps()}>
+                        {cell.column.id === 'sl' ? serial : cell.render('Cell')}
+                      </td>
+
+
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+
+          </CTable>
+
+          <div>
+            <span>
+              Page{' '}
+              <strong>
+                {pageIndex + 1} of {pageCount}
+              </strong>{' '}
+            </span>
+            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<<'}
+            </button>
+            <button onClick={() => previousPage()} disabled={!canPreviousPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'<'}
+            </button>
+            <button onClick={() => nextPage()} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>'}
+            </button>
+            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} className='mb-3 bg-secondary float-end w-auto'>
+              {'>>'}
+            </button>
+          </div>
+        </CCardBody>
+      </CCard>
 
 
 
@@ -728,7 +733,7 @@ const SpareAssign = () => {
                   }
                 }}
               />
-                 <CFormLabel className="col-form-label">
+              <CFormLabel className="col-form-label">
                 Part Number
               </CFormLabel>
 
@@ -746,7 +751,7 @@ const SpareAssign = () => {
                     ...prev,
                     partnumber: selectedOption ? selectedOption.value : '',
                   }));
-                   if (selectedOption) {
+                  if (selectedOption) {
                     getserialnolist(selectedOption.value);
                   }
                 }}
@@ -770,11 +775,11 @@ const SpareAssign = () => {
                     ...prev,
                     serialno: selectedOption ? selectedOption.value : '',
                   }));
-                  
+
                 }}
               />
 
-           
+
             </CCol>
           </CRow>
         </CModalBody>
@@ -786,55 +791,55 @@ const SpareAssign = () => {
 
 
 
-             <CModal visible={showHistory} onClose={() => setShowHistory(false)} size="lg">
-              <CModalHeader>
-                <CModalTitle>Spare Assign History</CModalTitle>
-              </CModalHeader>
-              <CModalBody>
-                {history.length > 0 ? (
-                  <CTable
-                    striped
-                  bordered
-                  hover
-                  size="sm"
-                  variant="dark"
-                  style={{ fontSize: '0.75rem' }}
-                  >
-                    <CTableHead>
-                      <CTableRow>
-                        <CTableHeaderCell>ID</CTableHeaderCell>
-                        <CTableHeaderCell>Updated By</CTableHeaderCell>
-                        <CTableHeaderCell>Vehicle No</CTableHeaderCell>
-                        <CTableHeaderCell>Spare Name</CTableHeaderCell>
-                        <CTableHeaderCell>Status</CTableHeaderCell>
-                        <CTableHeaderCell>DateTime</CTableHeaderCell>
-                      </CTableRow>
-                    </CTableHead>
-                    <CTableBody>
-                      {history.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableDataCell>{index + 1}</CTableDataCell>
-                          <CTableDataCell>{row.user_id}</CTableDataCell>
-                          <CTableDataCell>{row.vehicle_no}</CTableDataCell>
-                          <CTableDataCell>{row.spare_name}</CTableDataCell>
-                          <CTableDataCell>{row.status}</CTableDataCell>
-                          <CTableDataCell>{row.datetime}</CTableDataCell>
-                        </CTableRow>
-                      ))}
-      
-                    </CTableBody>
-                  </CTable>
-                ) : (
-                  <p>No history available for this Spare.</p>
-                )}
-              </CModalBody>
-              <CModalFooter>
-                <CButton color="secondary" onClick={() => setShowHistory(false)}>
-                  Close
-                </CButton>
-              </CModalFooter>
-            </CModal>
-</>
+      <CModal visible={showHistory} onClose={() => setShowHistory(false)} size="lg">
+        <CModalHeader>
+          <CModalTitle>Spare Assign History</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {history.length > 0 ? (
+            <CTable
+              striped
+              bordered
+              hover
+              size="sm"
+              variant="dark"
+              style={{ fontSize: '0.75rem' }}
+            >
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>ID</CTableHeaderCell>
+                  <CTableHeaderCell>Updated By</CTableHeaderCell>
+                  <CTableHeaderCell>Vehicle No</CTableHeaderCell>
+                  <CTableHeaderCell>Spare Name</CTableHeaderCell>
+                  <CTableHeaderCell>Status</CTableHeaderCell>
+                  <CTableHeaderCell>DateTime</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {history.map((row, index) => (
+                  <CTableRow key={row.id}>
+                    <CTableDataCell>{index + 1}</CTableDataCell>
+                    <CTableDataCell>{row.user_id}</CTableDataCell>
+                    <CTableDataCell>{row.vehicle_no}</CTableDataCell>
+                    <CTableDataCell>{row.spare_name}</CTableDataCell>
+                    <CTableDataCell>{row.status}</CTableDataCell>
+                    <CTableDataCell>{row.datetime}</CTableDataCell>
+                  </CTableRow>
+                ))}
+
+              </CTableBody>
+            </CTable>
+          ) : (
+            <p>No history available for this Spare.</p>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowHistory(false)}>
+            Close
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </>
   )
 }
 

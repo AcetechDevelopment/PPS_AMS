@@ -281,7 +281,7 @@ const User = () => {
   5: "User Admin",
   6: "User",
 };
-  
+   const centerClass = "text-center flex justify-center items-center";
   const columns = useMemo(
     () => [
       { Header: 'SL',
@@ -294,7 +294,8 @@ const User = () => {
         Cell: ({ value }) => roleMap[value] || "Unknown"
       },
       {
-        Header: 'Action',
+        Header:()=>(<div className={centerClass}>Action</div> ),
+        id:"actions",
         Cell: ({ row }) => (
           <>
           <FaEdit className="text-primary pointer" onClick={() => edit_user(row.original.id)} style={{marginRight: '10px', marginLeft: '10px' }} />
