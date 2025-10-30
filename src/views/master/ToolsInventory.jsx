@@ -730,13 +730,6 @@ import React, { useEffect, useState, createRef, useMemo, useContext } from 'reac
       }
     }
     useEffect(() => { fetchActionDetails() }, [roleId])
-  
-    const fuelOptions = [
-      { value: "1", label: "Diesel" },
-      { value: "2", label: "Petrol" },
-      { value: "3", label: "Gas" },
-      { value: "4", label: "Battery" },
-    ];
 
     return (
       <>

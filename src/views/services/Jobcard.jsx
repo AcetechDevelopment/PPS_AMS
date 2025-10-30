@@ -87,10 +87,7 @@ const Jobcard = () => {
         []
     );
 
-    const edittoolroom = (id) => {
-        console.log(id);
 
-    }
 
     const fetchData = async ({ pageSize, pageIndex, sortBy, search, todate, location }) => {
         setLoading(true);
@@ -101,8 +98,6 @@ const Jobcard = () => {
 
         const pageSizee = 15;
         const pageindex = pageIndex * pageSizee;
-
-        // const pageindex = pageIndex*15;
 
         try {
             const response = await fetch(
@@ -132,6 +127,8 @@ const Jobcard = () => {
             setLoading(false);
         }
     };
+
+    
 
 
     const {
@@ -243,6 +240,43 @@ const Jobcard = () => {
              
     }
 
+
+
+    const [tool_search, settool_search] = useState("");
+    const [tool_options, settool_options] = useState([]);
+
+
+    const srvicetool = async() => {
+           try {
+            const response = await fetch(
+                `${BASE}options/searc_htool_option`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+            const result = await response.json();
+            const options = result.map(item => ({
+                value: item.id,
+                label: item.vehicle_number
+                }));
+
+                settool_options(options);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            
+        } finally {
+           
+        }     
+    }
+
       useEffect(() => {
          srvicetoadata();
         }, [services]);
@@ -262,15 +296,6 @@ const Jobcard = () => {
 
     useEffect(() => { console.log(jobcard, vehicleno, spares, tools, service_engineer, tyrespares, category, description, address, items, services) },
         [tyrespares, jobcard, vehicleno, spares, tools, service_engineer, category, description, address, items, services])
-
-
-
-
-
-  
-
-
-
 
 
     return (
@@ -441,14 +466,10 @@ const Jobcard = () => {
                                         <CFormLabel className="col-form-label">
                                             Service Engineer
                                         </CFormLabel>
-                                        <Select options={initial_engineers} isMulti={true} placeholder="Select Service engineers"
+                                        <input type="text"
                                             size="sm"
-                                            className='mb-2 small-select'
+                                            className='mb-2 form-control form-control-sm'
                                             classNamePrefix="custom-select"
-                                            value={service_engineer}
-                                            onChange={(selectedOption) => {
-                                                setservice_engineer(selectedOption)
-                                            }}
                                         />
                                     </>}
 
